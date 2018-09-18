@@ -1,6 +1,6 @@
-# OBIEMachineLearningFrameWork
+# OBIEMachineLearningFramework
 
-Repository of the OBIE Information Extraction Tool.
+Repository of the ontology based information extraction machine learning framework.
 
 **NOTE** This project is stilll under heavy development!
 
