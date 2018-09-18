@@ -4,7 +4,7 @@ Repository of the ontology based information extraction machine learning framewo
 
 **NOTE** This project is still under heavy development!
 
-**Dependiecies**
+**Dependencies**
 You need the following dependent projects:
 
 1)  OBIECore https://github.com/hterhors/OBIECore
