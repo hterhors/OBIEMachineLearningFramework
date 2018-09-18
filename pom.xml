@@ -6,8 +6,6 @@
 	<artifactId>OBIEMLFramework</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<name>OBIEMLFramework</name>
-
 	<dependencies>
 
 		<!-- https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable -->
@@ -30,11 +28,13 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 
+		<!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>26.0-jre</version>
+			<version>23.6-jre</version>
 		</dependency>
+
 
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/apache-jena-libs -->
 		<dependency>
@@ -70,7 +70,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
+				<version>3.7.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
