@@ -32,6 +32,6 @@ The project can be used out-of-the-box. Parameter and configurations are project
 
 For Relation Extraction problems create a new StandardRERunner and pass all necessary parameter.
 This class contains methods for loading, training, storing a model. 
-How to use this project in particular, see SoccerPlayerOBIEProject.
+How to use this project in particular, see the example project SoccerPlayerOBIEProject.
 
 
