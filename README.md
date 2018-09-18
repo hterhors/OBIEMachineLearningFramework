@@ -2,7 +2,7 @@
 
 Repository of the ontology based information extraction machine learning framework.
 
-**NOTE** This project is stilll under heavy development!
+**NOTE** This project is still under heavy development!
 
 **Dependiecies**
 You need the following dependent projects:
