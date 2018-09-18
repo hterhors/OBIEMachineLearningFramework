@@ -2,10 +2,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>PSINK</groupId>
-	<artifactId>PSINK</artifactId>
+	<groupId>de.uni.bielefeld.sc.hterhors.psink.obie</groupId>
+	<artifactId>OBIEMLFramework</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>PSINK-Tools</name>
+
+	<name>OBIEMLFramework</name>
 
 	<dependencies>
 
@@ -48,6 +49,18 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 			<version>2.11.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>de.uni.bielefeld.sc.hterhors.psink.obie</groupId>
+			<artifactId>OBIECore</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>de.citec.sc</groupId>
+			<artifactId>BIRE</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
 	</dependencies>
