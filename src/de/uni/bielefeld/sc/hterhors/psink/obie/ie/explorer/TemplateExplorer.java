@@ -146,10 +146,9 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 	 * @throws IllegalAccessException
 	 * @throws NoSuchFieldException
 	 */
-	public List<StateInstancePair> topDownRecursiveFieldFilling(OBIEInstance internalInstance,
-			IOBIEThing baseInstance, Class<? extends IOBIEThing> baseClassType_interface,
-			Class<? extends IOBIEThing> rootEntityClassType, int rootEntitySentenceIndex,
-			final boolean sampleRootClassType)
+	public List<StateInstancePair> topDownRecursiveFieldFilling(OBIEInstance internalInstance, IOBIEThing baseInstance,
+			Class<? extends IOBIEThing> baseClassType_interface, Class<? extends IOBIEThing> rootEntityClassType,
+			int rootEntitySentenceIndex, final boolean sampleRootClassType)
 			throws InstantiationException, IllegalAccessException, NoSuchFieldException {
 
 		List<StateInstancePair> generatedInstances = new LinkedList<>();
@@ -330,8 +329,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 			final IOBIEThing clonedClass = OBIEUtils.deepConstructorClone(filledCandidateInstance);
 
 			OBIEState generatedState = new OBIEState(this.currentState);
-			EntityAnnotation entity = generatedState.getCurrentPrediction()
-					.getEntity(this.currentInstanceAnnotationID);
+			EntityAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
 
 			if (!wasNOTModByPreFilledTemplate) {
 				generatedState.addUsedPreFilledObject(filledCandidateInstance);
@@ -440,8 +438,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 			OBIEState generatedState = new OBIEState(this.currentState);
 			// System.out.println("Add: " + possibleElementValue.newInstance);
 			generatedState.addUsedPreFilledObject(possibleElementValue.instance);
-			EntityAnnotation entity = generatedState.getCurrentPrediction()
-					.getEntity(this.currentInstanceAnnotationID);
+			EntityAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
 
 			// System.out.println("Remove: " + childBaseClass);
 			generatedState.removeRecUsedPreFilledObject(

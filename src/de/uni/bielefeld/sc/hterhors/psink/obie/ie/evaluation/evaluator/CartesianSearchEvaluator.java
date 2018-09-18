@@ -50,20 +50,21 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 */
 	private static final int WARNING_ON_MAX = 8;
 
-	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, int maxNumberOfAnnotations,
-			final boolean ignoreEmptyInstancesOnEvaluation) {
+	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
+			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
 		this(enableCaching, maxEvaluationDepth, penalizeCardinality, investigationRestrictions, f -> false,
 				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 	}
 
-	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, IOrListCondition orListCondition,
-			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
+	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
+			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			IOrListCondition orListCondition, int maxNumberOfAnnotations,
+			final boolean ignoreEmptyInstancesOnEvaluation) {
 		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
 				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
-		listOfDataTypesEvaluator = new NamedEntityLinkingEvaluator(maxEvaluationDepth, penalizeCardinality, investigationRestrictions,
-				orListCondition, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+		listOfDataTypesEvaluator = new NamedEntityLinkingEvaluator(maxEvaluationDepth, penalizeCardinality,
+				investigationRestrictions, orListCondition, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 
 		for (int i = 0; i <= MAX_NUMBER_OF_PERMUTATIONS; i++) {
 
@@ -218,7 +219,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 			return cache.get(ck);
 		}
 
-		PRF1 score = new PRF1();
+		final PRF1 score = new PRF1();
 
 		if (goldInstance == null && predictedInstance != null) {
 			/*
@@ -372,8 +373,8 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@SuppressWarnings("unchecked")
-	private PRF1 loopOverFields(IOBIEThing goldClass, IOBIEThing predictedClass, Field goldField,
-			Field predictionField, final int depth) {
+	private PRF1 loopOverFields(IOBIEThing goldClass, IOBIEThing predictedClass, Field goldField, Field predictionField,
+			final int depth) {
 
 		PRF1 score = new PRF1();
 
@@ -494,8 +495,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @throws IllegalAccessException
 	 * @throws NoSuchFieldException
 	 */
-	private PRF1 cartesianSimilarity(final List<IOBIEThing> gold, final List<IOBIEThing> prediction,
-			final int depth) {
+	private PRF1 cartesianSimilarity(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
 
 		final int maxSize = Math.max(gold.size(), prediction.size());
 

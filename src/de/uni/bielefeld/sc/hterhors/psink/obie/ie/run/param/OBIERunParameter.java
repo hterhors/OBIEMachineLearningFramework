@@ -158,7 +158,7 @@ public class OBIERunParameter implements Serializable {
 	 * The initializer allows various types of strategies to start an exploration.
 	 * This might be RANDOM, EMPTY, PREDEFINED...
 	 */
-	public final EInitializer initializer;
+	public final EInstantiationType initializer;
 
 	/**
 	 * The projects environment.
@@ -167,7 +167,16 @@ public class OBIERunParameter implements Serializable {
 
 	/**
 	 * Tasks specific exploration condition that goes beyond the
-	 * {@link #investigationRestriction}. This allows to set hard constrains.
+	 * {@link #investigationRestriction}. This allows to set hard exploration
+	 * constrains.
+	 * 
+	 * Even more specified exploration conditions. This does not affect the
+	 * evaluation! Use this interface to specify if specific fields should be
+	 * explored under given conditions. If the childClass can not be used in that
+	 * slot for that parent by external specification or limitations.
+	 * 
+	 * Set this to always return true if no further exploration conditions should be
+	 * defined.
 	 */
 	public final IExplorationCondition explorationCondition;
 	/**
@@ -273,7 +282,7 @@ public class OBIERunParameter implements Serializable {
 	private OBIERunParameter(final String corpusNamePrefix, final boolean excludeEmptyInstancesFromCorpus,
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
-			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInitializer initializer, final String runID,
+			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, final String runID,
 			boolean multiThreading, AbstractOBIEProjectEnvironment environment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
@@ -309,7 +318,7 @@ public class OBIERunParameter implements Serializable {
 
 		Objects.requireNonNull(investigationRestriction);
 
-		if (initializer == EInitializer.PROVIDED) {
+		if (initializer == EInstantiationType.SPECIFIED) {
 			requireElements(initializationObjects);
 			for (Class<? extends IOBIEThing> initObjectType : initializationObjects.keySet()) {
 				if (!rootSearchTypes.contains(initObjectType)) {
@@ -463,7 +472,15 @@ public class OBIERunParameter implements Serializable {
 	}
 
 	public static class OBIEParameterBuilder {
-
+		/**
+		 * Even more specified exploration conditions. This does not affect the
+		 * evaluation! Use this interface to specify if specific fields should be
+		 * explored under given conditions. If the childClass can not be used in that
+		 * slot for that parent by external specification or limitations.
+		 * 
+		 * Set this to always return true if no further exploration conditions should be
+		 * defined.
+		 */
 		private IExplorationCondition explorationCondition = (baseClass, baseClassFieldName, candidateClass) -> true;
 
 		private Map<Class<? extends IOBIEThing>, List<IOBIEThing>> initializationObjects = new HashMap<>();
@@ -481,7 +498,7 @@ public class OBIERunParameter implements Serializable {
 
 		private InvestigationRestriction investigationRestriction = InvestigationRestriction.noRestrictionInstance;
 
-		private EInitializer initializer = EInitializer.EMPTY;
+		private EInstantiationType initializer = EInstantiationType.EMPTY;
 
 		private IEvaluator evaluator = null;
 
@@ -687,11 +704,11 @@ public class OBIERunParameter implements Serializable {
 			return this;
 		}
 
-		public EInitializer getInitializer() {
+		public EInstantiationType getInitializer() {
 			return initializer;
 		}
 
-		public OBIEParameterBuilder setInitializer(EInitializer initializer) {
+		public OBIEParameterBuilder setInitializer(EInstantiationType initializer) {
 			this.initializer = initializer;
 			return this;
 		}
@@ -709,6 +726,15 @@ public class OBIERunParameter implements Serializable {
 			return explorationCondition;
 		}
 
+		/**
+		 * Even more specified exploration conditions. This does not affect the
+		 * evaluation! Use this interface to specify if specific fields should be
+		 * explored under given conditions. If the childClass can not be used in that
+		 * slot for that parent by external specification or limitations.
+		 * 
+		 * Set this to always return true if no further exploration conditions should be
+		 * defined.
+		 */
 		public OBIEParameterBuilder setExplorationCondition(IExplorationCondition explorationCondition) {
 			this.explorationCondition = explorationCondition;
 			return this;

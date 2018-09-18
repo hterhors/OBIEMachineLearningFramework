@@ -28,7 +28,7 @@ import factors.Factor;
 import learning.Vector;
 
 /**
- * Captures the frequency of evidence in the text for a scio class.
+ * Captures the frequency of evidence in the text for a ontology class.
  * 
  * @author hterhors
  *

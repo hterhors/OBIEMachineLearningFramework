@@ -1,11 +1,11 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param;
 
-public enum EInitializer {
+public enum EInstantiationType {
 
 	/**
 	 * Initialize with an entity which is provided.
 	 */
-	PROVIDED,
+	SPECIFIED,
 
 	/**
 	 * Initialize with an empty object. This is basically just a new instance of the

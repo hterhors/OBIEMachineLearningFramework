@@ -20,7 +20,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Relatio
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.EInitializer;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.EInstantiationType;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.utils.InitializerUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.scorer.InstanceCollection;
@@ -142,7 +142,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		this.preFilledObjectMap = new HashMap<>();
 		this.investigationRestriction = parameter.investigationRestriction;
 
-		if (parameter.initializer == EInitializer.PROVIDED) {
+		if (parameter.initializer == EInstantiationType.SPECIFIED) {
 
 			for (Entry<Class<? extends IOBIEThing>, List<IOBIEThing>> inits : parameter.initializationObjects
 					.entrySet()) {
@@ -217,7 +217,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 //	}
 
 	private Set<IOBIEThing> getInitializingObject(OBIEInstance instance, Class<? extends IOBIEThing> searchType,
-			EInitializer initializer) {
+			EInstantiationType initializer) {
 
 		Set<IOBIEThing> set = new HashSet<>();
 

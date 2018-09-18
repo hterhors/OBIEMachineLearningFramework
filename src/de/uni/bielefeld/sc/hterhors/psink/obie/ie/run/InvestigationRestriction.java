@@ -17,6 +17,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Relatio
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 /**
+ * IMPORTANT: USE WITH CAUTION! HAS STILL SOME TODOS TO CONSIDER.
+ * 
  * This class holds information about what fields and if the type if the root
  * class type should be investigated by the system.
  * 

@@ -1,2 +1,2 @@
-# OBIEMachineLearningFrameWork
-The ontology based informaiton extraction machine learning framework
+# OBIE_Development
+Development repository of the PSINK Information Extraction Tool.
