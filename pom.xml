@@ -5,6 +5,7 @@
 	<groupId>de.uni.bielefeld.sc.hterhors.psink.obie</groupId>
 	<artifactId>OBIEMLFramework</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
 
 	<dependencies>
 
