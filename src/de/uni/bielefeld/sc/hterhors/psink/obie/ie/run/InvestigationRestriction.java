@@ -334,10 +334,9 @@ public class InvestigationRestriction implements Serializable {
 	private static Set<RestrictedField> getSubSingleFieldsRec(Class<? extends IOBIEThing> m) {
 		List<RestrictedField> main = getMainSingleFieldsRec(m);
 		Set<RestrictedField> all = getAllSingleFieldsRec(new HashSet<>(), m);
-		all.removeAll(main);
-		/**
-		 * TODO: What if a subfield has the same name as a main field?
-		 */
+		all.removeAll(main);/**
+							 * TODO: What if a subfield has the same name as a main field?
+							 */
 		return all;
 
 	}
@@ -373,6 +372,27 @@ public class InvestigationRestriction implements Serializable {
 
 		return fieldNames;
 
+	}
+
+	public String summarize() {
+
+		StringBuilder summarize = new StringBuilder("Restricted to: ");
+		if (investigateClassType) {
+			summarize.append("Template-Type AND ");
+		}
+		if (restrictedFieldNames == null) {
+			summarize.append("Field(s): noRestrictions");
+		} else {
+			if (!restrictedFieldNames.isEmpty()) {
+				summarize.append("Field(s):");
+				for (String fieldName : restrictedFieldNames) {
+					summarize.append(fieldName);
+					summarize.append(" ");
+				}
+			}
+		}
+
+		return summarize.toString().trim();
 	}
 
 }

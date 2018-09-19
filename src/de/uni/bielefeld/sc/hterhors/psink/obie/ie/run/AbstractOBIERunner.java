@@ -293,8 +293,9 @@ public abstract class AbstractOBIERunner {
 		return predict(corpusProvider.getTestCorpus().getInternalInstances());
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictOnTrain() throws IOException,
-			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictOnTrain()
+			throws IOException, FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException,
+			Exception {
 		return predict(corpusProvider.getTrainingCorpus().getInternalInstances());
 	}
 
@@ -477,6 +478,21 @@ public abstract class AbstractOBIERunner {
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
 		return EvaluatePrediction.evaluateREPredictions(getObjectiveFunction(), predictions, evaluator);
+	}
+
+	public void evaluatePerSlotOnTest(boolean detailedOutput) throws Exception {
+
+		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = predictOnTest();
+
+		/**
+		 * Train with purity evaluate finally with cartesian
+		 */
+		IEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
+				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
+				parameter.evaluator.getInvestigationRestrictions(), parameter.evaluator.getMaxNumberOfAnnotations(),
+				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
+
+		EvaluatePrediction.evaluatePerSlotPredictions(getObjectiveFunction(), predictions, evaluator, detailedOutput);
 	}
 
 	public boolean modelExists() {

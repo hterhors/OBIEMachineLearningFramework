@@ -217,8 +217,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 				continue;
 			}
 
-			if (internalInstance.getGoldAnnotation().getEntityAnnotations().size() > parameter.maxNumberOfEntityElements) {
-				log.warn("WARN!!! Number of annotations = " + internalInstance.getGoldAnnotation().getEntityAnnotations().size()
+			if (internalInstance.getGoldAnnotation().getEntityAnnotations()
+					.size() > parameter.maxNumberOfEntityElements) {
+				log.warn("WARN!!! Number of annotations = "
+						+ internalInstance.getGoldAnnotation().getEntityAnnotations().size()
 						+ " exceeds given limit of: " + parameter.maxNumberOfEntityElements + "! Remove document "
 						+ internalInstance.getName() + " from internal corpus.");
 				it.remove();

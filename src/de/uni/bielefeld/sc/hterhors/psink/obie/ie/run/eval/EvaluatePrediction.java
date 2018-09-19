@@ -1,5 +1,6 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.eval;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -7,6 +8,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.jena.sparql.function.library.eval;
 
 import corpus.SampledInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
@@ -42,8 +45,7 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction()
-					.getEntityAnnotations()) {
+			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
 				if (!resultEntity.getAnnotationInstance().equals(initializingObject))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
@@ -107,7 +109,8 @@ public class EvaluatePrediction {
 
 	public static PRF1Container evaluateREPredictions(
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
-			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IEvaluator evaluator) {
+			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions,
+			IEvaluator evaluator) {
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
 
@@ -119,8 +122,7 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction()
-					.getEntityAnnotations()) {
+			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
 				if (!resultEntity.getAnnotationInstance().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
@@ -198,7 +200,8 @@ public class EvaluatePrediction {
 		return new PRF1Container(meanP, meanR, (2 * meanP * meanR) / (meanP + meanR));
 	}
 
-	public static double evaluatePurityPredictions(ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
+	public static double evaluatePurityPredictions(
+			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
 			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IEvaluator evaluator,
 			InvestigationRestriction investigationRestriction) {
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
@@ -212,8 +215,7 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction()
-					.getEntityAnnotations()) {
+			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
 				if (!resultEntity.getAnnotationInstance().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
@@ -269,9 +271,10 @@ public class EvaluatePrediction {
 		return meanF1;
 	}
 
-	public static void evaluatePerSlotPredictions(ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
-			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions,
-			AbstractOBIEEvaluator evaluator, InvestigationRestriction investigationRestriction) {
+	public static void evaluatePerSlotPredictions(
+			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
+			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IEvaluator evaluator,
+			boolean detailedOutput) {
 
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
@@ -284,15 +287,14 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction()
-					.getEntityAnnotations()) {
+			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
 				if (!resultEntity.getAnnotationInstance().equals(resultEntity.getInitializationClass()))
-					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
+					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (EntityAnnotation goldEntity : goldState.getEntityAnnotations()) {
-				gold.get(key).add(new EvaluationObject(goldEntity, investigationRestriction));
+				gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
 			}
 
 		}
@@ -314,60 +316,80 @@ public class EvaluatePrediction {
 		List<Set<RestrictedField>> restrictFieldsList = InvestigationRestriction
 				.getFieldRestrictionCombinations(classType, InvestigationRestriction.getMainSingleFields(classType));
 
+		Set<InvestigationRestriction> restrictions = new HashSet<>();
+		restrictions.add(new InvestigationRestriction(classType, Collections.emptySet(), true));
 		for (Set<RestrictedField> set : restrictFieldsList) {
-			final int a = set.size() == 2 ? 2 : 3;
-			for (int i = 1; i < a; i++) {
+			if (set.size() > 1) {
+				/**
+				 * TODO: allow more than a single field here: parameterize
+				 */
+				continue;
+			}
+			for (int i = 1; i < 3; i++) {
+				restrictions.add(new InvestigationRestriction(classType, set, i % 2 == 0));
+			}
+		}
 
-				evaluator = new CartesianSearchEvaluator(true, evaluator.getMaxEvaluationDepth(),
-						evaluator.isPenalizeCardinality(), new InvestigationRestriction(classType, set, i % 2 == 0),
-						evaluator.getOrListCondition(), 7, evaluator.isIgnoreEmptyInstancesOnEvaluation());
+		for (InvestigationRestriction rest : restrictions) {
+
+			evaluator = new CartesianSearchEvaluator(true, evaluator.getMaxEvaluationDepth(),
+					evaluator.isPenalizeCardinality(), rest, evaluator.getOrListCondition(), 7,
+					evaluator.isIgnoreEmptyInstancesOnEvaluation());
+
+			if (detailedOutput) {
 				System.out.println("#############################");
 				System.out.println(evaluator.getInvestigationRestrictions());
 				System.out.println("#############################");
+			}
 
-				double meanP = 0;
-				double meanR = 0;
-				double meanF1 = 0;
-				for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
+			double meanP = 0;
+			double meanR = 0;
+			double meanF1 = 0;
+			for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
+				if (detailedOutput) {
 					System.out.println("_____________" + state.getKey() + "______________");
-					System.out.println(state.getKey());
 					System.out.println("Gold:\t");
 					System.out.println(gold.get(state.getKey()));
 					System.out.println("Result:\t");
 					System.out.println(result.get(state.getKey()));
+				}
+				List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
+						.collect(Collectors.toList());
 
-					List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
-							.collect(Collectors.toList());
+				List<IOBIEThing> predictionList = result.get(state.getKey()).stream().map(s -> s.scioClass)
+						.collect(Collectors.toList());
 
-					List<IOBIEThing> predictionList = result.get(state.getKey()).stream().map(s -> s.scioClass)
-							.collect(Collectors.toList());
-
-					final double p = evaluator.precision(goldList, predictionList);
-					final double r = evaluator.recall(goldList, predictionList);
-					final double f1 = evaluator.f1(goldList, predictionList);
+				final double p = evaluator.precision(goldList, predictionList);
+				final double r = evaluator.recall(goldList, predictionList);
+				final double f1 = evaluator.f1(goldList, predictionList);
+				if (detailedOutput) {
 					System.out.println("Doc-Precisiion = " + p);
 					System.out.println("Doc-Recall = " + r);
 					System.out.println("Doc-F1 = " + f1);
-
-					meanP += p;
-					meanR += r;
-					meanF1 += f1;
-
 				}
-
-				System.out.println();
-				System.out.println();
-				System.out.println("#############################");
-				System.out.println(evaluator.getInvestigationRestrictions());
-				System.out.println("#############################");
-				meanP /= gold.entrySet().size();
-				meanR /= gold.entrySet().size();
-				meanF1 /= gold.entrySet().size();
-				System.out.println("Mean-Precisiion = " + meanP);
-				System.out.println("Mean-Recall = " + meanR);
-				System.out.println("Mean-F1 = " + meanF1);
+				meanP += p;
+				meanR += r;
+				meanF1 += f1;
 
 			}
+
+			System.out.println();
+			System.out.println();
+
+			System.out.println("#############################");
+			if (detailedOutput)
+				System.out.println(evaluator.getInvestigationRestrictions());
+			else
+				System.out.println(evaluator.getInvestigationRestrictions().summarize());
+
+			meanP /= gold.entrySet().size();
+			meanR /= gold.entrySet().size();
+			meanF1 /= gold.entrySet().size();
+			System.out.println("Mean-Precisiion = " + meanP);
+			System.out.println("Mean-Recall = " + meanR);
+			System.out.println("Mean-F1 = " + meanF1);
+			System.out.println("#############################");
+
 		}
 	}
 
