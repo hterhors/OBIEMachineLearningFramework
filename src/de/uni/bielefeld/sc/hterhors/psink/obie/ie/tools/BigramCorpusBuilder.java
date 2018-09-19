@@ -42,7 +42,9 @@ public class BigramCorpusBuilder {
 					+ ". Override file!");
 		}
 
-		log.info("Store corpus to " + corpusFile + "...");
+		corpusFile.getParentFile().mkdirs();
+
+		System.out.println("Store corpus to " + corpusFile + "...");
 		try {
 			FileOutputStream fileOut;
 			fileOut = new FileOutputStream(corpusFile);
