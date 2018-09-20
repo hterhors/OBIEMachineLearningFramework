@@ -378,13 +378,13 @@ public class InvestigationRestriction implements Serializable {
 
 		StringBuilder summarize = new StringBuilder("Restricted to: ");
 		if (investigateClassType) {
-			summarize.append("Template-Type AND ");
+			summarize.append("Template-Type");
 		}
 		if (restrictedFieldNames == null) {
-			summarize.append("Field(s): noRestrictions");
+			summarize.append(" & Field(s): noRestrictions");
 		} else {
 			if (!restrictedFieldNames.isEmpty()) {
-				summarize.append("Field(s):");
+				summarize.append(" & Field(s):");
 				for (String fieldName : restrictedFieldNames) {
 					summarize.append(fieldName);
 					summarize.append(" ");
