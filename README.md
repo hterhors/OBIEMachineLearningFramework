@@ -19,6 +19,7 @@ You need the following dependent projects:
   It further, contains an examplary annotated data set that was automatically generated from Wikipedia/dbpedia data using the DBPediaDatasetExtraction project.
 4)  OBIECore https://github.com/hterhors/OBIECore contains core source code for all OBIE-related projects. 
 5)  BIRE https://github.com/ag-sc/BIRE the probabilistic graphical model framework.
+
 **Description**
 
 This project builds on the BIRE framework that implements probabilistic graphical models with factor graphs (basically Conditional Random Fields). 
