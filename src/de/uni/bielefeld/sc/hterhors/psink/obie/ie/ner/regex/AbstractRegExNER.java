@@ -164,23 +164,18 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 		 * Auto generated pattern from class names.
 		 */
 		addOrMergePatterns(regExPattern, addPlainRegExPattern(rootClassType));
-		System.out.println("rootClassType: " + rootClassType);
 
 		Map<Class<? extends R>, Set<Pattern>> handMadePattern = addHandMadePattern(rootClassType);
 		addOrMergePatterns(regExPattern, handMadePattern);
-		System.out.println("rootClassType: " + rootClassType);
 
 		Map<Class<? extends R>, Set<Pattern>> extendedAuxiliaryClassPattern = generateExtendedAuxiliaryClassPattern(
 				rootClassType);
 		addOrMergePatterns(regExPattern, extendedAuxiliaryClassPattern);
-		System.out.println("rootClassType: " + rootClassType);
 
 		Map<Class<? extends R>, Set<Pattern>> crossReferencePattern = generateCrossReferencePattern(rootClassType);
 		addOrMergePatterns(regExPattern, crossReferencePattern);
-		System.out.println("rootClassType: " + rootClassType);
 
 		addOrMergePatterns(regExPattern, addFurtherPattern());
-		System.out.println("rootClassType: " + rootClassType);
 
 		/*
 		 * This should be added last as we use regular expression patterns that were
@@ -188,11 +183,8 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 		 */
 		Map<Class<? extends R>, Set<Pattern>> patternDependendCrossReferencePattern = generateHandMadeCrossReferences(
 				regExPattern, rootClassType);
-		System.out.println("rootClassType: " + rootClassType);
 
 		addOrMergePatterns(regExPattern, patternDependendCrossReferencePattern);
-
-		System.out.println("rootClassType: " + rootClassType);
 
 		return regExPattern;
 	}

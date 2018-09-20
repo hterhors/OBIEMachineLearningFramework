@@ -109,7 +109,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			throw new IllegalArgumentException("Could not load corpus: " + e.getMessage());
 		}
 		log.info("Convert " + rawCorpus.getAllDocumentNames().size() + " instances to interal representations...");
-
+	
 		final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
 			try {
 				return linkerClass.getConstructor(Set.class).newInstance(this.rawCorpus.getRootClasses());
@@ -255,12 +255,12 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		this.currentFold = -1;
 		this.currentActiveLearningItertion = 0;
 
-		System.out.println("-----");
-		System.out.println(trainingDocuments);
-		System.out.println("-----");
-		System.out.println(developmentDocuments);
-		System.out.println("-----");
-		System.out.println(testDocuments);
+		log.debug("-----");
+		log.debug(trainingDocuments);
+		log.debug("-----");
+		log.debug(developmentDocuments);
+		log.debug("-----");
+		log.debug(testDocuments);
 
 		this.trainingCorpus = new BigramInternalCorpus(trainingDocuments);
 		this.developmentCorpus = new BigramInternalCorpus(developmentDocuments);
