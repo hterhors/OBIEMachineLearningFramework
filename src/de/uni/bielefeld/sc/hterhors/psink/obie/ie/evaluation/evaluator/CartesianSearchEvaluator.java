@@ -50,6 +50,14 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 */
 	private static final int WARNING_ON_MAX = 8;
 
+	/**
+	 * Default constructor.
+	 */
+	public CartesianSearchEvaluator() {
+		this(true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
+				Integer.MAX_VALUE, true);
+	}
+
 	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
 			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
 			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {

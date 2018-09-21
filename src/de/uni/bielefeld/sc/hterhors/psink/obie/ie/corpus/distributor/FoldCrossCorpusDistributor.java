@@ -19,8 +19,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
  * @date Oct 13, 2017
  */
 public class FoldCrossCorpusDistributor extends AbstractCorpusDistributor {
-	protected static Logger log = LogManager.getFormatterLogger(FoldCrossCorpusDistributor.class);
-
+	protected static Logger log = LogManager.getRootLogger();
 	/**
 	 * 
 	 */
@@ -42,6 +41,8 @@ public class FoldCrossCorpusDistributor extends AbstractCorpusDistributor {
 	public final int n;
 
 	private FoldCrossCorpusDistributor(int n, long seed) {
+		log.info("Create new corpus diributor of type " + this.getClass().getName());
+
 		this.n = n;
 		this.seed = seed;
 		this.rnd = new Random(seed);

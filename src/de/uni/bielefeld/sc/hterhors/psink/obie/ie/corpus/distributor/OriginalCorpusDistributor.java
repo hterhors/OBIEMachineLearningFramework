@@ -18,14 +18,14 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
  * @date Oct 13, 2017
  */
 public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
-	protected static Logger log = LogManager.getFormatterLogger(OriginalCorpusDistributor.class);
-
+	protected static Logger log = LogManager.getRootLogger();
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
 	private OriginalCorpusDistributor() {
+		log.info("Create new corpus diributor of type " + this.getClass().getName());
 	}
 
 	public static class Builder extends AbstractConfigBuilder<Builder> {

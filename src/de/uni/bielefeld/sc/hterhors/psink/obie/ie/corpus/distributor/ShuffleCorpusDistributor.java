@@ -21,7 +21,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
  */
 public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 
-	protected static Logger log = LogManager.getFormatterLogger(ShuffleCorpusDistributor.class);
+	protected static Logger log = LogManager.getRootLogger();
 
 	/**
 	 * 
@@ -54,6 +54,8 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 	public final long seed;
 
 	private ShuffleCorpusDistributor(int trainingProportion, int developmentProportion, int testProportion, long seed) {
+		log.info("Create new corpus diributor of type " + this.getClass().getName());
+
 		this.trainingProportion = trainingProportion;
 		this.developmentProportion = developmentProportion;
 		this.testProportion = testProportion;

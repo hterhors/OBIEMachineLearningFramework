@@ -34,6 +34,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.utils.AnnotationExtract
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.ner.INamedEntitityLinker;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.AbstractOBIERunner;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
@@ -101,15 +102,23 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	}
 
 	public BigramCorpusProvider(final File rawCorpusFile, Set<Class<? extends INamedEntitityLinker>> entityLinker) {
-		this.entityLinker = Collections.unmodifiableSet(entityLinker);
+		log.info("Start creating corpus...");
+
+		log.info("Read raw corpus from file system: " + rawCorpusFile);
 		try {
 			this.rawCorpus = OBIECorpus.readRawCorpusData(rawCorpusFile);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IllegalArgumentException("Could not load corpus: " + e.getMessage());
 		}
-		log.info("Convert " + rawCorpus.getAllDocumentNames().size() + " instances to interal representations...");
-	
+
+		this.entityLinker = Collections.unmodifiableSet(entityLinker);
+
+		log.info("Provided Named Enitity Recognition and Linking tools: ");
+		this.entityLinker.forEach(log::info);
+
+		log.info("Apply NEL-tools to " + rawCorpus.getAllDocumentNames().size() + " instances...");
+		log.info("Instantiate NEL-tools...");
 		final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
 			try {
 				return linkerClass.getConstructor(Set.class).newInstance(this.rawCorpus.getRootClasses());
@@ -119,7 +128,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			throw new RuntimeException("Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
 		}).collect(Collectors.toSet());
 
-		log.info("Apply named entity linking with " + linker.size() + " linker...");
+		log.info("Apply " + linker.size() + " NEL-tools to instances...");
 		rawCorpus.getAllDocumentNames().parallelStream().forEach(docName -> {
 			try {
 				OBIEInstance internalInstance = convertToInternalInstances(docName);
@@ -133,12 +142,24 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 					annotationbuilder.addAnnotations(l.annotate(internalInstance.getContent()));
 				}
 				internalInstance.setAnnotations(annotationbuilder.build());
+				log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().size() + " in instance: "
+						+ internalInstance.getName());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
+		log.info("Sucessfully applied all NEL-tools");
+
+		log.info("Check annotation for errors...");
 
 		checkAnnotationConsistencies(internalInstances);
+
+		if (errors.isEmpty())
+			log.info("No errors found");
+		else {
+			log.warn(errors.size() + " erros found:");
+			errors.forEach(log::warn);
+		}
 
 	}
 
@@ -184,45 +205,45 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		/*
 		 * Add factors for object type properties.
 		 */
-		Arrays.stream(annotation.getClass().getDeclaredFields())
-				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
-					field.setAccessible(true);
-					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-							for (IOBIEThing t : (List<IOBIEThing>) field.get(annotation)) {
-								checkForTextualAnnotations(t, instanceName, content);
-							}
-						} else {
-							checkForTextualAnnotations((IOBIEThing) field.get(annotation), instanceName, content);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
+		ReflectionUtils.getDeclaredOntologyFields(annotation.getClass()).forEach(field -> {
+			try {
+				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+					for (IOBIEThing t : (List<IOBIEThing>) field.get(annotation)) {
+						checkForTextualAnnotations(t, instanceName, content);
 					}
-				});
+				} else {
+					checkForTextualAnnotations((IOBIEThing) field.get(annotation), instanceName, content);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
-	private BigramCorpusProvider applyParameter(OBIERunParameter parameter) {
-		log.info("Apply parameter to raw corpus... ");
-		log.info("Remove empty documents while loading was set to: " + parameter.excludeEmptyInstancesFromCorpus);
+	private BigramCorpusProvider applyParameterToCorpus(OBIERunParameter parameter) {
+		log.info("Apply parameter to corpus...");
+		log.info("\"remove empty documents\"-flag was set to: " + parameter.excludeEmptyInstancesFromCorpus);
+		log.info("\"maximum number of annotations\" was set to: " + parameter.maxNumberOfEntityElements);
 
+		final int totalNumberOfInstances = this.internalInstances.size();
+
+		log.info("Apply filter...");
 		for (Iterator<OBIEInstance> it = this.internalInstances.iterator(); it.hasNext();) {
 			OBIEInstance internalInstance = (OBIEInstance) it.next();
 
 			if (parameter.excludeEmptyInstancesFromCorpus
 					&& internalInstance.getGoldAnnotation().getEntityAnnotations().isEmpty()) {
-				log.warn("WARN!!! No annotation data found!" + " Remove empty document " + internalInstance.getName()
-						+ " from internal corpus.");
-
+				log.info("No annotation data found!" + " Remove empty document " + internalInstance.getName()
+						+ " from corpus.");
 				it.remove();
 				continue;
 			}
 
 			if (internalInstance.getGoldAnnotation().getEntityAnnotations()
 					.size() > parameter.maxNumberOfEntityElements) {
-				log.warn("WARN!!! Number of annotations = "
-						+ internalInstance.getGoldAnnotation().getEntityAnnotations().size()
-						+ " exceeds given limit of: " + parameter.maxNumberOfEntityElements + "! Remove document "
-						+ internalInstance.getName() + " from internal corpus.");
+				log.info("Number of annotations = " + internalInstance.getGoldAnnotation().getEntityAnnotations().size()
+						+ " exceeds limit of: " + parameter.maxNumberOfEntityElements + "! Remove document "
+						+ internalInstance.getName() + " from corpus.");
 				it.remove();
 				continue;
 			}
@@ -230,20 +251,23 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			for (EntityAnnotation annotation : internalInstance.getGoldAnnotation().getEntityAnnotations()) {
 
 				if (!AnnotationExtractorHelper.testLimitToAnnnotationElementsRecursively(
-						annotation.getAnnotationInstance(), parameter.maxNumberOfEntityElements)) {
-					log.warn("WARN!!! Remove annotation " + internalInstance.getName() + " from internal instance.");
+						annotation.getAnnotationInstance(), parameter.maxNumberOfEntityElements,
+						parameter.maxNumberOfDataTypeElements)) {
+					log.info("Number of elements in annotation exceeds limit of: " + parameter.maxNumberOfEntityElements
+							+ " for object property OR " + parameter.maxNumberOfDataTypeElements
+							+ " for datatype property" + "!Remove annotation " + internalInstance.getName()
+							+ " from corpus.");
 					it.remove();
 					continue;
 				}
 			}
 		}
 
+		log.info("Remaining number of instances: " + this.internalInstances.size() + "/" + totalNumberOfInstances);
+
 		this.fullCorpus = new BigramInternalCorpus(this.internalInstances);
 
-		log.info("Configuration is of type: " + config.getClass().getSimpleName());
-
-		log.info("Convert " + String.valueOf(this.internalInstances.size())
-				+ " instances to interal representations...");
+		log.info("Distribute instances...");
 
 		final List<OBIEInstance> trainingDocuments = new ArrayList<>();
 		final List<OBIEInstance> developmentDocuments = new ArrayList<>();
@@ -254,13 +278,6 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		this.currentFold = -1;
 		this.currentActiveLearningItertion = 0;
-
-		log.debug("-----");
-		log.debug(trainingDocuments);
-		log.debug("-----");
-		log.debug(developmentDocuments);
-		log.debug("-----");
-		log.debug(testDocuments);
 
 		this.trainingCorpus = new BigramInternalCorpus(trainingDocuments);
 		this.developmentCorpus = new BigramInternalCorpus(developmentDocuments);
@@ -288,7 +305,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
 			}).reduce("", String::concat));
 		}
-		log.info("Corpus distributed!");
+		log.info("Corpus successfully distributed!");
 
 		return this;
 	}
@@ -352,8 +369,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * @throws ClassNotFoundException
 	 */
 	public static BigramCorpusProvider loadCorpusFromFile(final OBIERunParameter param) {
-		File file = CorpusFileTools.buildAnnotatedBigramCorpusFile(param.environment.getBigramCorpusFileDirectory(),
-				param.corpusNamePrefix, param.rootSearchTypes, param.environment.getOntologyVersion());
+
+		final File file = CorpusFileTools.buildAnnotatedBigramCorpusFile(
+				param.environment.getBigramCorpusFileDirectory(), param.corpusNamePrefix, param.rootSearchTypes,
+				param.environment.getOntologyVersion());
 
 		log.info("Load corpus from " + file + "...");
 		try {
@@ -365,22 +384,26 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			data = in.readObject();
 			in.close();
 			fileIn.close();
+			log.info("Successfully loaded!");
 
-			return ((BigramCorpusProvider) data).setConfiguration(param.corpusDistributor).applyParameter(param);
+			return ((BigramCorpusProvider) data).setConfiguration(param.corpusDistributor)
+					.applyParameterToCorpus(param);
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
-			log.warn(e.getMessage());
+			log.warn(
+					"Run ie.corpus.BigramCorpusCreator.java first to convert the raw-corpus into an OBIE-machineLearningFramework-readable format.");
 			System.exit(COULD_NOT_LOAD_MODEL_ERROR);
 		}
 		throw new RuntimeException();
 	}
 
-	private BigramCorpusProvider setConfiguration(AbstractCorpusDistributor config) {
+	private BigramCorpusProvider setConfiguration(AbstractCorpusDistributor corpus) {
+
 		if (this.config != null)
 			throw new IllegalStateException("Can not override corpus distribution configuration once it is set!");
 
-		log.info("Set corpus configuration to: " + config.getClass().getSimpleName());
-		this.config = config;
+		log.info("Set corpus distributor to: " + corpus.getClass().getSimpleName());
+		this.config = corpus;
 		return this;
 	}
 
@@ -388,8 +411,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	public boolean nextFold() {
 		if (!(config instanceof FoldCrossCorpusDistributor))
 			throw new IllegalStateException(
-					"Selected corpus distributor configuration does not support fold corss validation: "
-							+ config.getDistributorID());
+					"Provided corpus distributor does not support fold cross validation: " + config.getDistributorID());
 		this.currentFold++;
 
 		if (((FoldCrossCorpusDistributor) config).n == (this.currentFold))
@@ -433,7 +455,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public boolean updateALTrainingInstances(AbstractOBIERunner model) {
+	public boolean updateActiveLearning(AbstractOBIERunner model) {
 
 		if (!(config instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException(

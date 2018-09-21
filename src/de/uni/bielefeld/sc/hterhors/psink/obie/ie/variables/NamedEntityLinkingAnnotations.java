@@ -24,8 +24,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 	private final Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> retrievalsByDistinctSemanticValues;
 
-	private NamedEntityLinkingAnnotations(
-			Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals) {
+	private NamedEntityLinkingAnnotations(Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals) {
 		this.retrievals = retrievals;
 		this.retrievalsByTextMention = indexByTextMention(retrievals);
 
@@ -97,8 +96,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return
 	 */
-	public Set<NELAnnotation> getAnnotationsByTextMention(Class<? extends IOBIEThing> classType,
-			String surfaceForm) {
+	public Set<NELAnnotation> getAnnotationsByTextMention(Class<? extends IOBIEThing> classType, String surfaceForm) {
 
 		if (!retrievalsByTextMention.containsKey(classType))
 			return null;
@@ -112,8 +110,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return
 	 */
-	public Set<NELAnnotation> getAnnotationsBySemanticValues(
-			Class<? extends IOBIEThing> classType) {
+	public Set<NELAnnotation> getAnnotationsBySemanticValues(Class<? extends IOBIEThing> classType) {
 		return retrievalsByDistinctSemanticValues.get(classType).values().stream().flatMap(v -> v.stream().limit(1))
 				.collect(Collectors.toSet());
 	}
@@ -172,6 +169,10 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 */
 	public int getNumberOfAnnotations(Class<? extends IOBIEThing> classType) {
 		return retrievals.containsKey(classType) ? retrievals.get(classType).size() : 0;
+	}
+
+	public int size() {
+		return retrievals.size();
 	}
 
 }

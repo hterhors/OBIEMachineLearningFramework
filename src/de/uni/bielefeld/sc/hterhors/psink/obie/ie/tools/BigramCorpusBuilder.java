@@ -17,29 +17,44 @@ public class BigramCorpusBuilder {
 
 	protected static Logger log = LogManager.getFormatterLogger(BigramCorpusBuilder.class);
 
+	public static boolean overrideCorpusFileIfExists = false;
+
 	public BigramCorpusBuilder(AbstractOBIEProjectEnvironment env, Set<Class<? extends INamedEntitityLinker>> linker,
 			final String corpusPrefix) throws Exception {
-		storeCorpusToFile(new BigramCorpusProvider(env.getRawCorpusFile(), linker), env, corpusPrefix);
+
+		log.info("Override-flag was set to: " + overrideCorpusFileIfExists + ", "
+				+ (overrideCorpusFileIfExists ? "existing corpus might be overriden!" : "corpus might not be saved."));
+
+		final BigramCorpusProvider corpusProvider = new BigramCorpusProvider(env.getRawCorpusFile(), linker);
+
+		storeCorpusToFile(corpusProvider, env, corpusPrefix);
+
 	}
 
 	/**
-	 * Writes a corpus to the file-system.
+	 * * Writes a corpus to the file-system.
 	 * 
-	 * @param config2
-	 * 
-	 * @param filename the name of the corpora.
-	 * @param data     the actual data.
-	 * @param env
+	 * @param corpus
+	 * @param environment
+	 * @param corpusPrefixName
 	 */
-	private void storeCorpusToFile(final BigramCorpusProvider data, AbstractOBIEProjectEnvironment env,
-			final String corpusPrefix) {
+	private void storeCorpusToFile(final BigramCorpusProvider corpus, AbstractOBIEProjectEnvironment environment,
+			final String corpusPrefixName) {
 
-		final File corpusFile = CorpusFileTools.buildAnnotatedBigramCorpusFile(env.getBigramCorpusFileDirectory(),
-				corpusPrefix, data.getRawCorpus().getRootClasses(), env.getOntologyVersion());
+		final File corpusFile = CorpusFileTools.buildAnnotatedBigramCorpusFile(
+				environment.getBigramCorpusFileDirectory(), corpusPrefixName, corpus.getRawCorpus().getRootClasses(),
+				environment.getOntologyVersion());
 
 		if (corpusFile.exists()) {
-			log.warn("WARN!!! File to store corpusProvider already exists. for name: " + corpusFile
-					+ ". Override file!");
+			log.warn("Corpus file already exists under name: " + corpusFile);
+
+		}
+
+		if (!overrideCorpusFileIfExists) {
+			log.warn("Do not override, discard corpus!");
+			return;
+		} else {
+			log.warn("Override file!");
 		}
 
 		corpusFile.getParentFile().mkdirs();
@@ -49,11 +64,11 @@ public class BigramCorpusBuilder {
 			FileOutputStream fileOut;
 			fileOut = new FileOutputStream(corpusFile);
 			final ObjectOutputStream out = new ObjectOutputStream(fileOut);
-			out.writeObject(data);
+			out.writeObject(corpus);
 			out.close();
 			fileOut.close();
 			log.info("Corpus successfully stored!");
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

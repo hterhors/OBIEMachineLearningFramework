@@ -85,7 +85,12 @@ public abstract class AbstractOBIERunner {
 
 	public AbstractOBIERunner(OBIERunParameter parameter) {
 
+		log.info("Initialize OBIE runner...");
+
 		this.parameter = parameter;
+		log.debug("Parameter: " + this.parameter.toInfoString());
+
+		this.corpusProvider = BigramCorpusProvider.loadCorpusFromFile(parameter);
 
 		/**
 		 * TODO: parameterizes
@@ -95,7 +100,6 @@ public abstract class AbstractOBIERunner {
 				3 * parameter.explorers.size());
 
 		this.initializer = d -> new OBIEState(d, parameter);
-		this.corpusProvider = BigramCorpusProvider.loadCorpusFromFile(parameter);
 
 		this.scorer = getScorer(parameter.scorerType);
 		this.explorers = getExplorer(parameter);
@@ -106,7 +110,7 @@ public abstract class AbstractOBIERunner {
 			PrintStream infoPrinter = new PrintStream(infoFile);
 			infoPrinter.println(parameter.toInfoString());
 			infoPrinter.close();
-			log.info("Create info file of current run in:" + infoFile.getAbsolutePath());
+			log.info("Create info-file of current run in:" + infoFile.getAbsolutePath());
 		} catch (IOException e) {
 			e.printStackTrace();
 			log.warn("Could not log info file!");

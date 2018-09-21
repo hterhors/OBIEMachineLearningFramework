@@ -37,7 +37,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
  */
 public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
-	protected static Logger log = LogManager.getFormatterLogger(ActiveLearningDistributor.class);
+	protected static Logger log = LogManager.getRootLogger();
 
 	/**
 	 * 
@@ -71,12 +71,14 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
 	private ActiveLearningDistributor(long initializationSelectionSeed, double initialTrainingSelectionFraction, int b,
 			final int trainingProportion, final int testProportion) {
+		log.info("Create new corpus diributor of type " + this.getClass().getName());
 
 		this.random = new Random(initializationSelectionSeed);
 		this.initialTrainingSelectionFraction = initialTrainingSelectionFraction;
 		this.trainingProportion = trainingProportion;
 		this.testProportion = testProportion;
 		this.b = b;
+
 	}
 
 	private int totalAmount() {
