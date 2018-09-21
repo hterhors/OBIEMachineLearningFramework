@@ -9,13 +9,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.jena.sparql.function.library.eval;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1Container;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.AbstractOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.CartesianSearchEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.NamedEntityLinkingEvaluator;
@@ -29,6 +29,8 @@ import evaluation.EvaluationUtil;
 import learning.ObjectiveFunction;
 
 public class EvaluatePrediction {
+
+	public static Logger log = LogManager.getRootLogger();
 
 	public static void evaluateNERPredictions(IOBIEThing initializingObject,
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
@@ -70,12 +72,12 @@ public class EvaluatePrediction {
 
 		int docIndex = 0;
 		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
-			System.out.println("_____________" + state.getKey() + "______________");
-			System.out.println(state.getKey());
-			System.out.println("Gold:\t");
-			System.out.println(gold.get(state.getKey()));
-			System.out.println("Result:\t");
-			System.out.println(result.get(state.getKey()));
+			log.info("_____________" + state.getKey() + "______________");
+			log.info(state.getKey());
+			log.info("Gold:\t");
+			log.info(gold.get(state.getKey()));
+			log.info("Result:\t");
+			log.info(result.get(state.getKey()));
 			final int i = docIndex;
 			Set<OnlyTextEvaluationObject> goldList = gold.get(state.getKey()).stream()
 					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
@@ -88,9 +90,9 @@ public class EvaluatePrediction {
 			final double p = NamedEntityLinkingEvaluator.precision(goldList, predictionList);
 			final double r = NamedEntityLinkingEvaluator.recall(goldList, predictionList);
 			final double f1 = NamedEntityLinkingEvaluator.f1(goldList, predictionList);
-			System.out.println("Doc-Precisiion = " + p);
-			System.out.println("Doc-Recall = " + r);
-			System.out.println("Doc-F1 = " + f1);
+			log.info("Doc-Precisiion = " + p);
+			log.info("Doc-Recall = " + r);
+			log.info("Doc-F1 = " + f1);
 
 			goldSet.addAll(goldList);
 			predictionSet.addAll(predictionList);
@@ -101,9 +103,9 @@ public class EvaluatePrediction {
 		final double r = NamedEntityLinkingEvaluator.recall(goldSet, predictionSet);
 		final double f1 = NamedEntityLinkingEvaluator.f1(goldSet, predictionSet);
 
-		System.out.println("Micro-Precisiion = " + p);
-		System.out.println("Micro-Recall = " + r);
-		System.out.println("Micro-F1 = " + f1);
+		log.info("Micro-Precisiion = " + p);
+		log.info("Micro-Recall = " + r);
+		log.info("Micro-F1 = " + f1);
 
 	}
 
@@ -151,12 +153,11 @@ public class EvaluatePrediction {
 		int FN = 0;
 
 		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
-			System.out.println("_____________" + state.getKey() + "______________");
-			System.out.println(state.getKey());
-			System.out.println("Gold:\t");
-			System.out.println(gold.get(state.getKey()));
-			System.out.println("Result:\t");
-			System.out.println(result.get(state.getKey()));
+			log.info("_____________" + state.getKey() + "______________");
+			log.info("Gold:\t");
+			log.info(gold.get(state.getKey()));
+			log.info("Result:\t");
+			log.info(result.get(state.getKey()));
 
 			List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
 					.collect(Collectors.toList());
@@ -171,17 +172,17 @@ public class EvaluatePrediction {
 			final double p = evaluator.precision(goldList, predictionList);
 			final double r = evaluator.recall(goldList, predictionList);
 			final double f1 = evaluator.f1(goldList, predictionList);
-			System.out.println("Doc-Precisiion = " + p);
-			System.out.println("Doc-Recall = " + r);
-			System.out.println("Doc-F1 = " + f1);
+			log.info("Doc-Precisiion = " + p);
+			log.info("Doc-Recall = " + r);
+			log.info("Doc-F1 = " + f1);
 
 			meanP += p;
 			meanR += r;
 			// meanF1 += f1;
 
 		}
-		System.out.println();
-		System.out.println();
+		log.info("");
+		log.info("");
 
 		PRF1 x = new PRF1(TP, FP, FN);
 
@@ -189,14 +190,14 @@ public class EvaluatePrediction {
 		meanR /= gold.entrySet().size();
 		// meanF1 /= gold.entrySet().size();
 
-		System.out.println("MICRO: Mean-Precisiion = " + x.getPrecision());
-		System.out.println("MICRO: Mean-Recall = " + x.getRecall());
-		System.out.println("MICRO: Mean-F1 = " + x.getF1());
+		log.info("MICRO: Mean-Precisiion = " + x.getPrecision());
+		log.info("MICRO: Mean-Recall = " + x.getRecall());
+		log.info("MICRO: Mean-F1 = " + x.getF1());
 
-		System.out.println("MACRO: Mean-Precisiion = " + meanP);
-		System.out.println("MACRO: Mean-Recall = " + meanR);
-		// System.out.println("MACRO: Mean-F1 = " + meanF1);
-		System.out.println("MACRO: Mean-F1 = " + (2 * meanP * meanR) / (meanP + meanR));
+		log.info("MACRO: Mean-Precisiion = " + meanP);
+		log.info("MACRO: Mean-Recall = " + meanR);
+		// log.info("MACRO: Mean-F1 = " + meanF1);
+		log.info("MACRO: Mean-F1 = " + (2 * meanP * meanR) / (meanP + meanR));
 		return new PRF1Container(meanP, meanR, (2 * meanP * meanR) / (meanP + meanR));
 	}
 
@@ -238,12 +239,12 @@ public class EvaluatePrediction {
 		double meanF1 = 0;
 
 		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
-			System.out.println("_____________" + state.getKey() + "______________");
-			System.out.println(state.getKey());
-			System.out.println("Gold:\t");
-			System.out.println(gold.get(state.getKey()));
-			System.out.println("Result:\t");
-			System.out.println(result.get(state.getKey()));
+			log.info("_____________" + state.getKey() + "______________");
+			log.info(state.getKey());
+			log.info("Gold:\t");
+			log.info(gold.get(state.getKey()));
+			log.info("Result:\t");
+			log.info(result.get(state.getKey()));
 
 			List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
 					.collect(Collectors.toList());
@@ -252,13 +253,13 @@ public class EvaluatePrediction {
 					.collect(Collectors.toList());
 
 			final double f1 = evaluator.f1(goldList, predictionList);
-			System.out.println("Doc-F1 = " + f1);
+			log.info("Doc-F1 = " + f1);
 
 			meanF1 += f1;
 
 		}
-		System.out.println();
-		System.out.println();
+		log.info("");
+		log.info("");
 
 		// PRF1ScoreContainer x = new PRF1ScoreContainer(TP, FP, FN);
 
@@ -266,7 +267,7 @@ public class EvaluatePrediction {
 		// meanR /= gold.entrySet().size();
 		meanF1 /= gold.entrySet().size();
 
-		System.out.println("Purity-InversePurity F_Rij = " + meanF1);
+		log.info("Purity-InversePurity F_Rij = " + meanF1);
 
 		return meanF1;
 	}
@@ -337,9 +338,9 @@ public class EvaluatePrediction {
 					evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
 			if (detailedOutput) {
-				System.out.println("#############################");
-				System.out.println(evaluator.getInvestigationRestrictions());
-				System.out.println("#############################");
+				log.info("#############################");
+				log.info(evaluator.getInvestigationRestrictions());
+				log.info("#############################");
 			}
 
 			double meanP = 0;
@@ -347,11 +348,11 @@ public class EvaluatePrediction {
 			double meanF1 = 0;
 			for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
 				if (detailedOutput) {
-					System.out.println("_____________" + state.getKey() + "______________");
-					System.out.println("Gold:\t");
-					System.out.println(gold.get(state.getKey()));
-					System.out.println("Result:\t");
-					System.out.println(result.get(state.getKey()));
+					log.info("_____________" + state.getKey() + "______________");
+					log.info("Gold:\t");
+					log.info(gold.get(state.getKey()));
+					log.info("Result:\t");
+					log.info(result.get(state.getKey()));
 				}
 				List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
 						.collect(Collectors.toList());
@@ -363,9 +364,9 @@ public class EvaluatePrediction {
 				final double r = evaluator.recall(goldList, predictionList);
 				final double f1 = evaluator.f1(goldList, predictionList);
 				if (detailedOutput) {
-					System.out.println("Doc-Precisiion = " + p);
-					System.out.println("Doc-Recall = " + r);
-					System.out.println("Doc-F1 = " + f1);
+					log.info("Doc-Precisiion = " + p);
+					log.info("Doc-Recall = " + r);
+					log.info("Doc-F1 = " + f1);
 				}
 				meanP += p;
 				meanR += r;
@@ -373,22 +374,22 @@ public class EvaluatePrediction {
 
 			}
 
-			System.out.println();
-			System.out.println();
+			log.info("");
+			log.info("");
 
-			System.out.println("#############################");
+			log.info("#############################");
 			if (detailedOutput)
-				System.out.println(evaluator.getInvestigationRestrictions());
+				log.info(evaluator.getInvestigationRestrictions());
 			else
-				System.out.println(evaluator.getInvestigationRestrictions().summarize());
+				log.info(evaluator.getInvestigationRestrictions().summarize());
 
 			meanP /= gold.entrySet().size();
 			meanR /= gold.entrySet().size();
 			meanF1 /= gold.entrySet().size();
-			System.out.println("Mean-Precisiion = " + meanP);
-			System.out.println("Mean-Recall = " + meanR);
-			System.out.println("Mean-F1 = " + meanF1);
-			System.out.println("#############################");
+			log.info("Mean-Precisiion = " + meanP);
+			log.info("Mean-Recall = " + meanR);
+			log.info("Mean-F1 = " + meanF1);
+			log.info("#############################");
 
 		}
 	}
