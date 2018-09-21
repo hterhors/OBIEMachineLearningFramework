@@ -322,7 +322,7 @@ public class ExplorationUtils {
 		/*
 		 * Get all possible candidates and filter by mentions in the text.
 		 */
-		for (Class<? extends IOBIEThing> slotFillerType : slotSuperType.getAnnotation(AssignableSubClasses.class)
+		for (Class<? extends IOBIEThing> slotFillerType : slotSuperType.getAnnotation(AssignableSubInterfaces.class)
 				.get()) {
 			addFillerCandidates(instance, slotSuperType, candidates,
 					slotFillerType.getAnnotation(ImplementationClass.class).get(),
@@ -445,6 +445,7 @@ public class ExplorationUtils {
 
 	private static void fillBasicFields(IOBIEThing genClass, NELAnnotation nera)
 			throws NoSuchFieldException, IllegalAccessException {
+
 		if (genClass.getClass().isAnnotationPresent(DatatypeProperty.class)) {
 			// Field scioValueField =
 			// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.SCIO_VALUE_FIELD);
@@ -478,7 +479,6 @@ public class ExplorationUtils {
 		Field onsetField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
 				OntologyFieldNames.CHARACTER_ONSET_FIELD_NAME);
 		onsetField.set(genClass, Integer.valueOf(nera.onset));
-
 	}
 
 	/**

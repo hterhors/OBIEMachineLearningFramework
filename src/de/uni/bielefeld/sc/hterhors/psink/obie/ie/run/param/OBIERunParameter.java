@@ -508,7 +508,7 @@ public class OBIERunParameter implements Serializable {
 
 		private EScorerType scorerType = EScorerType.EXP;
 
-		private boolean exploreOnOntologyLevel = true;
+		private boolean exploreOnOntologyLevel = false;
 
 		private AbstractOBIEProjectEnvironment environment;
 
