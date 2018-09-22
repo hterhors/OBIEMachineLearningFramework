@@ -1,5 +1,6 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,7 +19,6 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalityTemplate.Scope.Pair;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -29,7 +29,7 @@ import learning.Vector;
 public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 

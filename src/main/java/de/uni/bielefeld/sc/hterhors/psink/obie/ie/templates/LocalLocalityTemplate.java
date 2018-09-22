@@ -1,5 +1,6 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,7 +20,6 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalLocalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalLocalityTemplate.Scope.Pair;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -34,7 +34,7 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -279,7 +279,7 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	/**
 	 * Gets all annotations mentions for the classes and computes the minimum
 	 * distance between them. Features are then stored as bins.
-	 * 
+	 *
 	 * @param determinatorFactor
 	 * @param featureVector
 	 * @param instance
