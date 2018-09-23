@@ -17,8 +17,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Ontolog
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalityTemplate.Scope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalityTemplate.Scope.Pair;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.utils.ClassTypePositionPair;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -44,58 +44,13 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 
 	static class Scope extends OBIEFactorScope {
 
-		public static class Pair {
-
-			final Class<? extends IOBIEThing> classType;
-			final long position;
-
-			public Pair(Class<? extends IOBIEThing> classType, long onset) {
-				this.classType = classType;
-				this.position = onset;
-			}
-
-			@Override
-			public int hashCode() {
-				final int prime = 31;
-				int result = 1;
-				result = prime * result + ((classType == null) ? 0 : classType.hashCode());
-				result = prime * result + (int) (position ^ (position >>> 32));
-				return result;
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				if (this == obj)
-					return true;
-				if (obj == null)
-					return false;
-				if (getClass() != obj.getClass())
-					return false;
-				Pair other = (Pair) obj;
-				if (classType == null) {
-					if (other.classType != null)
-						return false;
-				} else if (!classType.equals(other.classType))
-					return false;
-				if (position != other.position)
-					return false;
-				return true;
-			}
-
-			@Override
-			public String toString() {
-				return "Pair [className=" + classType + ", onset=" + position + "]";
-			}
-
-		}
-
-		private final Pair context;
-		private final Pair class1;
-		private final Pair class2;
+		private final ClassTypePositionPair context;
+		private final ClassTypePositionPair class1;
+		private final ClassTypePositionPair class2;
 
 		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template, Pair parentContext,
-				Pair class1, Pair class2) {
+				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+				ClassTypePositionPair parentContext, ClassTypePositionPair class1, ClassTypePositionPair class2) {
 			super(influencedVariable, entityRootClassType, template, parentContext, class1, class2,
 					entityRootClassType);
 			this.context = parentContext;
@@ -184,8 +139,8 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 		return properties;
 	}
 
-	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance document,
-			IOBIEThing context, IOBIEThing class1, IOBIEThing class2, List<Scope> factors) {
+	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance document, IOBIEThing context,
+			IOBIEThing class1, IOBIEThing class2, List<Scope> factors) {
 
 		if (class1 == null)
 			return;
@@ -205,21 +160,21 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 		if (class2.getTextMention() == null)
 			return;
 
-		final Pair class1Pair;
-		final Pair class2Pair;
+		final ClassTypePositionPair class1Pair;
+		final ClassTypePositionPair class2Pair;
 
-		Pair contextPair = null;
+		ClassTypePositionPair contextPair = null;
 		final long class1Onset = document.charPositionToTokenPosition(class1.getCharacterOnset());
 
-		class1Pair = new Pair(class1.getClass(), class1Onset);
+		class1Pair = new ClassTypePositionPair(class1.getClass(), class1Onset);
 
 		final long class2Onset = document.charPositionToTokenPosition(class2.getCharacterOnset());
-		class2Pair = new Pair(class2.getClass(), class2Onset);
+		class2Pair = new ClassTypePositionPair(class2.getClass(), class2Onset);
 
 		if (context != null && context.getCharacterOnset() != null && context.getTextMention() != null) {
 
 			final long contextOnset = document.charPositionToTokenPosition(context.getCharacterOnset());
-			contextPair = new Pair(context.getClass(), contextOnset);
+			contextPair = new ClassTypePositionPair(context.getClass(), contextOnset);
 		}
 
 		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();

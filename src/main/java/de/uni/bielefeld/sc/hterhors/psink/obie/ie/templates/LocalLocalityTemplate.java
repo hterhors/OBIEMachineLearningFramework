@@ -18,8 +18,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRo
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalLocalityTemplate.Scope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalLocalityTemplate.Scope.Pair;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.utils.ClassTypePositionPair;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -43,15 +43,15 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	private static final List<Integer> localityDistances = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50,
 			60, 70, 80, 90, 100, 150, 200, 300);
 
-	static class Scope extends OBIEFactorScope {
+	class Scope extends OBIEFactorScope {
 
-		private final Pair class1;
-		private final Pair class2;
+		private final ClassTypePositionPair class1;
+		private final ClassTypePositionPair class2;
 		private final OBIEInstance document;
 
 		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
 				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
-				OBIEInstance document, Pair class1, Pair class2) {
+				OBIEInstance document, ClassTypePositionPair class1, ClassTypePositionPair class2) {
 			super(influencedVariable, entityRootClassType, template, class1, class2, entityRootClassType);
 			this.class1 = class1;
 			this.class2 = class2;
@@ -62,51 +62,6 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		public String toString() {
 			return "Scope [class1=" + class1 + ", class2=" + class2 + ", document=" + document
 					+ ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
-		}
-
-		public static class Pair {
-
-			final Class<? extends IOBIEThing> classType;
-			final long position;
-
-			public Pair(Class<? extends IOBIEThing> classType, long onset) {
-				this.classType = classType;
-				this.position = onset;
-			}
-
-			@Override
-			public int hashCode() {
-				final int prime = 31;
-				int result = 1;
-				result = prime * result + ((classType == null) ? 0 : classType.hashCode());
-				result = prime * result + (int) (position ^ (position >>> 32));
-				return result;
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				if (this == obj)
-					return true;
-				if (obj == null)
-					return false;
-				if (getClass() != obj.getClass())
-					return false;
-				Pair other = (Pair) obj;
-				if (classType == null) {
-					if (other.classType != null)
-						return false;
-				} else if (!classType.equals(other.classType))
-					return false;
-				if (position != other.position)
-					return false;
-				return true;
-			}
-
-			@Override
-			public String toString() {
-				return "Pair [className=" + classType + ", onset=" + position + "]";
-			}
-
 		}
 
 	}
@@ -181,8 +136,8 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		return properties;
 	}
 
-	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance document,
-			IOBIEThing class1, IOBIEThing class2, List<Scope> factors) {
+	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance document, IOBIEThing class1,
+			IOBIEThing class2, List<Scope> factors) {
 
 		if (class1 == null)
 			return;
@@ -210,9 +165,9 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		final long class1Onset = document.charPositionToTokenPosition(class1.getCharacterOnset());
 		final long class2Onset = document.charPositionToTokenPosition(class2.getCharacterOnset());
 
-		final Pair class1Pair = new Pair(class1.getClass(), class1Onset);
+		final ClassTypePositionPair class1Pair = new ClassTypePositionPair(class1.getClass(), class1Onset);
 
-		final Pair class2Pair = new Pair(class2.getClass(), class2Onset);
+		final ClassTypePositionPair class2Pair = new ClassTypePositionPair(class2.getClass(), class2Onset);
 
 		factors.add(new Scope(influencedVariables, entityRootClassType, this, document, class1Pair, class2Pair));
 

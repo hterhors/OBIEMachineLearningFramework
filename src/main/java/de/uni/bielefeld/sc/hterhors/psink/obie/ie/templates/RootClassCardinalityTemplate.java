@@ -39,6 +39,7 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 		super(parameter);
 	}
 
+	
 	private static Logger log = LogManager.getFormatterLogger(RootClassCardinalityTemplate.class.getName());
 
 	/**

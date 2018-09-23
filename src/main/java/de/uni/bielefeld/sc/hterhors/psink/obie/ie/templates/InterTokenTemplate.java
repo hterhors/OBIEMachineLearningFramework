@@ -29,8 +29,8 @@ import learning.Vector;
  *
  * @date Nov 15, 2017
  */
-public class InterTokenTemplate extends AbstractOBIETemplate<Scope>
-		implements Serializable {
+public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements Serializable {
+
 	/**
 	 * 
 	 */
@@ -50,8 +50,8 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope>
 
 	private static final String RIGHT = ">";
 	/**
-	 * Whether distant supervision is enabled for this template or not. This
-	 * effects the way of calculating the factors and features!
+	 * Whether distant supervision is enabled for this template or not. This effects
+	 * the way of calculating the factors and features!
 	 */
 	private final boolean enableDistantSupervision;
 
@@ -130,8 +130,8 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope>
 
 	/**
 	 * Returns the surface forms of the given object. If distant supervision is
-	 * enabled all surface forms are returned that belongs to the class type of
-	 * the given object.If DV is not enabled the returned set contains only the
+	 * enabled all surface forms are returned that belongs to the class type of the
+	 * given object.If DV is not enabled the returned set contains only the
 	 * annotated surface form of the given object.
 	 * 
 	 * @param internalInstance
@@ -154,16 +154,15 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope>
 					surfaceForms = new HashSet<>();
 					surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
 				} else {
-					surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getAnnotations(filler.getClass()).stream()
-							.map(nera -> nera.textMention).collect(Collectors.toSet());
+					surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getAnnotations(filler.getClass())
+							.stream().map(nera -> nera.textMention).collect(Collectors.toSet());
 				}
 			} else {
 				return null;
 			}
 		} else {
 			/*
-			 * If DV is not enabled add just the surface form of that individual
-			 * annotation.
+			 * If DV is not enabled add just the surface form of that individual annotation.
 			 */
 			surfaceForms = new HashSet<>();
 			if (filler.getClass().isAnnotationPresent(DatatypeProperty.class)) {
