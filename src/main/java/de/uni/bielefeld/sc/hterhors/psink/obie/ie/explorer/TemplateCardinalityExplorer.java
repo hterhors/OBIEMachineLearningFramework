@@ -13,7 +13,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Datatyp
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 
 /**
@@ -71,7 +71,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 		 */
 		for (Class<? extends IOBIEThing> rootTemplateType : rootClassTypes) {
 
-			final int size = previousState.getCurrentPrediction().getEntityAnnotations().size();
+			final int size = previousState.getCurrentPrediction().getTemplateAnnotations().size();
 
 			if (rootTemplateType.isAnnotationPresent(DatatypeProperty.class) && size >= maxNumberOfDataTypeElements) {
 				continue;
@@ -93,14 +93,14 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 			for (IOBIEThing candidateClass : candidates) {
 				final OBIEState generatedState = new OBIEState(previousState);
 				generatedState.getCurrentPrediction()
-						.addAnnotation(new EntityAnnotation(rootTemplateType, candidateClass));
+						.addAnnotation(new TemplateAnnotation(rootTemplateType, candidateClass));
 				generatedStates.add(generatedState);
 
 			}
 
 		}
 
-		for (EntityAnnotation internalAnnotaton : previousState.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentPrediction().getTemplateAnnotations()) {
 			final OBIEState generatedState = new OBIEState(previousState);
 			generatedState.getCurrentPrediction().removeEntity(internalAnnotaton);
 			generatedStates.add(generatedState);

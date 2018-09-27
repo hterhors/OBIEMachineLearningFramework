@@ -15,15 +15,16 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOntologyEnvironment;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubInterfaces;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectInterface;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.projects.AbstractOBIEProjectEnvironment;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.projects.AbstractProjectEnvironment;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.utils.ToStringFormatter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.AbstractCorpusDistributor;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.AbstractOBIEExplorer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.IExplorationCondition;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
@@ -163,7 +164,12 @@ public class OBIERunParameter implements Serializable {
 	/**
 	 * The projects environment.
 	 */
-	public final AbstractOBIEProjectEnvironment environment;
+	public final AbstractProjectEnvironment projectEnvironment;
+
+	/**
+	 * The ontology environment.
+	 */
+	public final AbstractOntologyEnvironment ontologyEnvironment;
 
 	/**
 	 * Tasks specific exploration condition that goes beyond the
@@ -224,6 +230,8 @@ public class OBIERunParameter implements Serializable {
 	 * just a single change is performed based on the ontology, if there is at least
 	 * one entity of that type in the text.
 	 * 
+	 * TODO: parameterize if filtered by NELs!
+	 * 
 	 * This sampling is much faster but groups all existing entities of the same
 	 * type into a single. This needs to be handled in all templates.
 	 */
@@ -246,7 +254,7 @@ public class OBIERunParameter implements Serializable {
 	 * The evaluator which is used during training (within the objective function)
 	 * and afterwards evaluating on test set.
 	 */
-	public final IEvaluator evaluator;
+	public final IOBIEEvaluator evaluator;
 
 	/**
 	 * Restricts the maximum number of data type elements within a list. This is
@@ -283,16 +291,17 @@ public class OBIERunParameter implements Serializable {
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
 			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, final String runID,
-			boolean multiThreading, AbstractOBIEProjectEnvironment environment,
+			boolean multiThreading, AbstractProjectEnvironment environment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
 			svm_parameter svmParam, InvestigationRestriction investigationRestriction,
 			Map<Class<? extends IOBIEThing>, List<IOBIEThing>> initializationObjects, boolean exploreExistingTemplates,
 			boolean exploreOnOntologyLevel, boolean enableDiscourseProgression,
-			IInitializeNumberOfObjects numberOfInitializedObjects, IEvaluator evaluator,
+			IInitializeNumberOfObjects numberOfInitializedObjects, IOBIEEvaluator evaluator,
 			final int maxNumberOfEntityElements, final int maxNumberOfDataTypeElements, Regularizer regularizer,
 			int maxNumberOfSamplingSteps, Random rndForSampling, boolean ignoreEmptyInstancesonEvaluation,
-			final AbstractCorpusDistributor corpusConfiguration) {
+			final AbstractCorpusDistributor corpusConfiguration,
+			AbstractOntologyEnvironment ontologyEnvironment) {
 
 		if (!validate()) {
 			throw new IllegalStateException("The given paramters do not match.");
@@ -304,6 +313,7 @@ public class OBIERunParameter implements Serializable {
 		requireElements(rootSearchTypes);
 		Objects.requireNonNull(environment);
 		Objects.requireNonNull(corpusConfiguration);
+		Objects.requireNonNull(ontologyEnvironment);
 
 		Objects.requireNonNull(optimizer);
 
@@ -359,7 +369,8 @@ public class OBIERunParameter implements Serializable {
 		this.ignoreEmptyInstancesonEvaluation = ignoreEmptyInstancesonEvaluation;
 		this.runID = runID;
 		this.multiThreading = multiThreading;
-		this.environment = environment;
+		this.projectEnvironment = environment;
+		this.ontologyEnvironment = ontologyEnvironment;
 
 		this.exploreClassesWithoutTextualEvidence = autoExpand(environment,
 				manualExpand(manualExploreClassesWithoutEvidence));
@@ -425,7 +436,7 @@ public class OBIERunParameter implements Serializable {
 
 	}
 
-	private Set<Class<? extends IOBIEThing>> autoExpand(AbstractOBIEProjectEnvironment scioEnvironment,
+	private Set<Class<? extends IOBIEThing>> autoExpand(AbstractProjectEnvironment scioEnvironment,
 			Set<Class<? extends IOBIEThing>> set) {
 
 		for (Class<? extends IOBIEThing> c : scioEnvironment.getOntologyThingInterface()
@@ -460,7 +471,7 @@ public class OBIERunParameter implements Serializable {
 				+ regularizer + ", templates=" + templates + ", runID=" + runID + ", rootDirectory=" + rootDirectory
 				+ ", epochs=" + epochs + ", optimizer=" + optimizer + ", scorerType=" + scorerType + ", personalNotes="
 				+ personalNotes + ", rootSearchTypes=" + rootSearchTypes + ", initializer=" + initializer
-				+ ", environment=" + environment + ", explorationCondition=" + explorationCondition + ", explorers="
+				+ ", environment=" + projectEnvironment + ", explorationCondition=" + explorationCondition + ", explorers="
 				+ explorers + ", svmParam=" + svmParam + ", investigationRestriction=" + investigationRestriction
 				+ ", initializationObjects=" + initializationObjects + ", exploreExistingTemplates="
 				+ exploreExistingTemplates + ", enableDiscourseProgression=" + enableDiscourseProgression
@@ -500,7 +511,7 @@ public class OBIERunParameter implements Serializable {
 
 		private EInstantiationType initializer = EInstantiationType.EMPTY;
 
-		private IEvaluator evaluator = null;
+		private IOBIEEvaluator evaluator = null;
 
 		private boolean enableDiscourseProgression = false;
 
@@ -510,7 +521,9 @@ public class OBIERunParameter implements Serializable {
 
 		private boolean exploreOnOntologyLevel = false;
 
-		private AbstractOBIEProjectEnvironment environment;
+		private AbstractProjectEnvironment projectEnvironment;
+
+		private AbstractOntologyEnvironment ontologyEnvironment;
 
 		private String personalNotes = "Default Notes";
 
@@ -529,6 +542,7 @@ public class OBIERunParameter implements Serializable {
 		private Random rndForSampling = new Random();
 
 		private Optimizer optimizer = new SGD(0.001, 0, 0.0001, false);
+		
 		private int epochs = 100;
 
 		private int maxNumberOfEntityElements = 7;
@@ -576,11 +590,11 @@ public class OBIERunParameter implements Serializable {
 			return this;
 		}
 
-		public IEvaluator getEvaluator() {
+		public IOBIEEvaluator getEvaluator() {
 			return evaluator;
 		}
 
-		public OBIEParameterBuilder setEvaluator(IEvaluator evaluator) {
+		public OBIEParameterBuilder setEvaluator(IOBIEEvaluator evaluator) {
 			this.evaluator = evaluator;
 			return this;
 		}
@@ -713,12 +727,21 @@ public class OBIERunParameter implements Serializable {
 			return this;
 		}
 
-		public AbstractOBIEProjectEnvironment getEnvironment() {
-			return environment;
+		public AbstractProjectEnvironment getProjectEnvironment() {
+			return projectEnvironment;
 		}
 
-		public OBIEParameterBuilder setEnvironment(AbstractOBIEProjectEnvironment environment) {
-			this.environment = environment;
+		public AbstractOntologyEnvironment getOntologyEnvironment() {
+			return ontologyEnvironment;
+		}
+
+		public OBIEParameterBuilder setOntologyEnvironment(AbstractOntologyEnvironment ontologyEnvironment) {
+			this.ontologyEnvironment = ontologyEnvironment;
+			return this;
+		}
+
+		public OBIEParameterBuilder setProjectEnvironment(AbstractProjectEnvironment projectEnvironment) {
+			this.projectEnvironment = projectEnvironment;
 			return this;
 		}
 
@@ -854,11 +877,11 @@ public class OBIERunParameter implements Serializable {
 
 			return new OBIERunParameter(corpusNamePrefix, excludeEmptyInstancesFromCorpus, templates, rootDirectory,
 					epochs, optimizer, scorerType, personalNotes, rootSearchTypes, initializer, runID, multiThreading,
-					environment, manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
+					projectEnvironment, manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
 					investigationRestriction, initializationObjects, exploreExistingTemplates, exploreOnOntologyLevel,
 					enableDiscourseProgression, numberOfInitializedObjects, evaluator, maxNumberOfEntityElements,
 					maxNumberOfDataTypeElements, regularizer, maxNumberOfSamplingSteps, rndForSampling,
-					ignoreEmptyInstancesonEvaluation, corpusConfiguration);
+					ignoreEmptyInstancesonEvaluation, corpusConfiguration, ontologyEnvironment);
 		}
 
 	}

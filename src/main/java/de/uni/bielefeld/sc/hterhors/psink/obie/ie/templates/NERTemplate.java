@@ -17,7 +17,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.NERTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -66,9 +66,9 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			factors.addAll(
-					addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getAnnotationInstance()));
+					addFactorRecursive(state.getInstance(), entity.rootClassType, entity.get()));
 		}
 		return factors;
 	}
@@ -120,10 +120,10 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		Vector featureVector = factor.getFeatureVector();
 
 		if (!factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
-				.containsAnnotations(factor.getFactorScope().classType))
+				.containsClassAnnotations(factor.getFactorScope().classType))
 			return;
 		boolean foundByNER = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
-				.getAnnotations(factor.getFactorScope().classType).stream().map(e -> e.getDTValueIfAnyElseTextMention())
+				.getClassAnnotations(factor.getFactorScope().classType).stream().map(e -> e.getDTValueIfAnyElseTextMention())
 				.collect(Collectors.toSet()).contains(factor.getFactorScope().surfaceForm);
 
 		featureVector.set(factor.getFactorScope().getEntityRootClassType().getSimpleName() + " - FoundByNER",

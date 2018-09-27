@@ -15,10 +15,11 @@ import org.apache.logging.log4j.Logger;
 import corpus.SampledInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1Container;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.CartesianSearchEvaluator;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.exceptions.NotSupportedException;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.eval.EvaluatePrediction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.EScorerType;
@@ -57,6 +58,7 @@ import templates.TemplateFactory;
 import variables.AbstractState;
 
 public abstract class AbstractOBIERunner {
+
 	public static Logger log = LogManager.getFormatterLogger(OBIERunParameter.class.getSimpleName());
 
 	public final OBIERunParameter parameter;
@@ -89,6 +91,13 @@ public abstract class AbstractOBIERunner {
 
 		this.parameter = parameter;
 		log.debug("Parameter: " + this.parameter.toInfoString());
+
+		/*
+		 * TODO: Insert after java class generation was changed
+		 */
+		log.info("Initialize ontological classes for individual-factories...");
+
+		OntologyInitializer.initializeOntology(parameter.ontologyEnvironment);
 
 		this.corpusProvider = BigramCorpusProvider.loadCorpusFromFile(parameter);
 
@@ -385,10 +394,10 @@ public abstract class AbstractOBIERunner {
 					InstanceT instance, int indexOfInstance, StateT finalState, int numberOfInstances, int epoch,
 					int numberOfEpochs) {
 				final OBIEState state = (OBIEState) finalState;
-				List<IOBIEThing> predictions = state.getCurrentPrediction().getEntityAnnotations().stream()
-						.map(s -> s.getAnnotationInstance()).collect(Collectors.toList());
-				List<IOBIEThing> gold = state.getInstance().getGoldAnnotation().getEntityAnnotations().stream()
-						.map(s -> s.getAnnotationInstance()).collect(Collectors.toList());
+				List<IOBIEThing> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream()
+						.map(s -> s.get()).collect(Collectors.toList());
+				List<IOBIEThing> gold = state.getInstance().getGoldAnnotation().getTemplateAnnotations().stream()
+						.map(s -> s.get()).collect(Collectors.toList());
 
 				try {
 					PRF1 s = parameter.evaluator.prf1(gold, predictions);
@@ -476,7 +485,7 @@ public abstract class AbstractOBIERunner {
 		/**
 		 * Train with purity evaluate finally with cartesian
 		 */
-		IEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
+		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
 				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
 				parameter.evaluator.getInvestigationRestrictions(), parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
@@ -491,7 +500,7 @@ public abstract class AbstractOBIERunner {
 		/**
 		 * Train with purity evaluate finally with cartesian
 		 */
-		IEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
+		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
 				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
 				parameter.evaluator.getInvestigationRestrictions(), parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());

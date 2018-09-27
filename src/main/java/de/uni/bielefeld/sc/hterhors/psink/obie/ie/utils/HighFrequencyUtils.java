@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
@@ -114,7 +114,7 @@ public class HighFrequencyUtils {
 
 		List<FrequencyPair> bestClasses = new ArrayList<>();
 
-		final Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> evidences = new HashMap<>();
+		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> evidences = new HashMap<>();
 		final List<Class<? extends IOBIEThing>> bestClassTypes = new ArrayList<>();
 
 		if (interfaceType.isAnnotationPresent(DatatypeProperty.class)) {
@@ -123,11 +123,11 @@ public class HighFrequencyUtils {
 
 				final Class<? extends IOBIEThing> bestClassType = interfaceType.getAnnotation(ImplementationClass.class)
 						.get();
-				if (ner.containsAnnotations(bestClassType)) {
+				if (ner.containsClassAnnotations(bestClassType)) {
 					final Map<String, Integer> maxMention = new HashMap<>();
 
-					for (NELAnnotation ann : ner.getAnnotations(bestClassType)) {
-						maxMention.put(ann.textMention, maxMention.getOrDefault(ann.textMention, 0) + 1);
+					for (NERLClassAnnotation ann : ner.getClassAnnotations(bestClassType)) {
+						maxMention.put(ann.text, maxMention.getOrDefault(ann.text, 0) + 1);
 					}
 
 					final Map.Entry<String, Integer> maxDataTypeValue;
@@ -143,8 +143,8 @@ public class HighFrequencyUtils {
 					if (optional.isPresent()) {
 						maxDataTypeValue = optional.get();
 
-						for (NELAnnotation ann : ner.getAnnotations(bestClassType)) {
-							if (ann.textMention.equals(maxDataTypeValue.getKey())) {
+						for (NERLClassAnnotation ann : ner.getClassAnnotations(bestClassType)) {
+							if (ann.text.equals(maxDataTypeValue.getKey())) {
 								evidences.putIfAbsent(bestClassType, new HashSet<>());
 								evidences.get(bestClassType).add(ann);
 								break;
@@ -158,7 +158,7 @@ public class HighFrequencyUtils {
 
 				if (interfaceType.isAssignableFrom(classType)) {
 
-					evidences.put(classType, ner.getAnnotations(classType));
+					evidences.put(classType, ner.getClassAnnotations(classType));
 
 				}
 			}
@@ -169,7 +169,7 @@ public class HighFrequencyUtils {
 			return bestClasses;
 		}
 
-		final List<Map.Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>>> entryList = new ArrayList<>(
+		final List<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>> entryList = new ArrayList<>(
 				evidences.entrySet());
 
 		/*
@@ -177,11 +177,11 @@ public class HighFrequencyUtils {
 		 * multiple runs. Then we can sort with random seed.
 		 */
 		Collections.sort(entryList,
-				new Comparator<Map.Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>>>() {
+				new Comparator<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>>() {
 
 					@Override
-					public int compare(Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> o1,
-							Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> o2) {
+					public int compare(Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o1,
+							Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o2) {
 						return -Integer.compare(o1.getValue().size(), o2.getValue().size());
 					}
 				});
@@ -195,11 +195,11 @@ public class HighFrequencyUtils {
 		 * Sort entries according to their frequency
 		 */
 		Collections.sort(entryList,
-				new Comparator<Map.Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>>>() {
+				new Comparator<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>>() {
 
 					@Override
-					public int compare(Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> o1,
-							Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> o2) {
+					public int compare(Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o1,
+							Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o2) {
 						return -Integer.compare(o1.getValue().size(), o2.getValue().size());
 					}
 				});
@@ -216,13 +216,13 @@ public class HighFrequencyUtils {
 			if (!evidences.get(bestClassType).iterator().hasNext())
 				continue;
 
-			final NELAnnotation nerAnnotation = evidences.get(bestClassType).iterator().next();
+			final NERLClassAnnotation nerAnnotation = evidences.get(bestClassType).iterator().next();
 			log.debug(nerAnnotation);
 			if (interfaceType.isAnnotationPresent(DatatypeProperty.class)) {
-				bestClasses.add(new FrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.textMention,
+				bestClasses.add(new FrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text,
 						nerAnnotation.getDTValueIfAnyElseTextMention(), evidences.get(bestClassType).size()));
 			} else {
-				bestClasses.add(new FrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.textMention, null,
+				bestClasses.add(new FrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text, null,
 						evidences.get(bestClassType).size()));
 			}
 		}

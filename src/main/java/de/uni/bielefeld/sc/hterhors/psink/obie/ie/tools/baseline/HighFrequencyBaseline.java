@@ -21,7 +21,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils.FrequencyPair;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.OBIEClassFormatter;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
 /**
@@ -50,12 +50,12 @@ public class HighFrequencyBaseline {
 
 			System.out.println(doc.getName());
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getEntityAnnotations().stream()
-					.map(e -> e.getAnnotationInstance()).collect(Collectors.toList());
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictClassesByFrequency(doc);
-			doc.getGoldAnnotation().getEntityAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getAnnotationInstance(), false)));
+			doc.getGoldAnnotation().getTemplateAnnotations()
+					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.get(), false)));
 			System.out.println("____________________________");
 			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 
@@ -102,9 +102,9 @@ public class HighFrequencyBaseline {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
 
-		for (EntityAnnotation goldAnnotation : instance.getGoldAnnotation().getEntityAnnotations()) {
+		for (TemplateAnnotation goldAnnotation : instance.getGoldAnnotation().getTemplateAnnotations()) {
 
-			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.getAnnotationInstance();
+			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.get();
 			IOBIEThing predictionClass = null;
 			try {
 				predictionClass = goldClass.getClass().newInstance();

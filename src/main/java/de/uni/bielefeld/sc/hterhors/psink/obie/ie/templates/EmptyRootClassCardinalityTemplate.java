@@ -15,7 +15,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.EmptyRootClassCardinalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
 import learning.Vector;
@@ -54,8 +54,8 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 
 		final Map<Class<? extends IOBIEThing>, Integer> countEmptyClasses = new HashMap<>();
 
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
-			if (entity.getAnnotationInstance().equals(entity.getInitializationClass())) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+			if (entity.get().equals(entity.getInitializationClass())) {
 				countEmptyClasses.put(entity.rootClassType,
 						countEmptyClasses.getOrDefault(entity.rootClassType, 0) + 1);
 			}

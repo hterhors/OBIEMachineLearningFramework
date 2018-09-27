@@ -19,9 +19,9 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Relatio
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.utils.OBIEUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
 public class InitializerUtils {
@@ -80,8 +80,8 @@ public class InitializerUtils {
 	 */
 	public static Set<IOBIEThing> getFullCorrect(InstanceEntityAnnotations instanceAnnotations) {
 		Set<IOBIEThing> set = new HashSet<>();
-		for (EntityAnnotation goldAnnotation : instanceAnnotations.getEntityAnnotations()) {
-			set.add(OBIEUtils.deepConstructorClone(goldAnnotation.getAnnotationInstance()));
+		for (TemplateAnnotation goldAnnotation : instanceAnnotations.getTemplateAnnotations()) {
+			set.add(OBIEUtils.deepConstructorClone(goldAnnotation.get()));
 
 		}
 		return set;
@@ -150,15 +150,15 @@ public class InitializerUtils {
 		final String textValue;
 		final String dtValue;
 		if (random) {
-			final Set<NELAnnotation> candidates = instance.getNamedEntityLinkingAnnotations().getAnnotations(slotSuperType);
+			final Set<NERLClassAnnotation> candidates = instance.getNamedEntityLinkingAnnotations().getClassAnnotations(slotSuperType);
 			if (candidates != null && !candidates.isEmpty()) {
 				int index = rand.nextInt(candidates.size());
-				Iterator<NELAnnotation> iter = candidates.iterator();
+				Iterator<NERLClassAnnotation> iter = candidates.iterator();
 				for (int i = 0; i < index; i++) {
 					iter.next();
 				}
-				final NELAnnotation nera = iter.next();
-				textValue = nera.textMention;
+				final NERLClassAnnotation nera = iter.next();
+				textValue = nera.text;
 				dtValue = nera.getDTValueIfAnyElseTextMention();
 			} else {
 				textValue = null;

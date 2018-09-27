@@ -19,7 +19,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.GlobalSentenceLocalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -67,10 +67,10 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			try {
 				factors.addAll(
-						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getAnnotationInstance()));
+						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
@@ -175,14 +175,14 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 		 * Get all annotation mentions for original class type 1.
 		 */
 		List<Integer> mentionsForClass1 = document.getNamedEntityLinkingAnnotations()
-				.getAnnotations(factor.getFactorScope().class1Type).stream()
+				.getClassAnnotations(factor.getFactorScope().class1Type).stream()
 				.map(m -> document.charPositionToToken(m.onset).getSentenceIndex()).collect(Collectors.toList());
 
 		/*
 		 * Get all annotation mentions for original class type 2.
 		 */
 		List<Integer> mentionsForClass2 = new ArrayList<>(
-				document.getNamedEntityLinkingAnnotations().getAnnotations(factor.getFactorScope().class2Type)).stream()
+				document.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().class2Type)).stream()
 						.map(m -> document.charPositionToToken(m.onset).getSentenceIndex())
 						.collect(Collectors.toList());
 

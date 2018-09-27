@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -27,7 +27,7 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceEn
 	 */
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LogManager.getFormatterLogger(REObjectiveFunction.class.getName());
-	private IEvaluator evaluator;
+	private IOBIEEvaluator evaluator;
 
 	public REObjectiveFunction(OBIERunParameter parameter) {
 		this.evaluator = parameter.evaluator;
@@ -36,9 +36,9 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceEn
 	@Override
 	public double computeScore(OBIEState state, InstanceEntityAnnotations goldResult) {
 
-		List<IOBIEThing> predictions = state.getCurrentPrediction().getEntityAnnotations().stream()
-				.map(s -> s.getAnnotationInstance()).collect(Collectors.toList());
-		List<IOBIEThing> gold = goldResult.getEntityAnnotations().stream().map(s -> s.getAnnotationInstance())
+		List<IOBIEThing> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream()
+				.map(s -> s.get()).collect(Collectors.toList());
+		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.get())
 				.collect(Collectors.toList());
 
 		// System.out.println("predictions = ");

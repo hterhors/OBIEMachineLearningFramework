@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public class NamedEntityLinkingAnnotations implements Serializable {
@@ -18,26 +19,78 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals;
+	private final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals;
 
-	private final Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> retrievalsByTextMention;
+	private final Map<Class<? extends IOBIEThing>, Map<String, Set<NERLClassAnnotation>>> classRetrievalsByTextMention;
 
-	private final Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> retrievalsByDistinctSemanticValues;
+	private final Map<Class<? extends IOBIEThing>, Map<String, Set<NERLClassAnnotation>>> classRetrievalsByDistinctSemanticValues;
 
-	private NamedEntityLinkingAnnotations(Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals) {
-		this.retrievals = retrievals;
-		this.retrievalsByTextMention = indexByTextMention(retrievals);
+	private final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> individualRetrievals;
 
-		this.retrievalsByDistinctSemanticValues = indexBySemanticValue(retrievals);
+	private final Map<AbstractOBIEIndividual, Map<String, Set<NERLIndividualAnnotation>>> individualRetrievalsByTextMention;
+
+	private NamedEntityLinkingAnnotations(Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals,
+			Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> individualRetrievals) {
+
+		/*
+		 * 
+		 */
+
+		this.classRetrievals = classRetrievals;
+
+		this.classRetrievalsByTextMention = indexClassAnnotationsByText(classRetrievals);
+
+		this.classRetrievalsByDistinctSemanticValues = indexBySemanticValue(classRetrievals);
+
+		/*
+		 * 
+		 */
+
+		this.individualRetrievals = individualRetrievals;
+
+		this.individualRetrievalsByTextMention = indexIndividualAnnotationsByText(individualRetrievals);
+
 	}
 
-	private Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> indexBySemanticValue(
-			Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals) {
-		final Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> rBDSV = new HashMap<>();
-		for (Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrieval : retrievals.entrySet()) {
+	/**
+	 * TODO: get rid of duplicate code
+	 */
+
+	private Map<Class<? extends IOBIEThing>, Map<String, Set<NERLClassAnnotation>>> indexClassAnnotationsByText(
+			Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> retrievals) {
+		final Map<Class<? extends IOBIEThing>, Map<String, Set<NERLClassAnnotation>>> rbtm = new HashMap<>();
+		for (Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> retrieval : retrievals.entrySet()) {
+
+			rbtm.put(retrieval.getKey(), new HashMap<>());
+			for (NERLClassAnnotation nera : retrieval.getValue()) {
+				rbtm.get(retrieval.getKey()).putIfAbsent(nera.getText(), new HashSet<>());
+				rbtm.get(retrieval.getKey()).get(nera.getText()).add(nera);
+			}
+		}
+		return Collections.unmodifiableMap(rbtm);
+	}
+
+	private Map<AbstractOBIEIndividual, Map<String, Set<NERLIndividualAnnotation>>> indexIndividualAnnotationsByText(
+			Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> retrievals) {
+		final Map<AbstractOBIEIndividual, Map<String, Set<NERLIndividualAnnotation>>> rbtm = new HashMap<>();
+		for (Entry<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> retrieval : retrievals.entrySet()) {
+
+			rbtm.put(retrieval.getKey(), new HashMap<>());
+			for (NERLIndividualAnnotation nera : retrieval.getValue()) {
+				rbtm.get(retrieval.getKey()).putIfAbsent(nera.getText(), new HashSet<>());
+				rbtm.get(retrieval.getKey()).get(nera.getText()).add(nera);
+			}
+		}
+		return Collections.unmodifiableMap(rbtm);
+	}
+
+	private <B> Map<B, Map<String, Set<NERLClassAnnotation>>> indexBySemanticValue(
+			Map<B, Set<NERLClassAnnotation>> retrievals) {
+		final Map<B, Map<String, Set<NERLClassAnnotation>>> rBDSV = new HashMap<>();
+		for (Entry<B, Set<NERLClassAnnotation>> retrieval : retrievals.entrySet()) {
 
 			rBDSV.put(retrieval.getKey(), new HashMap<>());
-			for (NELAnnotation nera : retrieval.getValue()) {
+			for (NERLClassAnnotation nera : retrieval.getValue()) {
 				if (nera.semanticInterpretation == null)
 					continue;
 
@@ -48,15 +101,14 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 		return Collections.unmodifiableMap(rBDSV);
 	}
 
-	private Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> indexByTextMention(
-			Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals) {
-		final Map<Class<? extends IOBIEThing>, Map<String, Set<NELAnnotation>>> rbtm = new HashMap<>();
-		for (Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrieval : retrievals.entrySet()) {
+	private <K> Map<K, Map<String, Set<INERLAnnotation>>> indexByText2(Map<K, Set<INERLAnnotation>> retrievals) {
+		final Map<K, Map<String, Set<INERLAnnotation>>> rbtm = new HashMap<>();
+		for (Entry<K, Set<INERLAnnotation>> retrieval : retrievals.entrySet()) {
 
 			rbtm.put(retrieval.getKey(), new HashMap<>());
-			for (NELAnnotation nera : retrieval.getValue()) {
-				rbtm.get(retrieval.getKey()).putIfAbsent(nera.textMention, new HashSet<>());
-				rbtm.get(retrieval.getKey()).get(nera.textMention).add(nera);
+			for (INERLAnnotation nera : retrieval.getValue()) {
+				rbtm.get(retrieval.getKey()).putIfAbsent(nera.getText(), new HashSet<>());
+				rbtm.get(retrieval.getKey()).get(nera.getText()).add(nera);
 			}
 		}
 		return Collections.unmodifiableMap(rbtm);
@@ -64,29 +116,61 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 	public static class Builder {
 
-		private final Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> retrievals = new HashMap<>();
+		private final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals = new HashMap<>();
+		private final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> individualRetrievals = new HashMap<>();
 
 		public Builder() {
 		}
 
-		public Builder addAnnotations(
-				Map<Class<? extends IOBIEThing>, Set<NELAnnotation>> namedEntityLinkingAnnotations) {
+		public Builder addClassAnnotations(
+				Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> namedEntityLinkingAnnotations) {
 
-			for (Entry<Class<? extends IOBIEThing>, Set<NELAnnotation>> annotationEntry : namedEntityLinkingAnnotations
+			for (Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> annotationEntry : namedEntityLinkingAnnotations
 					.entrySet()) {
 
-				final Set<NELAnnotation> annotations = retrievals.getOrDefault(annotationEntry.getKey(),
+				final Set<NERLClassAnnotation> annotations = classRetrievals.getOrDefault(annotationEntry.getKey(),
 						new HashSet<>());
 				annotations.addAll(annotationEntry.getValue());
-				retrievals.put(annotationEntry.getKey(), annotations);
+				classRetrievals.put(annotationEntry.getKey(), annotations);
+			}
+			return this;
+
+		}
+
+		public Builder addIndividualAnnotations(
+				Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> namedEntityLinkingAnnotations) {
+
+			for (Entry<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> annotationEntry : namedEntityLinkingAnnotations
+					.entrySet()) {
+
+				final Set<NERLIndividualAnnotation> annotations = individualRetrievals
+						.getOrDefault(annotationEntry.getKey(), new HashSet<>());
+				annotations.addAll(annotationEntry.getValue());
+				individualRetrievals.put(annotationEntry.getKey(), annotations);
 			}
 			return this;
 
 		}
 
 		public NamedEntityLinkingAnnotations build() {
-			return new NamedEntityLinkingAnnotations(retrievals);
+			return new NamedEntityLinkingAnnotations(classRetrievals, individualRetrievals);
 		}
+	}
+
+	/**
+	 * Returns the annotations for a given individual that surfaceForm matches the
+	 * given string.
+	 * 
+	 * @param individual
+	 * @return
+	 */
+	public Set<NERLIndividualAnnotation> getIndividualAnnotationsByTextMention(AbstractOBIEIndividual individual,
+			String surfaceForm) {
+
+		if (!individualRetrievalsByTextMention.containsKey(individual))
+			return null;
+
+		return individualRetrievalsByTextMention.get(individual).get(surfaceForm);
 	}
 
 	/**
@@ -96,12 +180,13 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return
 	 */
-	public Set<NELAnnotation> getAnnotationsByTextMention(Class<? extends IOBIEThing> classType, String surfaceForm) {
+	public Set<NERLClassAnnotation> getClassAnnotationsByTextMention(Class<? extends IOBIEThing> classType,
+			String surfaceForm) {
 
-		if (!retrievalsByTextMention.containsKey(classType))
+		if (!classRetrievalsByTextMention.containsKey(classType))
 			return null;
 
-		return retrievalsByTextMention.get(classType).get(surfaceForm);
+		return classRetrievalsByTextMention.get(classType).get(surfaceForm);
 	}
 
 	/**
@@ -110,9 +195,9 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return
 	 */
-	public Set<NELAnnotation> getAnnotationsBySemanticValues(Class<? extends IOBIEThing> classType) {
-		return retrievalsByDistinctSemanticValues.get(classType).values().stream().flatMap(v -> v.stream().limit(1))
-				.collect(Collectors.toSet());
+	public Set<NERLClassAnnotation> getClassAnnotationsBySemanticValues(Class<? extends IOBIEThing> classType) {
+		return classRetrievalsByDistinctSemanticValues.get(classType).values().stream()
+				.flatMap(v -> v.stream().limit(1)).collect(Collectors.toSet());
 	}
 
 	/**
@@ -121,8 +206,8 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return
 	 */
-	public Set<NELAnnotation> getAnnotations(Class<? extends IOBIEThing> classType) {
-		return retrievals.get(classType);
+	public Set<NERLClassAnnotation> getClassAnnotations(Class<? extends IOBIEThing> classType) {
+		return classRetrievals.get(classType);
 	}
 
 	/**
@@ -131,9 +216,8 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return
 	 */
-	public Set<NELAnnotation> getOrDefaultAnnotations(Class<? extends IOBIEThing> classType,
-			Set<NELAnnotation> defaultValue) {
-		return retrievals.getOrDefault(classType, defaultValue);
+	public Set<NERLIndividualAnnotation> getIndividualAnnotations(AbstractOBIEIndividual individual) {
+		return individualRetrievals.get(individual);
 	}
 
 	/**
@@ -143,8 +227,19 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classType
 	 * @return true if data is available, else false.
 	 */
-	public boolean containsAnnotations(Class<? extends IOBIEThing> classType) {
-		return retrievals.containsKey(classType) && !retrievals.get(classType).isEmpty();
+	public boolean containsClassAnnotations(Class<? extends IOBIEThing> classType) {
+		return classRetrievals.containsKey(classType) && !classRetrievals.get(classType).isEmpty();
+	}
+
+	/**
+	 * Checks whether this document contains annotation data for the given class
+	 * type
+	 * 
+	 * @param classType
+	 * @return true if data is available, else false.
+	 */
+	public boolean containsIndividualAnnotations(AbstractOBIEIndividual individual) {
+		return individualRetrievals.containsKey(individual) && !individualRetrievals.get(individual).isEmpty();
 	}
 
 	/**
@@ -153,26 +248,26 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @return Unmodifiable set of all class types.
 	 */
 	public Set<Class<? extends IOBIEThing>> getAvailableClassTypes() {
-		return retrievals.keySet();
-	}
-
-	public String toString() {
-		return "AbstractRegExNER [retrievals=" + retrievals + "]";
+		return classRetrievals.keySet();
 	}
 
 	/**
-	 * Returns the number of annotations that are available for a given class type.
+	 * Returns all class types for that are annotations are available.
 	 * 
-	 * @param classType
-	 * @return the number of annotations in the text fopr the given class type.
-	 *         Returns 0 if there is no entry.
+	 * @return Unmodifiable set of all class types.
 	 */
-	public int getNumberOfAnnotations(Class<? extends IOBIEThing> classType) {
-		return retrievals.containsKey(classType) ? retrievals.get(classType).size() : 0;
+	public Set<AbstractOBIEIndividual> getAvailableIndividualTypes() {
+		return individualRetrievals.keySet();
 	}
 
-	public int size() {
-		return retrievals.size();
+	@Override
+	public String toString() {
+		return "NamedEntityLinkingAnnotations [classRetrievals=" + classRetrievals + ", individualRetrievals="
+				+ individualRetrievals + "]";
+	}
+
+	public int numberOfTotalAnnotations() {
+		return classRetrievals.size() + individualRetrievals.size();
 	}
 
 }

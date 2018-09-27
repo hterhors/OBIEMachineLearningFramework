@@ -1,22 +1,20 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables;
 
-import java.io.Serializable;
-
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.dtinterpreter.IDatatypeInterpretation;
 
-public class NELAnnotation implements Serializable {
+public class NERLClassAnnotation implements INERLAnnotation {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final String NAMED_ENTITY_ANNOTATION_PREFIX = "NEL:";
+	private static final String NAMED_ENTITY_ANNOTATION_PREFIX = "NERL_Class_Annotation:";
 
 	final public String annotationID;
 
-	final public String textMention;
+	final public String text;
 
 	final public int onset;
 
@@ -24,19 +22,18 @@ public class NELAnnotation implements Serializable {
 
 	final public IDatatypeInterpretation semanticInterpretation;
 
-	public NELAnnotation(String mentionText, int offset, Class<? extends IOBIEThing> relatedSCIOClassType,
+	public NERLClassAnnotation(String text, int offset, Class<? extends IOBIEThing> relatedSCIOClassType,
 			IDatatypeInterpretation semanticInterpretation) {
 
 		this.semanticInterpretation = semanticInterpretation;
-		this.textMention = mentionText;
+		this.text = text;
 		this.onset = offset;
 		this.classType = relatedSCIOClassType;
-		this.annotationID = NAMED_ENTITY_ANNOTATION_PREFIX + relatedSCIOClassType.getSimpleName() + offset
-				+ mentionText;
+		this.annotationID = NAMED_ENTITY_ANNOTATION_PREFIX + relatedSCIOClassType.getSimpleName() + offset + text;
 	}
 
 	public String getDTValueIfAnyElseTextMention() {
-		return semanticInterpretation == null ? textMention : semanticInterpretation.normalize().asFormattedString();
+		return semanticInterpretation == null ? text : semanticInterpretation.normalize().asFormattedString();
 	}
 
 	@Override
@@ -55,7 +52,7 @@ public class NELAnnotation implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		NELAnnotation other = (NELAnnotation) obj;
+		NERLClassAnnotation other = (NERLClassAnnotation) obj;
 		if (annotationID == null) {
 			if (other.annotationID != null)
 				return false;
@@ -66,8 +63,18 @@ public class NELAnnotation implements Serializable {
 
 	@Override
 	public String toString() {
-		return "NEL [mentionText=" + textMention + ", onset=" + onset + ", rootClassType=" + classType.getSimpleName()
+		return "NERLClassAnnotation [text=" + text + ", onset=" + onset + ", rootClassType=" + classType.getSimpleName()
 				+ ", semanticInterpretation=" + semanticInterpretation + "]";
+	}
+
+	@Override
+	public String getText() {
+		return text;
+	}
+
+	@Override
+	public int getOnset() {
+		return onset;
 	}
 
 }

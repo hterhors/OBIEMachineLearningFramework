@@ -19,7 +19,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.HierarchyTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
 import learning.Vector;
@@ -61,8 +61,8 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
-			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getAnnotationInstance()));
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+			factors.addAll(addFactorRecursive(entity.rootClassType, entity.get()));
 		}
 		return factors;
 	}
@@ -111,7 +111,7 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 		final Class<? extends IOBIEThing>[] rootClassTypes = factor.getFactorScope().scioClass
 				.getAnnotation(SuperRootClasses.class).get();
 
-		final int hierarchy = OntologyAnalyzer.getHierarchy(parameter.environment.getOntologyThingInterface(),
+		final int hierarchy = OntologyAnalyzer.getHierarchy(parameter.projectEnvironment.getOntologyThingInterface(),
 				factor.getFactorScope().scioClass);
 
 		for (Class<? extends IOBIEThing> rootClass : rootClassTypes) {

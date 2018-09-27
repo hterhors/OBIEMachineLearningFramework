@@ -15,8 +15,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.TokenContextTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -106,9 +106,9 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			addFactorRecursive(factors, state.getInstance().getInstance(), entity.rootClassType,
-					entity.getAnnotationInstance());
+					entity.get());
 		}
 		return factors;
 	}
@@ -123,12 +123,12 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 		try {
 			if (enableDistantSupervision) {
-				if (internalInstance.getNamedEntityLinkingAnnotations().containsAnnotations(scioClass.getClass())) {
-					for (NELAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
-							.getAnnotations(scioClass.getClass())) {
+				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(scioClass.getClass())) {
+					for (NERLClassAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
+							.getClassAnnotations(scioClass.getClass())) {
 						positions.add(new Position(nera.classType,
 								internalInstance.charPositionToTokenPosition(nera.onset),
-								internalInstance.charPositionToTokenPosition(nera.onset + nera.textMention.length())));
+								internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
 					}
 				}
 			} else {

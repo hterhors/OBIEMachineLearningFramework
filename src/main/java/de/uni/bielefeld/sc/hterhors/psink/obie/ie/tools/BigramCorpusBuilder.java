@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.projects.AbstractOBIEProjectEnvironment;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.projects.AbstractProjectEnvironment;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.CorpusFileTools;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.ner.INamedEntitityLinker;
@@ -19,15 +19,15 @@ public class BigramCorpusBuilder {
 
 	public static boolean overrideCorpusFileIfExists = false;
 
-	public BigramCorpusBuilder(AbstractOBIEProjectEnvironment env, Set<Class<? extends INamedEntitityLinker>> linker,
-			final String corpusPrefix) throws Exception {
+	public BigramCorpusBuilder(AbstractProjectEnvironment env, Set<Class<? extends INamedEntitityLinker>> linker,
+			final String corpusPrefix, final int ontologyVersion) throws Exception {
 
 		log.info("Override-flag was set to: " + overrideCorpusFileIfExists + ", "
 				+ (overrideCorpusFileIfExists ? "existing corpus might be overriden!" : "corpus might not be saved."));
 
 		final BigramCorpusProvider corpusProvider = new BigramCorpusProvider(env.getRawCorpusFile(), linker);
 
-		storeCorpusToFile(corpusProvider, env, corpusPrefix);
+		storeCorpusToFile(corpusProvider, env, corpusPrefix, ontologyVersion);
 
 	}
 
@@ -38,12 +38,12 @@ public class BigramCorpusBuilder {
 	 * @param environment
 	 * @param corpusPrefixName
 	 */
-	private void storeCorpusToFile(final BigramCorpusProvider corpus, AbstractOBIEProjectEnvironment environment,
-			final String corpusPrefixName) {
+	private void storeCorpusToFile(final BigramCorpusProvider corpus, AbstractProjectEnvironment environment,
+			final String corpusPrefixName, final int ontologyVersion) {
 
 		final File corpusFile = CorpusFileTools.buildAnnotatedBigramCorpusFile(
 				environment.getBigramCorpusFileDirectory(), corpusPrefixName, corpus.getRawCorpus().getRootClasses(),
-				environment.getOntologyVersion());
+				ontologyVersion);
 
 		if (corpusFile.exists()) {
 			log.warn("Corpus file already exists under name: " + corpusFile);

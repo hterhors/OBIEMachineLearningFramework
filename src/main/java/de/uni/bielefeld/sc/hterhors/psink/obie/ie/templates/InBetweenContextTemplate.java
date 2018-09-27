@@ -19,8 +19,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.InBetweenContextTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -130,9 +130,9 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null,
-					entity.getAnnotationInstance());
+					entity.get());
 		}
 
 		return factors;
@@ -151,27 +151,27 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 			if (enableDistantSupervision) {
 
-				if (internalInstance.getNamedEntityLinkingAnnotations().containsAnnotations(child.getClass())
-						&& internalInstance.getNamedEntityLinkingAnnotations().containsAnnotations(parent.getClass())) {
-					Set<NELAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
-							.getAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
+				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(child.getClass())
+						&& internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(parent.getClass())) {
+					Set<NERLClassAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
+							.getClassAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
 
-					Set<NELAnnotation> childNeras;
+					Set<NERLClassAnnotation> childNeras;
 					if (child.getClass().isAnnotationPresent(DatatypeProperty.class)) {
 						childNeras = internalInstance.getNamedEntityLinkingAnnotations()
-								.getAnnotationsByTextMention(child.getClass(), child.getTextMention());
+								.getClassAnnotationsByTextMention(child.getClass(), child.getTextMention());
 					} else {
 						childNeras = internalInstance.getNamedEntityLinkingAnnotations()
-								.getAnnotations(child.getClass()).stream().collect(Collectors.toSet());
+								.getClassAnnotations(child.getClass()).stream().collect(Collectors.toSet());
 					}
 
 					if (childNeras != null) {
 
-						for (NELAnnotation parentNera : parentNeras) {
-							for (NELAnnotation childNera : childNeras) {
+						for (NERLClassAnnotation parentNera : parentNeras) {
+							for (NERLClassAnnotation childNera : childNeras) {
 
 								Integer fromPosition = Integer
-										.valueOf(parentNera.onset + parentNera.textMention.length());
+										.valueOf(parentNera.onset + parentNera.text.length());
 								Class<? extends IOBIEThing> classType1 = parentNera.classType;
 								Integer toPosition = Integer.valueOf(childNera.onset);
 								Class<? extends IOBIEThing> classType2 = childNera.classType;
@@ -179,7 +179,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 								 * Switch "from" and "to" if from is after to position.
 								 */
 								if (fromPosition > toPosition) {
-									fromPosition = Integer.valueOf(childNera.onset + childNera.textMention.length());
+									fromPosition = Integer.valueOf(childNera.onset + childNera.text.length());
 									classType1 = childNera.classType;
 
 									toPosition = Integer.valueOf(parentNera.onset);

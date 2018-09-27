@@ -22,7 +22,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.MainSlotVarietyTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
 import learning.Vector;
@@ -130,11 +130,11 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		 * If there is only one rootClass (e.g. OrganismModel) the entry of the map for
 		 * that class should be equal to state.getPredictedResult.getEntities().size();
 		 */
-		state.getCurrentPrediction().getEntityAnnotations().stream().forEach(a -> {
+		state.getCurrentPrediction().getTemplateAnnotations().stream().forEach(a -> {
 
-			countRootClasses.put(a.getAnnotationInstance().getClass(),
-					1 + countRootClasses.getOrDefault(a.getAnnotationInstance().getClass(), 0));
-			entityRootClassTypeMapper.put(a.getAnnotationInstance().getClass(), a.rootClassType);
+			countRootClasses.put(a.get().getClass(),
+					1 + countRootClasses.getOrDefault(a.get().getClass(), 0));
+			entityRootClassTypeMapper.put(a.get().getClass(), a.rootClassType);
 
 		});
 
@@ -149,9 +149,9 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			influencedVariables.put(ec.getKey(), new HashSet<>());
 		}
 
-		for (EntityAnnotation annotation : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation annotation : state.getCurrentPrediction().getTemplateAnnotations()) {
 
-			final IOBIEThing entityScioClass = annotation.getAnnotationInstance();
+			final IOBIEThing entityScioClass = annotation.get();
 
 			final int index = indexRootClassCounter.getOrDefault(entityScioClass.getClass(), 0);
 

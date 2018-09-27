@@ -1,7 +1,7 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.tests;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.CartesianSearchEvaluator;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.NamedEntityLinkingEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.PurityEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
@@ -14,14 +14,13 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
  */
 public class TestEvaluation {
 
-	final static private IEvaluator purityREevaluator = new PurityEvaluator(true, 1000, true,
+	final static private IOBIEEvaluator purityREevaluator = new PurityEvaluator(true, 1000, true,
 			InvestigationRestriction.noRestrictionInstance, 10, false);
 
-	final static private IEvaluator cartesianREevaluator = new CartesianSearchEvaluator(true, 1000, true,
+	final static private IOBIEEvaluator cartesianREevaluator = new CartesianSearchEvaluator(true, 1000, true,
 			InvestigationRestriction.noRestrictionInstance, 10, false);
 
-	final static private IEvaluator NERevaluator = new NamedEntityLinkingEvaluator(1000, true,
-			InvestigationRestriction.noRestrictionInstance, 7, false);
+	final static private IOBIEEvaluator NERevaluator = new NamedEntityLinkingEvaluator();
 
 //	public static void main(String[] args)
 //			throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {

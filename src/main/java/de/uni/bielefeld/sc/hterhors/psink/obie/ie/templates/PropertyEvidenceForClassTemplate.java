@@ -17,7 +17,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.PropertyEvidenceForClassTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -65,8 +65,8 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
-			addFactors(factors, entity.rootClassType, state.getInstance(), entity.getAnnotationInstance());
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+			addFactors(factors, entity.rootClassType, state.getInstance(), entity.get());
 		}
 		return factors;
 	}
@@ -121,7 +121,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 			if (relatedClassType.isAnnotationPresent(DatatypeProperty.class))
 				continue;
 			boolean evidenceExists = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
-					.containsAnnotations(relatedClassType);
+					.containsClassAnnotations(relatedClassType);
 
 			featureVector.set(String.format(TEMPLATE_0, relatedClassType.getSimpleName(),
 					factor.getFactorScope().relatedClassType.getSimpleName()), evidenceExists);

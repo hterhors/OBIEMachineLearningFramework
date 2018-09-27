@@ -22,8 +22,8 @@ import org.apache.logging.log4j.Logger;
 import corpus.SampledInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.TemplateExplorer;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.SlotFillerExplorer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.objfunc.REObjectiveFunction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.eval.EvaluatePrediction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
@@ -106,7 +106,7 @@ public class WEKABaseline {
 	 * The objective function which is used to score states during training. The
 	 * objective score determines the quality of the state.
 	 */
-	private IEvaluator objectiveFunction;
+	private IOBIEEvaluator objectiveFunction;
 
 	/**
 	 * The parameter that includes the templates and further information.
@@ -117,7 +117,7 @@ public class WEKABaseline {
 	 * The exploration strategy. TODO: incorporate multiple strategies like
 	 * cardinality explorer.
 	 */
-	private TemplateExplorer explorer;
+	private SlotFillerExplorer explorer;
 	/**
 	 * The list of templates, which where specified in the parameter.
 	 */
@@ -195,7 +195,7 @@ public class WEKABaseline {
 		/*
 		 * TODO: adjust parameter.
 		 */
-		explorer = new TemplateExplorer(parameter);
+		explorer = new SlotFillerExplorer(parameter);
 		corpusProvider = BigramCorpusProvider.loadCorpusFromFile(parameter);
 
 		objectiveFunction = parameter.evaluator;
@@ -478,8 +478,8 @@ public class WEKABaseline {
 
 			OBIEState previousState = new OBIEState(trainInstance, parameter);
 
-			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getEntityAnnotations().stream()
-					.map(e -> e.getAnnotationInstance()).collect(Collectors.toList());
+			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			List<OBIEState> previousStates = new ArrayList<>();
 
@@ -543,8 +543,8 @@ public class WEKABaseline {
 
 		selectedStates.forEach(newState -> {
 
-			List<IOBIEThing> prediction = newState.getCurrentPrediction().getEntityAnnotations().stream()
-					.map(e -> e.getAnnotationInstance()).collect(Collectors.toList());
+			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
 					newState.toTrainingPoint(trainingData, true).setScore(objectiveFunction.f1(gold, prediction)));
@@ -584,8 +584,8 @@ public class WEKABaseline {
 
 		previousStates.forEach(newState -> {
 
-			List<IOBIEThing> prediction = newState.getCurrentPrediction().getEntityAnnotations().stream()
-					.map(e -> e.getAnnotationInstance()).collect(Collectors.toList());
+			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
 					newState.toTrainingPoint(trainingData, true).setScore(objectiveFunction.f1(gold, prediction)));
@@ -631,8 +631,8 @@ public class WEKABaseline {
 		 * Score all states so we can sort them.
 		 */
 		for (OBIEState genState : generatedStates) {
-			final List<IOBIEThing> prediction = genState.getCurrentPrediction().getEntityAnnotations().stream()
-					.map(e -> e.getAnnotationInstance()).collect(Collectors.toList());
+			final List<IOBIEThing> prediction = genState.getCurrentPrediction().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 			genState.setObjectiveScore(objectiveFunction.f1(gold, prediction));
 		}
 		/*

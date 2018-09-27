@@ -20,7 +20,7 @@ public class InstanceEntityAnnotations implements Serializable {
 	 * 
 	 * key = UUID unique for PSINKAnnotation.
 	 */
-	private final Map<String, EntityAnnotation> entities = new HashMap<>();;
+	private final Map<String, TemplateAnnotation> entities = new HashMap<>();;
 
 	public InstanceEntityAnnotations() {
 	}
@@ -31,24 +31,24 @@ public class InstanceEntityAnnotations implements Serializable {
 	 * @param cloneFrom
 	 */
 	public InstanceEntityAnnotations(InstanceEntityAnnotations cloneFrom) {
-		for (EntityAnnotation e : cloneFrom.entities.values()) {
-			this.entities.put(e.annotationID, new EntityAnnotation(e));
+		for (TemplateAnnotation e : cloneFrom.entities.values()) {
+			this.entities.put(e.annotationID, new TemplateAnnotation(e));
 		}
 	}
 
-	public EntityAnnotation getEntity(String entityID) {
+	public TemplateAnnotation getEntity(String entityID) {
 		return entities.get(entityID);
 	}
 
-	public Collection<EntityAnnotation> getEntityAnnotations() {
+	public Collection<TemplateAnnotation> getTemplateAnnotations() {
 		return Collections.unmodifiableCollection(entities.values());
 	}
 
-	public void addAnnotation(EntityAnnotation entity) {
+	public void addAnnotation(TemplateAnnotation entity) {
 		entities.put(entity.annotationID, entity);
 	}
 
-	public void removeEntity(EntityAnnotation entity) {
+	public void removeEntity(TemplateAnnotation entity) {
 		entities.remove(entity.annotationID);
 	}
 
@@ -81,9 +81,9 @@ public class InstanceEntityAnnotations implements Serializable {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 
-		for (EntityAnnotation e : entities.values()) {
+		for (TemplateAnnotation e : entities.values()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getAnnotationInstance()
+			builder.append(OBIEClassFormatter.format(e.get()
 //					, investigationRestriction
 			));
 			builder.append("\n");

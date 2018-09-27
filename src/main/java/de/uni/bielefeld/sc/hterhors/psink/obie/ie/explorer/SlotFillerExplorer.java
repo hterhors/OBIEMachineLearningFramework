@@ -21,7 +21,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtil
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 
@@ -34,9 +34,9 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
  *
  * @date Mar 14, 2018
  */
-public class TemplateExplorer extends AbstractOBIEExplorer {
+public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
-	private static Logger log = LogManager.getFormatterLogger(TemplateExplorer.class.getName());
+	private static Logger log = LogManager.getFormatterLogger(SlotFillerExplorer.class.getName());
 
 	private final IExplorationCondition explorationCondition;
 
@@ -58,7 +58,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 	 */
 	private final boolean enableDiscourseProgression;
 
-	public TemplateExplorer(OBIERunParameter param) {
+	public SlotFillerExplorer(OBIERunParameter param) {
 		this.exploreClassesWithoutTextualEvidence = param.exploreClassesWithoutTextualEvidence;
 		if (param.explorationCondition != null)
 			this.explorationCondition = param.explorationCondition;
@@ -90,18 +90,18 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 		// System.out.println("Curtrent State: ");
 		// previousState.preFilledUsedObjects.forEach(System.out::println);
 		// System.out.println("################");
-		Collection<EntityAnnotation> annotations = new OBIEState(previousState).getCurrentPrediction()
-				.getEntityAnnotations();
-		for (EntityAnnotation psinkAnnotation : annotations) {
+		Collection<TemplateAnnotation> annotations = new OBIEState(previousState).getCurrentPrediction()
+				.getTemplateAnnotations();
+		for (TemplateAnnotation psinkAnnotation : annotations) {
 			try {
 
 				final int rootEntitySentenceIndex;
 				if (enableDiscourseProgression) {
-					if (psinkAnnotation.getAnnotationInstance().getCharacterOnset() == null) {
+					if (psinkAnnotation.get().getCharacterOnset() == null) {
 						rootEntitySentenceIndex = 0;
 					} else {
 						rootEntitySentenceIndex = previousState.getInstance()
-								.charPositionToToken(psinkAnnotation.getAnnotationInstance().getCharacterOnset())
+								.charPositionToToken(psinkAnnotation.get().getCharacterOnset())
 								.getSentenceIndex();
 					}
 				} else {
@@ -111,7 +111,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 				this.currentInstanceAnnotationID = psinkAnnotation.getAnnotationID();
 
 				for (StateInstancePair state : topDownRecursiveFieldFilling(previousState.getInstance(),
-						psinkAnnotation.getAnnotationInstance(), psinkAnnotation.rootClassType,
+						psinkAnnotation.get(), psinkAnnotation.rootClassType,
 						psinkAnnotation.rootClassType, rootEntitySentenceIndex, true)) {
 					generatedStates.add(state.state);
 				}
@@ -175,7 +175,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 				 * filled add null to set of pre filled templates.
 				 */
 				OBIEState generatedState = new OBIEState(this.currentState);
-				EntityAnnotation entity = generatedState.getCurrentPrediction()
+				TemplateAnnotation entity = generatedState.getCurrentPrediction()
 						.getEntity(this.currentInstanceAnnotationID);
 				entity.setAnnotationInstance(null);
 
@@ -329,7 +329,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 			final IOBIEThing clonedClass = OBIEUtils.deepConstructorClone(filledCandidateInstance);
 
 			OBIEState generatedState = new OBIEState(this.currentState);
-			EntityAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
+			TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
 
 			if (!wasNOTModByPreFilledTemplate) {
 				generatedState.addUsedPreFilledObject(filledCandidateInstance);
@@ -438,7 +438,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 			OBIEState generatedState = new OBIEState(this.currentState);
 			// System.out.println("Add: " + possibleElementValue.newInstance);
 			generatedState.addUsedPreFilledObject(possibleElementValue.instance);
-			EntityAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
+			TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
 
 			// System.out.println("Remove: " + childBaseClass);
 			generatedState.removeRecUsedPreFilledObject(
@@ -491,7 +491,7 @@ public class TemplateExplorer extends AbstractOBIEExplorer {
 				OBIEState generatedState = new OBIEState(this.currentState);
 				generatedState.addUsedPreFilledObject(modAtFieldClass.instance);
 
-				EntityAnnotation entity = generatedState.getCurrentPrediction()
+				TemplateAnnotation entity = generatedState.getCurrentPrediction()
 						.getEntity(this.currentInstanceAnnotationID);
 
 				generatedState.removeRecUsedPreFilledObject(childInstance);

@@ -147,7 +147,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			for (Entry<Class<? extends IOBIEThing>, List<IOBIEThing>> inits : parameter.initializationObjects
 					.entrySet()) {
 				for (IOBIEThing iobieThing : inits.getValue()) {
-					this.prediction.addAnnotation(new EntityAnnotation(inits.getKey(), iobieThing));
+					this.prediction.addAnnotation(new TemplateAnnotation(inits.getKey(), iobieThing));
 				}
 			}
 
@@ -164,7 +164,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			for (int i = 0; i < numOfEntities; i++) {
 				for (Class<? extends IOBIEThing> searchType : parameter.rootSearchTypes) {
 					for (IOBIEThing initInstance : getInitializingObject(instance, searchType, parameter.initializer)) {
-						this.prediction.addAnnotation(new EntityAnnotation(searchType, initInstance));
+						this.prediction.addAnnotation(new TemplateAnnotation(searchType, initInstance));
 					}
 				}
 			}
@@ -261,9 +261,9 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	public boolean tokenHasAnnotation(Token token) {
 
 		boolean containsAnnotation = false;
-		for (EntityAnnotation internalAnnotation : prediction.getEntityAnnotations()) {
+		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
 
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.getAnnotationInstance(),
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(),
 					(int) token.getFromCharPosition(), (int) token.getToCharPosition());
 
 			if (containsAnnotation)
@@ -382,16 +382,16 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("#OfAnnotations:");
-		builder.append(prediction.getEntityAnnotations().size());
+		builder.append(prediction.getTemplateAnnotations().size());
 		builder.append(" [");
 		builder.append(SCORE_FORMAT.format(modelScore));
 		builder.append("]: ");
 		builder.append(" [");
 		builder.append(SCORE_FORMAT.format(objectiveScore));
 		builder.append("]: ");
-		for (EntityAnnotation e : prediction.getEntityAnnotations()) {
+		for (TemplateAnnotation e : prediction.getTemplateAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getAnnotationInstance(), parameter.investigationRestriction));
+			builder.append(OBIEClassFormatter.format(e.get(), parameter.investigationRestriction));
 			builder.append("\n");
 		}
 		return builder.toString();

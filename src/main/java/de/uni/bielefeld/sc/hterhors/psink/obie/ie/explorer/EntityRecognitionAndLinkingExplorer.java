@@ -19,8 +19,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Impleme
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 
 public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
@@ -48,7 +48,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 	public List<OBIEState> getNextStates(OBIEState previousState) {
 		List<OBIEState> generatedStates = new ArrayList<OBIEState>();
 
-		if (previousState.getCurrentPrediction().getEntityAnnotations().size() >= maxNumberOfSampleElements) {
+		if (previousState.getCurrentPrediction().getTemplateAnnotations().size() >= maxNumberOfSampleElements) {
 			generatedStates.add(previousState);
 			return generatedStates;
 		}
@@ -111,9 +111,9 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 							 * used for comparison.
 							 */
 							if (classToAnnotate.isAnnotationPresent(DatatypeProperty.class)) {
-								final Set<NELAnnotation> ner = previousState.getInstance()
+								final Set<NERLClassAnnotation> ner = previousState.getInstance()
 										.getNamedEntityLinkingAnnotations()
-										.getAnnotationsByTextMention(classToAnnotate, originalText);
+										.getClassAnnotationsByTextMention(classToAnnotate, originalText);
 
 								final String value;
 								if (ner != null && !ner.isEmpty()) {
@@ -139,9 +139,8 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 							}
 
 							annotation.setCharacterOnset(charStartIndex);
-							annotation.setCharacterOffset(charEndIndex);
 
-							EntityAnnotation tokenAnnotation = new EntityAnnotation(classToAnnotate, annotation);
+							TemplateAnnotation tokenAnnotation = new TemplateAnnotation(classToAnnotate, annotation);
 
 							generatedState.getCurrentPrediction().addAnnotation(tokenAnnotation);
 							generatedStates.add(generatedState);

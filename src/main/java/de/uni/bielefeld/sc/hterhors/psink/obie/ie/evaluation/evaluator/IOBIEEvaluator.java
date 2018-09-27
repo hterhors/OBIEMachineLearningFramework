@@ -7,7 +7,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.IOrListCondition;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 
-public interface IEvaluator {
+public interface IOBIEEvaluator {
 
 	public PRF1 prf1(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions);
 

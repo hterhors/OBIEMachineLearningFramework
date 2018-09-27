@@ -22,7 +22,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtil
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 
@@ -115,15 +115,15 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 		// System.out.println(previousState);
 
-		Collection<EntityAnnotation> annotations = new OBIEState(previousState).getCurrentPrediction()
-				.getEntityAnnotations();
+		Collection<TemplateAnnotation> annotations = new OBIEState(previousState).getCurrentPrediction()
+				.getTemplateAnnotations();
 
-		for (EntityAnnotation psinkAnnotation : annotations) {
+		for (TemplateAnnotation psinkAnnotation : annotations) {
 			this.currentAnnotationID = psinkAnnotation.getAnnotationID();
 
 			List<StateInstancePair> generatedClasses = new ArrayList<>();
 
-			IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(psinkAnnotation.getAnnotationInstance());
+			IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(psinkAnnotation.get());
 
 			topDownRecursiveListCardinalityChanger(previousState.getInstance(), generatedClasses, clonedBaseClass,
 					clonedBaseClass, new ArrayList<FieldPath>());
@@ -267,7 +267,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					continue;
 
 				OBIEState generatedState = new OBIEState(this.currentState);
-				EntityAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentAnnotationID);
+				TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentAnnotationID);
 				entity.setAnnotationInstance(clonedBaseClass);
 
 				generatedState.removeRecUsedPreFilledObject(listOfClassesForField.get(i));
@@ -401,7 +401,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					// generatedClasses.add(clonedBaseClass);
 
 					OBIEState generatedState = new OBIEState(this.currentState);
-					EntityAnnotation entity = generatedState.getCurrentPrediction()
+					TemplateAnnotation entity = generatedState.getCurrentPrediction()
 							.getEntity(this.currentAnnotationID);
 					entity.setAnnotationInstance(clonedBaseClass);
 

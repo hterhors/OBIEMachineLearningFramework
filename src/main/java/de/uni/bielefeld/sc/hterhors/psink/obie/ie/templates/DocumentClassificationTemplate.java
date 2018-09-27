@@ -19,7 +19,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.DocumentClassificationTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -68,10 +68,10 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 		List<Scope> factors = new ArrayList<>();
 		state.getInstance().getTokens();
 
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 
 			factors.addAll(
-					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getAnnotationInstance()));
+					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
 
 		}
 		return factors;

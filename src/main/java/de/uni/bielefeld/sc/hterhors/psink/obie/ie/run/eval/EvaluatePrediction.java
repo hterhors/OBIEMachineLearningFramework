@@ -17,11 +17,11 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1Container;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.CartesianSearchEvaluator;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.NamedEntityLinkingEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction.RestrictedField;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -47,13 +47,13 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
-				if (!resultEntity.getAnnotationInstance().equals(initializingObject))
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+				if (!resultEntity.get().equals(initializingObject))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation goldEntity : goldState.getEntityAnnotations()) {
+			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
 				gold.get(key).add(new EvaluationObject(goldEntity, investigationRestriction));
 			}
 
@@ -112,7 +112,7 @@ public class EvaluatePrediction {
 	public static PRF1Container evaluateREPredictions(
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
 			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions,
-			IEvaluator evaluator) {
+			IOBIEEvaluator evaluator) {
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
 
@@ -124,13 +124,13 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
-				if (!resultEntity.getAnnotationInstance().equals(resultEntity.getInitializationClass()))
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation goldEntity : goldState.getEntityAnnotations()) {
+			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
 				gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
 			}
 
@@ -203,7 +203,7 @@ public class EvaluatePrediction {
 
 	public static double evaluatePurityPredictions(
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
-			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IEvaluator evaluator,
+			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IOBIEEvaluator evaluator,
 			InvestigationRestriction investigationRestriction) {
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
@@ -216,13 +216,13 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
-				if (!resultEntity.getAnnotationInstance().equals(resultEntity.getInitializationClass()))
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation goldEntity : goldState.getEntityAnnotations()) {
+			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
 				gold.get(key).add(new EvaluationObject(goldEntity, investigationRestriction));
 			}
 
@@ -274,7 +274,7 @@ public class EvaluatePrediction {
 
 	public static void evaluatePerSlotPredictions(
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
-			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IEvaluator evaluator,
+			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IOBIEEvaluator evaluator,
 			boolean detailedOutput) {
 
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
@@ -288,13 +288,13 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation resultEntity : prediction.getState().getCurrentPrediction().getEntityAnnotations()) {
-				if (!resultEntity.getAnnotationInstance().equals(resultEntity.getInitializationClass()))
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (EntityAnnotation goldEntity : goldState.getEntityAnnotations()) {
+			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
 				gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
 			}
 

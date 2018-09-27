@@ -21,7 +21,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.FrequencyTemplate.Sc
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils.FrequencyPair;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -99,9 +99,9 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getAnnotationInstance(),
+			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get(),
 					entity.rootClassType));
 
 		}

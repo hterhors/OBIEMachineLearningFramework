@@ -18,8 +18,8 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramInternalCorpus;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.OBIEClassFormatter;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
@@ -76,8 +76,8 @@ public class UpperBound {
 
 			System.out.println(doc.getName());
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getEntityAnnotations().stream()
-					.map(e -> (IOBIEThing) e.getAnnotationInstance()).collect(Collectors.toList());
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
+					.map(e -> (IOBIEThing) e.get()).collect(Collectors.toList());
 
 			List<IOBIEThing> maxRecallPredictions = getRecallPredictionsForType(doc);
 
@@ -85,7 +85,7 @@ public class UpperBound {
 			System.out.println("score = " + s);
 
 			for (Class<? extends IOBIEThing> clazz : doc.getNamedEntityLinkingAnnotations().getAvailableClassTypes()) {
-				System.out.println(doc.getNamedEntityLinkingAnnotations().getAnnotations(clazz));
+				System.out.println(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
 			}
 
 			upperBound.add(s);
@@ -113,8 +113,8 @@ public class UpperBound {
 		List<IOBIEThing> maxRecallPredictions = null;
 		maxRecallPredictions = projectGoldToPredictions(doc);
 		System.out.println("GoldAnnotations:");
-		doc.getGoldAnnotation().getEntityAnnotations()
-				.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getAnnotationInstance(), false)));
+		doc.getGoldAnnotation().getTemplateAnnotations()
+				.forEach(s -> System.out.println(OBIEClassFormatter.format(s.get(), false)));
 		System.out.println("____________________________");
 		System.out.println("Predicted:");
 		maxRecallPredictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
@@ -143,16 +143,16 @@ public class UpperBound {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
 
-		List<EntityAnnotation> goldAn = new ArrayList<>(goldInstance.getGoldAnnotation().getEntityAnnotations());
+		List<TemplateAnnotation> goldAn = new ArrayList<>(goldInstance.getGoldAnnotation().getTemplateAnnotations());
 		Collections.shuffle(goldAn);
 
 		int counter = 0;
 		boolean maxIsReached;
-		for (EntityAnnotation goldAnnotation : goldAn) {
+		for (TemplateAnnotation goldAnnotation : goldAn) {
 
 			maxIsReached = ++counter == MAX_CARDINALITY;
 			try {
-				IOBIEThing goldModel = (IOBIEThing) goldAnnotation.getAnnotationInstance();
+				IOBIEThing goldModel = (IOBIEThing) goldAnnotation.get();
 				IOBIEThing predictionModel = null;
 
 				if (goldModel.getClass().isAnnotationPresent(DatatypeProperty.class)) {
@@ -174,14 +174,14 @@ public class UpperBound {
 		return predictions;
 	}
 
-	private IOBIEThing projectDataTypeClass(OBIEInstance goldInstance, IOBIEThing goldModel,
-			IOBIEThing predictionModel) throws InstantiationException, IllegalAccessException {
-		if (goldInstance.getNamedEntityLinkingAnnotations().containsAnnotations(goldModel.getClass())) {
+	private IOBIEThing projectDataTypeClass(OBIEInstance goldInstance, IOBIEThing goldModel, IOBIEThing predictionModel)
+			throws InstantiationException, IllegalAccessException {
+		if (goldInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(goldModel.getClass())) {
 
-			NELAnnotation value = null;
+			NERLClassAnnotation value = null;
 
-			for (NELAnnotation mentionAnnotation : goldInstance.getNamedEntityLinkingAnnotations()
-					.getAnnotations(goldModel.getClass())) {
+			for (NERLClassAnnotation mentionAnnotation : goldInstance.getNamedEntityLinkingAnnotations()
+					.getClassAnnotations(goldModel.getClass())) {
 				if (mentionAnnotation.getDTValueIfAnyElseTextMention()
 						.equals(((IDataType) goldModel).getSemanticValue())) {
 					value = mentionAnnotation;
@@ -191,7 +191,7 @@ public class UpperBound {
 			if (value != null) {
 				try {
 					predictionModel = value.classType.getDeclaredConstructor(String.class, String.class, String.class)
-							.newInstance(null, value.textMention, value.getDTValueIfAnyElseTextMention());
+							.newInstance(null, value.text, value.getDTValueIfAnyElseTextMention());
 				} catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 						| SecurityException e) {
 					e.printStackTrace();
@@ -239,7 +239,7 @@ public class UpperBound {
 								 */
 								addClassesRecursivly(thing, property, ner);
 
-							} else if (ner.containsAnnotations(thing.getClass())) {
+							} else if (ner.containsClassAnnotations(thing.getClass())) {
 								/*
 								 * If class is DataTypeProperty we need the exact value.
 								 */
@@ -248,14 +248,14 @@ public class UpperBound {
 									 * Search for exact match... break on find.
 									 */
 									boolean found = false;
-									for (NELAnnotation mentionAnnotation : ner
-											.getAnnotations(thing.getClass())) {
+									for (NERLClassAnnotation mentionAnnotation : ner
+											.getClassAnnotations(thing.getClass())) {
 										if (mentionAnnotation.getDTValueIfAnyElseTextMention()
 												.equals(((IDataType) thing).getSemanticValue())) {
 											found = true;
 											values.add((IOBIEThing) mentionAnnotation.classType
 													.getDeclaredConstructor(String.class, String.class, String.class)
-													.newInstance(null, mentionAnnotation.textMention,
+													.newInstance(null, mentionAnnotation.text,
 															mentionAnnotation.getDTValueIfAnyElseTextMention()));
 											break;
 										}
@@ -323,17 +323,16 @@ public class UpperBound {
 							 * We call this method with the new added class recursively.
 							 */
 							addClassesRecursivly((IOBIEThing) field.get(goldModel), property, ner);
-						} else if (ner.containsAnnotations(scioFieldType)) {
+						} else if (ner.containsClassAnnotations(scioFieldType)) {
 							/*
 							 * If field is DataTypeProeprty we need an exact match.
 							 */
 							if (field.getType().isAnnotationPresent(DatatypeProperty.class)) {
-								NELAnnotation value = null;
+								NERLClassAnnotation value = null;
 								/*
 								 * Search for exact match. Break on find.
 								 */
-								for (NELAnnotation mentionAnnotation : ner
-										.getAnnotations(scioFieldType)) {
+								for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(scioFieldType)) {
 									if (mentionAnnotation.getDTValueIfAnyElseTextMention()
 											.equals(((IDataType) field.get(goldModel)).getSemanticValue())) {
 										value = mentionAnnotation;
@@ -346,11 +345,9 @@ public class UpperBound {
 								if (value != null) {
 									Field f = predictionModel.getClass().getDeclaredField(field.getName());
 									f.setAccessible(true);
-									f.set(predictionModel,
-											(value.classType
-													.getDeclaredConstructor(String.class, String.class, String.class)
-													.newInstance(null, value.getDTValueIfAnyElseTextMention(),
-															value.textMention)));
+									f.set(predictionModel, (value.classType
+											.getDeclaredConstructor(String.class, String.class, String.class)
+											.newInstance(null, value.getDTValueIfAnyElseTextMention(), value.text)));
 								} else {
 
 									System.out.println("WARN: Can not fill dt-field: " + field.getName() + ":"

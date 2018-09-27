@@ -17,7 +17,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.HeterogeneousSlotTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
 import learning.Vector;
@@ -75,19 +75,19 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		Map<Class<? extends IOBIEThing>, List<EntityAnnotation>> groupedBy = new HashMap<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		Map<Class<? extends IOBIEThing>, List<TemplateAnnotation>> groupedBy = new HashMap<>();
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			groupedBy.putIfAbsent(entity.rootClassType, new ArrayList<>());
 			groupedBy.get(entity.rootClassType).add(entity);
 
 		}
-		for (Entry<Class<? extends IOBIEThing>, List<EntityAnnotation>> entities : groupedBy.entrySet()) {
+		for (Entry<Class<? extends IOBIEThing>, List<TemplateAnnotation>> entities : groupedBy.entrySet()) {
 			factors.addAll(addFactor(entities.getKey(), entities.getValue()));
 		}
 		return factors;
 	}
 
-	private List<Scope> addFactor(Class<? extends IOBIEThing> entityRootClassType, List<EntityAnnotation> list) {
+	private List<Scope> addFactor(Class<? extends IOBIEThing> entityRootClassType, List<TemplateAnnotation> list) {
 		List<Scope> factors = new ArrayList<>();
 
 		if (list.isEmpty())
@@ -95,12 +95,12 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 
 		Map<Class<? extends IOBIEThing>, Map<String, Integer>> countBy = new HashMap<>();
 
-		for (EntityAnnotation ann : list) {
-			countBy.putIfAbsent(ann.getAnnotationInstance().getClass(), new HashMap<>());
-			if (ann.getAnnotationInstance().getClass().isAnnotationPresent(DatatypeProperty.class)) {
-				final String text = ((IDataType) ann.getAnnotationInstance()).getSemanticValue();
-				countBy.get(ann.getAnnotationInstance().getClass()).put(text,
-						countBy.get(ann.getAnnotationInstance().getClass()).getOrDefault(text, 0) + 1);
+		for (TemplateAnnotation ann : list) {
+			countBy.putIfAbsent(ann.get().getClass(), new HashMap<>());
+			if (ann.get().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+				final String text = ((IDataType) ann.get()).getSemanticValue();
+				countBy.get(ann.get().getClass()).put(text,
+						countBy.get(ann.get().getClass()).getOrDefault(text, 0) + 1);
 			}
 
 		}

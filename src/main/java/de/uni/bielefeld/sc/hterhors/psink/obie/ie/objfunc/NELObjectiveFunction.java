@@ -26,19 +26,19 @@ public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceE
 	@Override
 	public double computeScore(OBIEState state, InstanceEntityAnnotations goldResult) {
 
-		Set<String> gold = goldResult.getEntityAnnotations().stream().map(s -> {
-			if (s.getAnnotationInstance().getClass().isAnnotationPresent(DatatypeProperty.class)) {
-				return ((IDataType) s.getAnnotationInstance()).getSemanticValue();
+		Set<String> gold = goldResult.getTemplateAnnotations().stream().map(s -> {
+			if (s.get().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+				return ((IDataType) s.get()).getSemanticValue();
 			} else {
-				return s.getAnnotationInstance().getTextMention();
+				return s.get().getTextMention();
 			}
 		}).collect(Collectors.toSet());
 
-		Set<String> predictions = state.getCurrentPrediction().getEntityAnnotations().stream().map(s -> {
-			if (s.getAnnotationInstance().getClass().isAnnotationPresent(DatatypeProperty.class)) {
-				return ((IDataType) s.getAnnotationInstance()).getSemanticValue();
+		Set<String> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream().map(s -> {
+			if (s.get().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+				return ((IDataType) s.get()).getSemanticValue();
 			} else {
-				return s.getAnnotationInstance().getTextMention();
+				return s.get().getTextMention();
 			}
 		}).collect(Collectors.toSet());
 

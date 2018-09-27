@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyFieldNames;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubInterfaces;
@@ -24,7 +27,9 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Relatio
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NELAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.INERLAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLIndividualAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
 /**
@@ -176,6 +181,30 @@ public class ExplorationUtils {
 
 		addSlotTypeCandidates(instance, slotSuperType, candidates,
 				slotSuperType.getAnnotation(ImplementationClass.class).get(), exploreClassesWithoutTextualEvidence);
+
+		/*
+		 * TODO: insert
+		 */
+		try {
+			@SuppressWarnings("unchecked")
+			IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) slotSuperType
+					.getField("individualFactory").get(null);
+
+			Collection<AbstractOBIEIndividual> individuals = individualFactory.getIndividuals();
+
+			/*
+			 * Get all possible candidates for individuals and filter by mentions in the
+			 * text.
+			 */
+			for (AbstractOBIEIndividual individual : individuals) {
+				addSlotTypeIndividualCandidates(instance, slotSuperType, candidates, individual,
+						exploreClassesWithoutTextualEvidence);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		/*
 		 * Get all possible candidates and filter by mentions in the text.
 		 */
@@ -212,7 +241,7 @@ public class ExplorationUtils {
 		 * This happens if the direct interface is not an aux class but has subclasses
 		 * that are.
 		 */
-		if (exploreClassesWithoutTextualEvidence.contains(slotFillerType)
+		if (slotFillerType != null && exploreClassesWithoutTextualEvidence.contains(slotFillerType)
 				|| (isDifferentiableToAllSiblingClasses(slotFillerType, slotSuperType)
 						|| isAuxiliaryProperty(slotSuperType))) {
 			/**
@@ -241,18 +270,21 @@ public class ExplorationUtils {
 			 * If not we need explicit text mentions to create this class.
 			 */
 			/**
-			 * TODO: should this whole else part be executed always or just in else? Create
-			 * annotation for classes that do not need evidences?
+			 * TODO: PARAMETERIZE TODO: should this whole else part be executed always or
+			 * just in else? Create annotation for classes that do not need evidences?
 			 */
 			/*
 			 * 
-			 * Remember: Early pruning! Do not generate state where absolutely no evidence
-			 * is in the text.
+			 * Early pruning! Do not generate state where absolutely no evidence is in the
+			 * text. for either classes or individuals
 			 *
 			 */
-			if (!instance.getNamedEntityLinkingAnnotations().containsAnnotations(slotFillerType)) {
+
+			if (slotFillerType != null
+					&& !instance.getNamedEntityLinkingAnnotations().containsClassAnnotations(slotFillerType)) {
 				return;
 			}
+
 			/*
 			 * If the type is data type property then create an annotation instance for each
 			 * mention in the text.
@@ -261,11 +293,12 @@ public class ExplorationUtils {
 				/**
 				 * 
 				 */
-				for (NELAnnotation nera : instance.getNamedEntityLinkingAnnotations()
-						.getAnnotationsBySemanticValues(slotFillerType)) {
+				for (NERLClassAnnotation nera : instance.getNamedEntityLinkingAnnotations()
+						.getClassAnnotationsBySemanticValues(slotFillerType)) {
 					try {
 						IOBIEThing newInstance = createNewInstance(slotFillerType);
 						fillBasicFields(newInstance, nera);
+						fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
 						fillIDField(newInstance, nera.annotationID);
 						candidates.add(newInstance);
 					} catch (InstantiationException | IllegalAccessException | SecurityException
@@ -287,7 +320,53 @@ public class ExplorationUtils {
 					e.printStackTrace();
 				}
 			}
+
 		}
+	}
+
+	private static void addSlotTypeIndividualCandidates(OBIEInstance instance,
+			Class<? extends IOBIEThing> slotSuperType, Set<IOBIEThing> candidates,
+			AbstractOBIEIndividual individualCandidate,
+			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+
+		boolean keepIndividual = includeIndividualForSampling(individualCandidate);
+
+		if (!keepIndividual)
+			return;
+
+		/**
+		 * If not we need explicit text mentions to create this class.
+		 */
+		/**
+		 * TODO: PARAMETERIZE TODO: should this whole else part be executed always or
+		 * just in else? Create annotation for classes that do not need evidences?
+		 */
+		/*
+		 * 
+		 * Early pruning! Do not generate state where absolutely no evidence is in the
+		 * text. for either classes or individuals
+		 *
+		 */
+
+		if (individualCandidate != null
+				&& !instance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(individualCandidate)) {
+			return;
+		}
+
+		if (individualCandidate != null) {
+			/*
+			 * Else create exactly one instance without textual reference.
+			 */
+			try {
+				IOBIEThing newInstance = createNewIndividual(slotSuperType, individualCandidate);
+				fillIDField(newInstance, UUID.randomUUID().toString());
+				candidates.add(newInstance);
+			} catch (InstantiationException | IllegalAccessException | SecurityException | NoSuchFieldException
+					| IllegalArgumentException e) {
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 	private static void fillIDField(IOBIEThing newInstance, String annotationID)
@@ -319,6 +398,30 @@ public class ExplorationUtils {
 		 */
 		addFillerCandidates(instance, slotSuperType, candidates,
 				slotSuperType.getAnnotation(ImplementationClass.class).get(), exploreClassesWithoutTextualEvidence);
+
+		/**
+		 * TODO: insert
+		 */
+		try {
+			@SuppressWarnings("unchecked")
+			IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) slotSuperType
+					.getField("individualFactory").get(null);
+
+			Collection<AbstractOBIEIndividual> individuals = individualFactory.getIndividuals();
+
+			/*
+			 * Get all possible candidates for individuals and filter by mentions in the
+			 * text.
+			 */
+			for (AbstractOBIEIndividual individual : individuals) {
+				addFillerIndividualCandidates(instance, slotSuperType, candidates, individual,
+						exploreClassesWithoutTextualEvidence);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		/*
 		 * Get all possible candidates and filter by mentions in the text.
 		 */
@@ -329,6 +432,48 @@ public class ExplorationUtils {
 					exploreClassesWithoutTextualEvidence);
 		}
 		return candidates;
+	}
+
+	private static void addFillerIndividualCandidates(OBIEInstance psinkDocument,
+			Class<? extends IOBIEThing> baseClassType_interface, Set<IOBIEThing> candidates,
+			AbstractOBIEIndividual individual, Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+
+		boolean keepIndividual = includeIndividualForSampling(individual);
+
+		if (!keepIndividual)
+			return;
+
+		/**
+		 * TODO: should this be executed always or just in else? Create annotation for
+		 * classes that do not need evidences?
+		 */
+		/**
+		 * If not we need explicit text mentions to create this class.
+		 */
+		Set<NERLIndividualAnnotation> possibleNERAnnotations = psinkDocument.getNamedEntityLinkingAnnotations()
+				.getIndividualAnnotations(individual);
+		/*
+		 * 
+		 * Remember: Early pruning! Do not generate state where absolutely no evidence
+		 * is in the text.
+		 *
+		 */
+		if (possibleNERAnnotations == null) {
+			return;
+		}
+
+		for (NERLIndividualAnnotation nera : possibleNERAnnotations) {
+			try {
+
+				IOBIEThing newInstance = createNewIndividual(baseClassType_interface, individual);
+
+				fillBasicFields(newInstance, nera);
+				fillIDField(newInstance, nera.annotationID);
+				candidates.add(newInstance);
+			} catch (InstantiationException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private static void addFillerCandidates(OBIEInstance psinkDocument,
@@ -387,8 +532,8 @@ public class ExplorationUtils {
 			/**
 			 * If not we need explicit text mentions to create this class.
 			 */
-			Set<NELAnnotation> possibleNERAnnotations = psinkDocument.getNamedEntityLinkingAnnotations()
-					.getAnnotations(candidateType_class);
+			Set<NERLClassAnnotation> possibleNERAnnotations = psinkDocument.getNamedEntityLinkingAnnotations()
+					.getClassAnnotations(candidateType_class);
 			/*
 			 * 
 			 * Remember: Early pruning! Do not generate state where absolutely no evidence
@@ -399,18 +544,29 @@ public class ExplorationUtils {
 				return;
 			}
 
-			for (NELAnnotation nera : possibleNERAnnotations) {
+			for (NERLClassAnnotation nera : possibleNERAnnotations) {
 				try {
 
 					IOBIEThing newInstance = createNewInstance(candidateType_class);
 
 					fillBasicFields(newInstance, nera);
 					fillIDField(newInstance, nera.annotationID);
+					fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
 					candidates.add(newInstance);
 				} catch (InstantiationException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
 					e.printStackTrace();
 				}
 			}
+		}
+	}
+
+	private static void fillSemanticInterpretationField(IOBIEThing newInstance, String dtOrTextValue)
+			throws IllegalArgumentException, IllegalAccessException {
+		if (newInstance.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+
+			Field scioValueField = ReflectionUtils.getDeclaredFieldByName(newInstance.getClass(),
+					OntologyFieldNames.SEMANTIC_VALUE_FIELD_NAME);
+			scioValueField.set(newInstance, dtOrTextValue);
 		}
 	}
 
@@ -443,18 +599,37 @@ public class ExplorationUtils {
 		return newInstance;
 	}
 
-	private static void fillBasicFields(IOBIEThing genClass, NELAnnotation nera)
-			throws NoSuchFieldException, IllegalAccessException {
+	/**
+	 * Creates a new instance of the given class type. The new instance is then pre
+	 * filled with properties that are auxiliarily classes.
+	 * 
+	 * @param ipsinkThing
+	 * @return
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 */
+	private static IOBIEThing createNewIndividual(Class<? extends IOBIEThing> ipsinkThing,
+			AbstractOBIEIndividual individual) throws InstantiationException, IllegalAccessException {
+		IOBIEThing newInstance = (IOBIEThing) ipsinkThing.newInstance();
 
-		if (genClass.getClass().isAnnotationPresent(DatatypeProperty.class)) {
-			// Field scioValueField =
-			// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.SCIO_VALUE_FIELD);
-			// scioValueField.setAccessible(true);
+		Field individualField = ReflectionUtils.getDeclaredFieldByName(ipsinkThing, "individual");
+		individualField.set(newInstance, individual);
 
-			Field scioValueField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
-					OntologyFieldNames.SEMANTIC_VALUE_FIELD_NAME);
-			scioValueField.set(genClass, nera.getDTValueIfAnyElseTextMention());
+		for (Field field : ReflectionUtils.getDeclaredOntologyFields(newInstance.getClass())) {
+			/*
+			 * NOTE: Pre fill auxiliary fields as default.
+			 */
+			if (isAuxiliaryProperty(field.getType())) {
+				field.set(newInstance, field.getType().getAnnotation(ImplementationClass.class).get().newInstance());
+			}
 		}
+		return newInstance;
+	}
+
+	private static void fillBasicFields(IOBIEThing genClass, INERLAnnotation nera)
+			throws NoSuchFieldException, IllegalAccessException
+
+	{
 
 		// Field textMentionField =
 		// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.SCIO_TEXT_MENTION);
@@ -462,7 +637,7 @@ public class ExplorationUtils {
 
 		Field textMentionField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
 				OntologyFieldNames.TEXT_MENTION_FIELD_NAME);
-		textMentionField.set(genClass, nera.textMention);
+		textMentionField.set(genClass, nera.getText());
 
 		// Field offsetField =
 		// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.CHARACTER_OFFSET_FIELD);
@@ -470,7 +645,7 @@ public class ExplorationUtils {
 
 		Field offsetField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
 				OntologyFieldNames.CHARACTER_OFFSET_FIELD_NAME);
-		offsetField.set(genClass, Integer.valueOf(nera.onset + nera.textMention.length()));
+		offsetField.set(genClass, Integer.valueOf(nera.getOnset() + nera.getText().length()));
 
 		// Field onsetField =
 		// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.CHARACTER_ONSET_FIELD);
@@ -478,7 +653,7 @@ public class ExplorationUtils {
 
 		Field onsetField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
 				OntologyFieldNames.CHARACTER_ONSET_FIELD_NAME);
-		onsetField.set(genClass, Integer.valueOf(nera.onset));
+		onsetField.set(genClass, Integer.valueOf(nera.getOnset()));
 	}
 
 	/**
@@ -598,6 +773,11 @@ public class ExplorationUtils {
 		// .isAnnotationPresent(AssignableSubClasses.class))
 		// return false;
 
+		return true;
+	}
+
+	private static boolean includeIndividualForSampling(AbstractOBIEIndividual individualCandidate) {
+		// TODO Auto-generated method stub
 		return true;
 	}
 }

@@ -18,7 +18,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.InterTokenTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -81,8 +81,8 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.getAnnotationInstance());
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.get());
 		}
 
 		return factors;
@@ -149,13 +149,13 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 			/*
 			 * If DV is enabled add all surface forms of that class.
 			 */
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsAnnotations(filler.getClass())) {
+			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(filler.getClass())) {
 				if (filler.getClass().isAnnotationPresent(DatatypeProperty.class)) {
 					surfaceForms = new HashSet<>();
 					surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
 				} else {
-					surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getAnnotations(filler.getClass())
-							.stream().map(nera -> nera.textMention).collect(Collectors.toSet());
+					surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(filler.getClass())
+							.stream().map(nera -> nera.text).collect(Collectors.toSet());
 				}
 			} else {
 				return null;

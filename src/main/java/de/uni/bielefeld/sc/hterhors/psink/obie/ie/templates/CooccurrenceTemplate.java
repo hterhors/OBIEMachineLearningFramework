@@ -20,7 +20,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.CooccurrenceTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -131,9 +131,9 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		internalInstance = state.getInstance();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			entityRootClassType = entity.rootClassType;
-			addFactorRecursive(factors, entity.getAnnotationInstance());
+			addFactorRecursive(factors, entity.get());
 		}
 
 		return factors;
@@ -297,8 +297,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			/*
 			 * If DV is enabled add all surface forms of that class.
 			 */
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsAnnotations(filler.getClass())) {
-				surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getAnnotations(filler.getClass())
+			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(filler.getClass())) {
+				surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(filler.getClass())
 						.stream().map(nera -> nera.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet());
 			} else {
 				return null;

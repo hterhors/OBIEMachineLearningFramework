@@ -10,21 +10,29 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.IOrListCondition;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 
-public class NamedEntityLinkingEvaluator extends AbstractOBIEEvaluator {
+/**
+ * How to use this as evaluation but not extends abstract evaluator implementing
+ * all methods that are not necessary here.
+ * 
+ * @author hterhors
+ *
+ */
+public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
 
-	public NamedEntityLinkingEvaluator(int maxEvaluationDepth, boolean penalizeCardinality,
-			InvestigationRestriction sampleRestrictions, IOrListCondition scioOrListConditon,
-			final int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
-		super(false, penalizeCardinality, sampleRestrictions, scioOrListConditon, maxEvaluationDepth,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+	public NamedEntityLinkingEvaluator() {
 	}
 
-	public NamedEntityLinkingEvaluator(int maxEvaluationDepth, boolean penalizeCardinality,
-			InvestigationRestriction sampleRestrictions, final int maxNumberOfAnnotations,
-			final boolean ignoreEmptyInstancesOnEvaluation) {
-		this(maxEvaluationDepth, penalizeCardinality, sampleRestrictions, f -> false, maxNumberOfAnnotations,
-				ignoreEmptyInstancesOnEvaluation);
-	}
+//	public NamedEntityLinkingEvaluator(int maxEvaluationDepth, boolean penalizeCardinality,
+//			InvestigationRestriction sampleRestrictions, IOrListCondition scioOrListConditon,
+//			final int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
+//	}
+//
+//	public NamedEntityLinkingEvaluator(int maxEvaluationDepth, boolean penalizeCardinality,
+//			InvestigationRestriction sampleRestrictions, final int maxNumberOfAnnotations,
+//			final boolean ignoreEmptyInstancesOnEvaluation) {
+//		this(maxEvaluationDepth, penalizeCardinality, sampleRestrictions, f -> false, maxNumberOfAnnotations,
+//				ignoreEmptyInstancesOnEvaluation);
+//	}
 
 	public static <E> double microPrecision(double tp, double fp, double fn) {
 		return tp / (tp + fp);
@@ -158,8 +166,48 @@ public class NamedEntityLinkingEvaluator extends AbstractOBIEEvaluator {
 		return f1(new HashSet<>(gold), new HashSet<>(predictions));
 	}
 
+	/**
+	 * TODO: they are obsolete here but how to model?
+	 */
+
+	@Override
+	public boolean isIgnoreEmptyInstancesOnEvaluation() {
+		return false;
+	}
+
+	@Override
+	public boolean isPenalizeCardinality() {
+		return false;
+	}
+
+	@Override
+	public InvestigationRestriction getInvestigationRestrictions() {
+		return null;
+	}
+
+	@Override
+	public IOrListCondition getOrListCondition() {
+		return null;
+	}
+
+	@Override
+	public int getMaxEvaluationDepth() {
+		return 0;
+	}
+
+	@Override
+	public boolean isEnableCaching() {
+		return false;
+	}
+
+	@Override
+	public int getMaxNumberOfAnnotations() {
+		return 0;
+	}
+
 	@Override
 	public void clearCache() {
+
 	}
 
 }

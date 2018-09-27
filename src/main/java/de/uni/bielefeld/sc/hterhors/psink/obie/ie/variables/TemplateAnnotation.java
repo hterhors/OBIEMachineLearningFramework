@@ -12,14 +12,14 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.utils.OBIEUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.OBIEClassFormatter;
 
-public class EntityAnnotation implements Serializable {
+public class TemplateAnnotation implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public EntityAnnotation(EntityAnnotation e) {
+	public TemplateAnnotation(TemplateAnnotation e) {
 		this.rootClassType = e.rootClassType;
 		this.obieAnnotation = OBIEUtils.deepConstructorClone(e.obieAnnotation);
 		this.annotationID = e.annotationID;
@@ -68,7 +68,7 @@ public class EntityAnnotation implements Serializable {
 	 */
 	private final IOBIEThing initClass;
 
-	public EntityAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass) {
+	public TemplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass) {
 		this.initClass = OBIEUtils.deepConstructorClone(obieClass);
 		this.rootClassType = rootClassType;
 		this.annotationID = UUID.randomUUID().toString();
@@ -80,7 +80,7 @@ public class EntityAnnotation implements Serializable {
 		this.obieAnnotation = annotationInstance;
 	}
 
-	public IOBIEThing getAnnotationInstance() {
+	public IOBIEThing get() {
 		return obieAnnotation;
 	}
 
@@ -105,7 +105,7 @@ public class EntityAnnotation implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		EntityAnnotation other = (EntityAnnotation) obj;
+		TemplateAnnotation other = (TemplateAnnotation) obj;
 		if (annotationID == null) {
 			if (other.annotationID != null)
 				return false;

@@ -20,7 +20,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalLocalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.utils.ClassTypePositionPair;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.EntityAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -69,10 +69,10 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (EntityAnnotation entity : state.getCurrentPrediction().getEntityAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			try {
 				factors.addAll(
-						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getAnnotationInstance()));
+						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
@@ -188,14 +188,14 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Get all annotation mentions for original class type 1.
 		 */
-		List<Integer> mentionsForClass1 = document.getNamedEntityLinkingAnnotations().getAnnotations(class1Type)
+		List<Integer> mentionsForClass1 = document.getNamedEntityLinkingAnnotations().getClassAnnotations(class1Type)
 				.stream().map(m -> document.charPositionToTokenPosition(m.onset)).collect(Collectors.toList());
 
 		/*
 		 * Get all annotation mentions for original class type 2.
 		 */
 		List<Integer> mentionsForClass2 = new ArrayList<>(
-				document.getNamedEntityLinkingAnnotations().getAnnotations(factor.getFactorScope().class1.classType))
+				document.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().class1.classType))
 						.stream().map(m -> document.charPositionToTokenPosition(m.onset)).collect(Collectors.toList());
 
 		double closestClassDistance = Integer.MAX_VALUE;
