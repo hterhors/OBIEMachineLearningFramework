@@ -47,7 +47,8 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
+					.getTemplateAnnotations()) {
 				if (!resultEntity.get().equals(initializingObject))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
@@ -124,7 +125,8 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
+					.getTemplateAnnotations()) {
 				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
@@ -203,8 +205,8 @@ public class EvaluatePrediction {
 
 	public static double evaluatePurityPredictions(
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
-			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IOBIEEvaluator evaluator,
-			InvestigationRestriction investigationRestriction) {
+			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions,
+			IOBIEEvaluator evaluator, InvestigationRestriction investigationRestriction) {
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
 
@@ -216,7 +218,8 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
+					.getTemplateAnnotations()) {
 				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
@@ -274,8 +277,8 @@ public class EvaluatePrediction {
 
 	public static void evaluatePerSlotPredictions(
 			ObjectiveFunction<OBIEState, InstanceEntityAnnotations> objectiveFunction,
-			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions, IOBIEEvaluator evaluator,
-			boolean detailedOutput) {
+			List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions,
+			IOBIEEvaluator evaluator, boolean detailedOutput) {
 
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
@@ -288,7 +291,8 @@ public class EvaluatePrediction {
 			final String key = resultState.getName();
 
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction().getTemplateAnnotations()) {
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
+					.getTemplateAnnotations()) {
 				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}

@@ -1,25 +1,18 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.instances.EmptyOBIEInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.IOrListCondition;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 
 /**
  * Beam Search with parameterized beam size.
@@ -32,25 +25,30 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 
 	public static Logger log = LogManager.getFormatterLogger(BeamSearchEvaluator.class.getSimpleName());
 
-//	/**
-//	 * We need this to compare lists of data types efficiently.
-//	 */
-//	private final NamedEntityLinkingEvaluator listOfDataTypesEvaluator;
+	private final int beamSize;
 
-	private static final int BEAM_SIZE = 100;
-
-	public BeamSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, int maxNumberOfAnnotations,
+	/**
+	 * Creates a new BeamSearchEvaluator. Searches the best assignment using the
+	 * beam search algorithm. A beam size of <code>infinite</code> results in a
+	 * Cartesian search complexity!
+	 * 
+	 * @param beamSize                         the beam size use negative for
+	 *                                         unlimited.
+	 * @param enableCaching
+	 * @param maxEvaluationDepth
+	 * @param penalizeCardinality
+	 * @param investigationRestrictions
+	 * @param orListCondition
+	 * @param maxNumberOfAnnotations
+	 * @param ignoreEmptyInstancesOnEvaluation
+	 */
+	public BeamSearchEvaluator(final int beamSize, boolean enableCaching, final int maxEvaluationDepth,
+			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			IOrListCondition orListCondition, int maxNumberOfAnnotations,
 			final boolean ignoreEmptyInstancesOnEvaluation) {
-		this(enableCaching, maxEvaluationDepth, penalizeCardinality, investigationRestrictions, f -> false,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
-	}
-
-	public BeamSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, IOrListCondition orListCondition,
-			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
 		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
 				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+		this.beamSize = beamSize < 1 ? Integer.MAX_VALUE : beamSize;
 	}
 
 	@Override
@@ -174,7 +172,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 
 		assignments.add(new BeamAssignmentTree(gold, prediction));
 
-		final BeamAssignmentTree bestAssignments = beamExploration(assignments, BEAM_SIZE, depth).get(0);
+		final BeamAssignmentTree bestAssignments = beamExploration(assignments, beamSize, depth).get(0);
 
 		return bestAssignments.overallSimiliarity;
 	}

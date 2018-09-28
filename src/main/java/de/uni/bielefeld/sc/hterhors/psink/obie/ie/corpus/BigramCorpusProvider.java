@@ -305,12 +305,12 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
 			}).reduce("", String::concat));
 			i.set(0);
-			log.debug("Development documents (" + developmentDocuments.size() + ")");
+			log.info("Development documents (" + developmentDocuments.size() + ")");
 			log.debug(developmentDocuments.stream().map(d -> {
 				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
 			}).reduce("", String::concat));
 			i.set(0);
-			log.debug("Test documents (" + testDocuments.size() + ")");
+			log.info("Test documents (" + testDocuments.size() + ")");
 			log.debug(testDocuments.stream().map(d -> {
 				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
 			}).reduce("", String::concat));

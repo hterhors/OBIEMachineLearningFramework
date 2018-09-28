@@ -313,27 +313,14 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				if (wasNOTModByPreFilledTemplate = (candidateInstances = currentState
 						.getPreFilledTemplates(slotSuperType)) == null) {
 
-					candidateInstances = new HashSet<>();
-
 					candidateInstances = ExplorationUtils.getCandidates(document, slotSuperType,
 							exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
-
-//					if (exploreOnOntologyLevel) {
-//					} else {
-//						candidateInstances = ExplorationUtils.getSlotFillerCandidates(document, slotSuperType,
-//								exploreClassesWithoutTextualEvidence);
-//					}
 
 				}
 			} else {
 
 				candidateInstances = ExplorationUtils.getCandidates(document, slotSuperType,
 						exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
-//					if (exploreOnOntologyLevel) {
-//				} else {
-//					candidateInstances = ExplorationUtils.getSlotFillerCandidates(document, slotSuperType,
-//							exploreClassesWithoutTextualEvidence);
-//				}
 
 			}
 
