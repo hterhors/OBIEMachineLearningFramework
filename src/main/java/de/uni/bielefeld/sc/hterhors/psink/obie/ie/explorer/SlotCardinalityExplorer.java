@@ -147,9 +147,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void topDownRecursiveListCardinalityChanger(OBIEInstance document,
-			List<StateInstancePair> generatedClasses, IOBIEThing baseClass, IOBIEThing classToModify,
-			List<FieldPath> previousFieldPath) {
+	private void topDownRecursiveListCardinalityChanger(OBIEInstance document, List<StateInstancePair> generatedClasses,
+			IOBIEThing baseClass, IOBIEThing classToModify, List<FieldPath> previousFieldPath) {
 		if (baseClass == null)
 			return;
 
@@ -316,24 +315,25 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 					candidateInstances = new HashSet<>();
 
-					if (exploreOnOntologyLevel) {
-						candidateInstances = ExplorationUtils.getSlotTypeCandidates(document, slotSuperType,
-								exploreClassesWithoutTextualEvidence);
-					} else {
-						candidateInstances = ExplorationUtils.getSlotFillerCandidates(document, slotSuperType,
-								exploreClassesWithoutTextualEvidence);
-					}
+					candidateInstances = ExplorationUtils.getCandidates(document, slotSuperType,
+							exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
+
+//					if (exploreOnOntologyLevel) {
+//					} else {
+//						candidateInstances = ExplorationUtils.getSlotFillerCandidates(document, slotSuperType,
+//								exploreClassesWithoutTextualEvidence);
+//					}
 
 				}
 			} else {
 
-				if (exploreOnOntologyLevel) {
-					candidateInstances = ExplorationUtils.getSlotTypeCandidates(document, slotSuperType,
-							exploreClassesWithoutTextualEvidence);
-				} else {
-					candidateInstances = ExplorationUtils.getSlotFillerCandidates(document, slotSuperType,
-							exploreClassesWithoutTextualEvidence);
-				}
+				candidateInstances = ExplorationUtils.getCandidates(document, slotSuperType,
+						exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
+//					if (exploreOnOntologyLevel) {
+//				} else {
+//					candidateInstances = ExplorationUtils.getSlotFillerCandidates(document, slotSuperType,
+//							exploreClassesWithoutTextualEvidence);
+//				}
 
 			}
 

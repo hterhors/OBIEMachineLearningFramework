@@ -101,8 +101,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 						rootEntitySentenceIndex = 0;
 					} else {
 						rootEntitySentenceIndex = previousState.getInstance()
-								.charPositionToToken(psinkAnnotation.get().getCharacterOnset())
-								.getSentenceIndex();
+								.charPositionToToken(psinkAnnotation.get().getCharacterOnset()).getSentenceIndex();
 					}
 				} else {
 					rootEntitySentenceIndex = 0;
@@ -111,8 +110,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				this.currentInstanceAnnotationID = psinkAnnotation.getAnnotationID();
 
 				for (StateInstancePair state : topDownRecursiveFieldFilling(previousState.getInstance(),
-						psinkAnnotation.get(), psinkAnnotation.rootClassType,
-						psinkAnnotation.rootClassType, rootEntitySentenceIndex, true)) {
+						psinkAnnotation.get(), psinkAnnotation.rootClassType, psinkAnnotation.rootClassType,
+						rootEntitySentenceIndex, true)) {
 					generatedStates.add(state.state);
 				}
 
@@ -276,40 +275,64 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			 * For all values for field:
 			 */
 
-			if (exploreOnOntologyLevel) {
-				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getSlotTypeCandidates(internalInstance,
-						slotSuperType, exploreClassesWithoutTextualEvidence)) {
-					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
-							baseInstance);
-					candidateInstances.add(emptyCandidateInstance);
-				}
-			} else {
-				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getSlotFillerCandidates(internalInstance,
-						slotSuperType, exploreClassesWithoutTextualEvidence)) {
+			for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(internalInstance, slotSuperType,
+					exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel)) {
 
-					if (enableDiscourseProgression) {
-						/**
-						 * If the discourse progression is enabled we do not want to sample for slot
-						 * candidates which are mentioned before their parent class. This holds only
-						 * true for the rootClass.
-						 */
-						if (emptyCandidateInstance.getCharacterOnset() != null) {
-							final int slotEntitySentenceIndex = internalInstance
-									.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
-							if (rootEntitySentenceIndex > slotEntitySentenceIndex) {
-								continue;
-							}
+				if (!exploreOnOntologyLevel && enableDiscourseProgression) {
+					/**
+					 * If the discourse progression is enabled we do not want to sample for slot
+					 * candidates which are mentioned before their parent class. This is only true
+					 * for the rootClass. TODO: Why?
+					 */
+					if (emptyCandidateInstance.getCharacterOnset() != null) {
+						final int slotEntitySentenceIndex = internalInstance
+								.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
+						if (rootEntitySentenceIndex > slotEntitySentenceIndex) {
+							continue;
 						}
-
 					}
 
-					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
-							baseInstance);
-
-					candidateInstances.add(emptyCandidateInstance);
 				}
 
+				emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance, baseInstance);
+				candidateInstances.add(emptyCandidateInstance);
+
 			}
+//			if (exploreOnOntologyLevel) {
+//				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(internalInstance,
+//						slotSuperType, exploreClassesWithoutTextualEvidence,exploreOnOntologyLevel)) {
+//					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
+//							baseInstance);
+//					candidateInstances.add(emptyCandidateInstance);
+//					
+//				}
+//			} else {
+//				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(internalInstance,
+//						slotSuperType, exploreClassesWithoutTextualEvidence,exploreOnOntologyLevel)) {
+//
+//					if (enableDiscourseProgression) {
+//						/**
+//						 * If the discourse progression is enabled we do not want to sample for slot
+//						 * candidates which are mentioned before their parent class. This holds only
+//						 * true for the rootClass.
+//						 */
+//						if (emptyCandidateInstance.getCharacterOnset() != null) {
+//							final int slotEntitySentenceIndex = internalInstance
+//									.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
+//							if (rootEntitySentenceIndex > slotEntitySentenceIndex) {
+//								continue;
+//							}
+//						}
+//
+//					}
+//
+//					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
+//							baseInstance);
+//
+//					candidateInstances.add(emptyCandidateInstance);
+//				}
+//
+//			}
 		}
 		/*
 		 * Basic fields are already set. Only OntologyModelContent fields are missing.
@@ -329,7 +352,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			final IOBIEThing clonedClass = OBIEUtils.deepConstructorClone(filledCandidateInstance);
 
 			OBIEState generatedState = new OBIEState(this.currentState);
-			TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
+			TemplateAnnotation entity = generatedState.getCurrentPrediction()
+					.getEntity(this.currentInstanceAnnotationID);
 
 			if (!wasNOTModByPreFilledTemplate) {
 				generatedState.addUsedPreFilledObject(filledCandidateInstance);
@@ -438,7 +462,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			OBIEState generatedState = new OBIEState(this.currentState);
 			// System.out.println("Add: " + possibleElementValue.newInstance);
 			generatedState.addUsedPreFilledObject(possibleElementValue.instance);
-			TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentInstanceAnnotationID);
+			TemplateAnnotation entity = generatedState.getCurrentPrediction()
+					.getEntity(this.currentInstanceAnnotationID);
 
 			// System.out.println("Remove: " + childBaseClass);
 			generatedState.removeRecUsedPreFilledObject(

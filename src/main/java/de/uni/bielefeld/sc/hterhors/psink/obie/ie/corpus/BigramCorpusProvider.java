@@ -156,7 +156,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		log.info("Sucessfully applied all NEL-tools. Found " + countEntities.get() + " entities in "
 				+ rawCorpus.getAllInstanceNames().size() + " instances");
 
-		log.info("Check annotation for errors...");
+		log.info("Check for errors...");
 
 		checkAnnotationConsistencies(internalInstances);
 
@@ -300,16 +300,18 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 					}).reduce("", String::concat));
 		} else {
 			final AtomicInteger i = new AtomicInteger(0);
-			log.debug("Training documents (" + trainingDocuments.size() + "):\n" + trainingDocuments.stream().map(d -> {
+			log.info("Training documents (" + trainingDocuments.size() + ")");
+			log.debug(trainingDocuments.stream().map(d -> {
 				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
 			}).reduce("", String::concat));
 			i.set(0);
-			log.debug("Development documents (" + developmentDocuments.size() + "):\n"
-					+ developmentDocuments.stream().map(d -> {
-						return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
-					}).reduce("", String::concat));
+			log.debug("Development documents (" + developmentDocuments.size() + ")");
+			log.debug(developmentDocuments.stream().map(d -> {
+				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
+			}).reduce("", String::concat));
 			i.set(0);
-			log.debug("Test documents (" + testDocuments.size() + "):\n" + testDocuments.stream().map(d -> {
+			log.debug("Test documents (" + testDocuments.size() + ")");
+			log.debug(testDocuments.stream().map(d -> {
 				return d.getName() + " " + (i.incrementAndGet() % 10 == 0 ? "\n" : "");
 			}).reduce("", String::concat));
 		}

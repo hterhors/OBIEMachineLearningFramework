@@ -92,9 +92,6 @@ public abstract class AbstractOBIERunner {
 		this.parameter = parameter;
 		log.debug("Parameter: " + this.parameter.toInfoString());
 
-		/*
-		 * TODO: Insert after java class generation was changed
-		 */
 		log.info("Initialize ontological classes for individual-factories...");
 
 		OntologyInitializer.initializeOntology(parameter.ontologyEnvironment);

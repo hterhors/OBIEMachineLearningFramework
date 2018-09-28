@@ -150,7 +150,8 @@ public class InitializerUtils {
 		final String textValue;
 		final String dtValue;
 		if (random) {
-			final Set<NERLClassAnnotation> candidates = instance.getNamedEntityLinkingAnnotations().getClassAnnotations(slotSuperType);
+			final Set<NERLClassAnnotation> candidates = instance.getNamedEntityLinkingAnnotations()
+					.getClassAnnotations(slotSuperType);
 			if (candidates != null && !candidates.isEmpty()) {
 				int index = rand.nextInt(candidates.size());
 				Iterator<NERLClassAnnotation> iter = candidates.iterator();
@@ -178,8 +179,8 @@ public class InitializerUtils {
 			final Class<? extends IOBIEThing> slotSuperType) throws InstantiationException, IllegalAccessException {
 		final IOBIEThing value;
 		if (random) {
-			Set<IOBIEThing> candidates = ExplorationUtils.getSlotFillerCandidates(instance, slotSuperType,
-					new HashSet<>());
+			Set<IOBIEThing> candidates = ExplorationUtils.getCandidates(instance, slotSuperType, new HashSet<>(),
+					false);
 			if (candidates != null && !candidates.isEmpty()) {
 				int index = rand.nextInt(candidates.size());
 				Iterator<IOBIEThing> iter = candidates.iterator();

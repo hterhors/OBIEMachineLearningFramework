@@ -2,9 +2,11 @@ package de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +15,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import org.apache.commons.collections.set.SynchronizedSet;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
@@ -47,6 +47,7 @@ public class ExplorationUtils {
 	private static final Map<Class<? extends IOBIEThing>, Map<Class<? extends IOBIEThing>, Boolean>> isDifferentiableToAllSiblingsCache = new ConcurrentHashMap<>();
 
 	private ExplorationUtils() {
+
 	}
 
 	/**
@@ -148,11 +149,7 @@ public class ExplorationUtils {
 						toField.set(copyToClass, null);
 				}
 
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			} catch (SecurityException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
@@ -166,63 +163,104 @@ public class ExplorationUtils {
 	 * least one evidence in the text or is in the exploreWithoutEvidence list.
 	 * 
 	 * @param instance
-	 * @param slotSuperType
-	 * @param exploreClassesWithoutTextualEvidence
+	 * @param slotSuperType_interface              the class-type interface of the
+	 *                                             slot
+	 * @param exploreClassesWithoutTextualEvidence a set of classes that should be
+	 *                                             explored without textual evidence
+	 * @param typeCandidates                       if the candidate generation
+	 *                                             should be only on ontological
+	 *                                             level and not on mention level
 	 * @return
 	 */
-	public static Set<IOBIEThing> getSlotTypeCandidates(OBIEInstance instance,
-			Class<? extends IOBIEThing> slotSuperType,
-			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+	public static Set<IOBIEThing> getCandidates(OBIEInstance instance,
+			Class<? extends IOBIEThing> slotSuperType_interface,
+			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence, boolean typeCandidates) {
 
-		Set<IOBIEThing> candidates = new HashSet<>();
-		/*
-		 * Add candidate for root super class
-		 */
+		final Set<IOBIEThing> candidates = new HashSet<>();
 
-		if (!slotSuperType.isAnnotationPresent(ImplementationClass.class)) {
+		if (!slotSuperType_interface.isAnnotationPresent(ImplementationClass.class)) {
 			return candidates;
 		}
 
-		addSlotTypeClassCandidates(instance, slotSuperType, candidates,
-				slotSuperType.getAnnotation(ImplementationClass.class).get(), exploreClassesWithoutTextualEvidence);
-
-		/*
-		 * TODO: insert
-		 */
-		if (!IDatatype.class.isAssignableFrom(slotSuperType)) {
+		if (!IDatatype.class.isAssignableFrom(slotSuperType_interface)) {
 			try {
 
-				@SuppressWarnings("unchecked")
-				IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) slotSuperType
-						.getAnnotation(ImplementationClass.class).get()
-						.getField(OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null);
-
-				Collection<AbstractOBIEIndividual> individuals = individualFactory.getIndividuals();
+				final Collection<AbstractOBIEIndividual> individuals = getCollectionOfindividuals(
+						slotSuperType_interface);
 
 				/*
 				 * Get all possible candidates for individuals and filter by mentions in the
 				 * text.
 				 */
 				for (AbstractOBIEIndividual individual : individuals) {
-					addSlotTypeIndividualCandidates(instance,
-							slotSuperType.getAnnotation(ImplementationClass.class).get(), candidates, individual,
-							exploreClassesWithoutTextualEvidence);
+
+					if (typeCandidates) {
+						addSlotTypeIndividualCandidates(instance,
+								slotSuperType_interface.getAnnotation(ImplementationClass.class).get(), candidates,
+								individual, exploreClassesWithoutTextualEvidence);
+					} else {
+						addFillerIndividualCandidates(instance,
+								slotSuperType_interface.getAnnotation(ImplementationClass.class).get(), candidates,
+								individual, exploreClassesWithoutTextualEvidence);
+					}
+
 				}
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+
+		/*
+		 * Add candidate for root super class
+		 */
+		if (typeCandidates) {
+			addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
+					slotSuperType_interface.getAnnotation(ImplementationClass.class).get(),
+					exploreClassesWithoutTextualEvidence);
+		} else {
+			addFillerCandidates(instance, slotSuperType_interface, candidates,
+					slotSuperType_interface.getAnnotation(ImplementationClass.class).get(),
+					exploreClassesWithoutTextualEvidence);
+		}
+
 		/*
 		 * Get all possible candidates and filter by mentions in the text.
 		 */
-		for (Class<? extends IOBIEThing> slotFillerType : slotSuperType.getAnnotation(AssignableSubInterfaces.class)
-				.get()) {
-			addSlotTypeClassCandidates(instance, slotSuperType, candidates,
-					slotFillerType.getAnnotation(ImplementationClass.class).get(),
-					exploreClassesWithoutTextualEvidence);
+		for (Class<? extends IOBIEThing> slotFillerType : slotSuperType_interface
+				.getAnnotation(AssignableSubInterfaces.class).get()) {
+			if (typeCandidates) {
+				addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
+						slotFillerType.getAnnotation(ImplementationClass.class).get(),
+						exploreClassesWithoutTextualEvidence);
+			} else {
+				addFillerCandidates(instance, slotSuperType_interface, candidates,
+						slotFillerType.getAnnotation(ImplementationClass.class).get(),
+						exploreClassesWithoutTextualEvidence);
+			}
 		}
 		return candidates;
+	}
+
+	/**
+	 * Given an ontological class this method returns a collection of all possible
+	 * individuals that are of the class type.
+	 * 
+	 * @param slotSuperType_interface
+	 * @return
+	 * @throws IllegalAccessException
+	 */
+	private static Collection<AbstractOBIEIndividual> getCollectionOfindividuals(
+			Class<? extends IOBIEThing> slotSuperType_interface) throws IllegalAccessException {
+		final Class<? extends IOBIEThing> clazz = slotSuperType_interface.getAnnotation(ImplementationClass.class)
+				.get();
+
+		@SuppressWarnings("unchecked")
+		final IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
+				.getDeclaredFieldByName(clazz, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null);
+
+		final Collection<AbstractOBIEIndividual> individuals = individualFactory.getIndividuals();
+		return individuals;
 	}
 
 	private static void addSlotTypeClassCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
@@ -332,155 +370,6 @@ public class ExplorationUtils {
 		}
 	}
 
-	private static void addSlotTypeIndividualCandidates(OBIEInstance instance,
-			Class<? extends IOBIEThing> slotSuperType, Set<IOBIEThing> candidates,
-			AbstractOBIEIndividual individualCandidate,
-			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
-
-		if (individualCandidate == null)
-			return;
-
-		boolean keepIndividual = includeIndividualForSampling(individualCandidate);
-
-		if (!keepIndividual)
-			return;
-
-		/**
-		 * If not we need explicit text mentions to create this class.
-		 */
-
-		/*
-		 * 
-		 * TODO: Early pruning! Do not generate state where absolutely no evidence is in
-		 * the text. for either classes or individuals
-		 *
-		 */
-		if (!instance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(individualCandidate)) {
-			return;
-		}
-
-		/*
-		 * Else create exactly one instance without textual reference.
-		 */
-		try {
-
-			IOBIEThing newInstance = newIndividual(slotSuperType, individualCandidate);
-			fillIDField(newInstance, UUID.randomUUID().toString());
-			candidates.add(newInstance);
-
-		} catch (InstantiationException | IllegalAccessException | SecurityException | NoSuchFieldException
-				| IllegalArgumentException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	private static void fillIDField(IOBIEThing newInstance, String annotationID)
-			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		// Field annotationIDField =
-		// newInstance.getClass().getDeclaredField(AbstractOntologyEnvironment.ANNOTATION_ID_FIELD);
-		// annotationIDField.setAccessible(true);
-
-		Field annotationIDField = ReflectionUtils.getDeclaredFieldByName(newInstance.getClass(),
-				OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
-		annotationIDField.set(newInstance, annotationID);
-	}
-
-	/**
-	 * Returns candidates based on the evidences in the text.
-	 * 
-	 * @param instance
-	 * @param slotSuperType
-	 * @param exploreClassesWithoutTextualEvidence
-	 * @return
-	 */
-	public static Set<IOBIEThing> getSlotFillerCandidates(OBIEInstance instance,
-			Class<? extends IOBIEThing> slotSuperType,
-			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
-
-		Set<IOBIEThing> candidates = new HashSet<>();
-		/*
-		 * Add candidate for root super class
-		 */
-		addFillerCandidates(instance, slotSuperType, candidates,
-				slotSuperType.getAnnotation(ImplementationClass.class).get(), exploreClassesWithoutTextualEvidence);
-
-		/**
-		 * TODO: insert
-		 */
-		if (!IDatatype.class.isAssignableFrom(slotSuperType)) {
-			try {
-
-				@SuppressWarnings("unchecked")
-				IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) slotSuperType
-						.getAnnotation(ImplementationClass.class).get()
-						.getField(OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null);
-
-				Collection<AbstractOBIEIndividual> individuals = individualFactory.getIndividuals();
-
-				/*
-				 * Get all possible candidates for individuals and filter by mentions in the
-				 * text.
-				 */
-				for (AbstractOBIEIndividual individual : individuals) {
-					addFillerIndividualCandidates(instance,
-							slotSuperType.getAnnotation(ImplementationClass.class).get(), candidates, individual,
-							exploreClassesWithoutTextualEvidence);
-				}
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		/*
-		 * Get all possible candidates and filter by mentions in the text.
-		 */
-		for (Class<? extends IOBIEThing> slotFillerType : slotSuperType.getAnnotation(AssignableSubInterfaces.class)
-				.get()) {
-			addFillerCandidates(instance, slotSuperType, candidates,
-					slotFillerType.getAnnotation(ImplementationClass.class).get(),
-					exploreClassesWithoutTextualEvidence);
-		}
-		return candidates;
-	}
-
-	private static void addFillerIndividualCandidates(OBIEInstance instance,
-			Class<? extends IOBIEThing> baseClassType_class, Set<IOBIEThing> candidates,
-			AbstractOBIEIndividual individual, Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
-
-		boolean keepIndividual = includeIndividualForSampling(individual);
-
-		if (!keepIndividual)
-			return;
-
-		/**
-		 * If not we need explicit text mentions to create this class.
-		 */
-		Set<NERLIndividualAnnotation> possibleNERAnnotations = instance.getNamedEntityLinkingAnnotations()
-				.getIndividualAnnotations(individual);
-		/*
-		 * 
-		 * Remember: Early pruning! Do not generate state where absolutely no evidence
-		 * is in the text.
-		 *
-		 */
-		if (possibleNERAnnotations == null) {
-			return;
-		}
-
-		for (NERLIndividualAnnotation nera : possibleNERAnnotations) {
-			try {
-				IOBIEThing newThing = newIndividual(baseClassType_class, individual);
-				fillBasicFields(newThing, nera);
-				fillIDField(newThing, nera.annotationID);
-				candidates.add(newThing);
-			} catch (InstantiationException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	private static void addFillerCandidates(OBIEInstance psinkDocument,
 			Class<? extends IOBIEThing> baseClassType_interface, Set<IOBIEThing> candidates,
 			Class<? extends IOBIEThing> candidateType_class,
@@ -564,6 +453,100 @@ public class ExplorationUtils {
 			}
 		}
 	}
+
+	
+	
+	
+	private static void addSlotTypeIndividualCandidates(OBIEInstance instance,
+			Class<? extends IOBIEThing> slotSuperType, Set<IOBIEThing> candidates,
+			AbstractOBIEIndividual individualCandidate,
+			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+
+		if (individualCandidate == null)
+			return;
+
+		boolean keepIndividual = includeIndividualForSampling(individualCandidate);
+
+		if (!keepIndividual)
+			return;
+
+		/**
+		 * If not we need explicit text mentions to create this class.
+		 */
+
+		/*
+		 * 
+		 * TODO: Early pruning! Do not generate state where absolutely no evidence is in
+		 * the text. for either classes or individuals
+		 *
+		 */
+		if (!instance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(individualCandidate)) {
+			return;
+		}
+
+		/*
+		 * Else create exactly one instance without textual reference.
+		 */
+		try {
+
+			IOBIEThing newInstance = newIndividual(slotSuperType, individualCandidate);
+			fillIDField(newInstance, UUID.randomUUID().toString());
+			candidates.add(newInstance);
+
+		} catch (InstantiationException | IllegalAccessException | SecurityException | NoSuchFieldException
+				| IllegalArgumentException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private static void fillIDField(IOBIEThing newInstance, String annotationID)
+			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		// Field annotationIDField =
+		// newInstance.getClass().getDeclaredField(AbstractOntologyEnvironment.ANNOTATION_ID_FIELD);
+		// annotationIDField.setAccessible(true);
+
+		Field annotationIDField = ReflectionUtils.getDeclaredFieldByName(newInstance.getClass(),
+				OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
+		annotationIDField.set(newInstance, annotationID);
+	}
+
+	private static void addFillerIndividualCandidates(OBIEInstance instance,
+			Class<? extends IOBIEThing> baseClassType_class, Set<IOBIEThing> candidates,
+			AbstractOBIEIndividual individual, Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+
+		boolean keepIndividual = includeIndividualForSampling(individual);
+
+		if (!keepIndividual)
+			return;
+
+		/**
+		 * If not we need explicit text mentions to create this class.
+		 */
+		Set<NERLIndividualAnnotation> possibleNERAnnotations = instance.getNamedEntityLinkingAnnotations()
+				.getIndividualAnnotations(individual);
+		/*
+		 * 
+		 * Remember: Early pruning! Do not generate state where absolutely no evidence
+		 * is in the text.
+		 *
+		 */
+		if (possibleNERAnnotations == null) {
+			return;
+		}
+
+		for (NERLIndividualAnnotation nera : possibleNERAnnotations) {
+			try {
+				IOBIEThing newThing = newIndividual(baseClassType_class, individual);
+				fillBasicFields(newThing, nera);
+				fillIDField(newThing, nera.annotationID);
+				candidates.add(newThing);
+			} catch (InstantiationException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 
 	private static void fillSemanticInterpretationField(IOBIEThing newInstance, String dtOrTextValue)
 			throws IllegalArgumentException, IllegalAccessException {

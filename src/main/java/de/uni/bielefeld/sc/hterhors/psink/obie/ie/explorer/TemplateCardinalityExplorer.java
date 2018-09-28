@@ -81,14 +81,13 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 				continue;
 			}
 
-			final Set<IOBIEThing> candidates;
-			if (exploreOnOntologyLevel) {
-				candidates = ExplorationUtils.getSlotTypeCandidates(previousState.getInstance(), rootTemplateType,
-						exploreClassesWithoutTextualEvidence);
-			} else {
-				candidates = ExplorationUtils.getSlotFillerCandidates(previousState.getInstance(), rootTemplateType,
-						exploreClassesWithoutTextualEvidence);
-			}
+			final Set<IOBIEThing> candidates = ExplorationUtils.getCandidates(previousState.getInstance(),
+					rootTemplateType, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
+//			if (exploreOnOntologyLevel) {
+//			} else {
+//				candidates = ExplorationUtils.getSlotFillerCandidates(previousState.getInstance(), rootTemplateType,
+//						exploreClassesWithoutTextualEvidence);
+//			}
 
 			for (IOBIEThing candidateClass : candidates) {
 				final OBIEState generatedState = new OBIEState(previousState);
