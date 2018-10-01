@@ -46,7 +46,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 	 *
 	 * @date Oct 11, 2017
 	 */
-	class FieldPath {
+	class SlotPath {
 		/**
 		 * The index of the object that holds this field in the upper list of objects.
 		 */
@@ -57,7 +57,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 		 */
 		final public Field field;
 
-		public FieldPath(int listIndex, Field field) {
+		public SlotPath(int listIndex, Field field) {
 			this.objectsListIndex = listIndex;
 			this.field = field;
 		}
@@ -126,7 +126,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 			IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(psinkAnnotation.get());
 
 			topDownRecursiveListCardinalityChanger(previousState.getInstance(), generatedClasses, clonedBaseClass,
-					clonedBaseClass, new ArrayList<FieldPath>());
+					clonedBaseClass, new ArrayList<SlotPath>());
 			// topDownRecursiveListCardinalityChanger(previousState.getInstance(),
 			// generatedClasses,
 			// psinkAnnotation.getAnnotationInstance());
@@ -148,7 +148,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void topDownRecursiveListCardinalityChanger(OBIEInstance document, List<StateInstancePair> generatedClasses,
-			IOBIEThing baseClass, IOBIEThing classToModify, List<FieldPath> previousFieldPath) {
+			IOBIEThing baseClass, IOBIEThing classToModify, List<SlotPath> previousFieldPath) {
 		if (baseClass == null)
 			return;
 
@@ -184,8 +184,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 						int index = 0;
 						for (IOBIEThing thing : (List<IOBIEThing>) field.get(classToModify)) {
-							List<FieldPath> fieldPath = new ArrayList<>(previousFieldPath);
-							fieldPath.add(new FieldPath(index, field));
+							List<SlotPath> fieldPath = new ArrayList<>(previousFieldPath);
+							fieldPath.add(new SlotPath(index, field));
 							topDownRecursiveListCardinalityChanger(document, generatedClasses, baseClass, thing,
 									fieldPath);
 							index++;
@@ -201,8 +201,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				 * the field to check whether the child class contains oneToMany relations.
 				 */
 				try {
-					List<FieldPath> fieldPath = new ArrayList<>(previousFieldPath);
-					fieldPath.add(new FieldPath(0, field));
+					List<SlotPath> fieldPath = new ArrayList<>(previousFieldPath);
+					fieldPath.add(new SlotPath(0, field));
 					topDownRecursiveListCardinalityChanger(document, generatedClasses, baseClass,
 							(IOBIEThing) field.get(classToModify), fieldPath);
 				} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -215,7 +215,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void removeInstanceFromList(List<StateInstancePair> generatedClasses, IOBIEThing baseClass,
-			IOBIEThing listHoldingClass, Field field, List<FieldPath> fieldPath) {
+			IOBIEThing listHoldingClass, Field field, List<SlotPath> fieldPath) {
 
 		List<IOBIEThing> listOfClassesForField;
 		try {
@@ -288,10 +288,10 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 	}
 
-	private boolean addNewInstanceToList(OBIEInstance document, List<StateInstancePair> generatedClasses,
-			IOBIEThing baseClass, IOBIEThing listHoldingClass, Field field, List<FieldPath> fieldPath) {
+	private boolean addNewInstanceToList(OBIEInstance instance, List<StateInstancePair> generatedThings,
+			IOBIEThing baseThing, IOBIEThing listHoldingThing, Field slot, List<SlotPath> slotPath) {
 
-		if (baseClass == null)
+		if (baseThing == null)
 			return true;
 
 		try {
@@ -300,7 +300,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 			 * Get class type of generic list.
 			 */
 			@SuppressWarnings("unchecked")
-			Class<? extends IOBIEThing> slotSuperType = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
+			Class<? extends IOBIEThing> slotSuperType = ((Class<? extends IOBIEThing>) ((ParameterizedType) slot
 					.getGenericType()).getActualTypeArguments()[0]);
 
 			Set<IOBIEThing> candidateInstances;
@@ -313,13 +313,13 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				if (wasNOTModByPreFilledTemplate = (candidateInstances = currentState
 						.getPreFilledTemplates(slotSuperType)) == null) {
 
-					candidateInstances = ExplorationUtils.getCandidates(document, slotSuperType,
+					candidateInstances = ExplorationUtils.getCandidates(instance, slotSuperType,
 							exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
 
 				}
 			} else {
 
-				candidateInstances = ExplorationUtils.getCandidates(document, slotSuperType,
+				candidateInstances = ExplorationUtils.getCandidates(instance, slotSuperType,
 						exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
 
 			}
@@ -328,9 +328,9 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 			 * Generate states for lists of objects. Change just one element of the list.
 			 */
 			@SuppressWarnings("unchecked")
-			List<IOBIEThing> oldList = (ArrayList<IOBIEThing>) field.get(listHoldingClass);
+			List<IOBIEThing> oldList = (ArrayList<IOBIEThing>) slot.get(listHoldingThing);
 
-			if (field.isAnnotationPresent(DatatypeProperty.class)
+			if (slot.isAnnotationPresent(DatatypeProperty.class)
 					&& oldList.size() >= maxNumberOfDataTypeElementsInList) {
 				return wasNOTModByPreFilledTemplate;
 			}
@@ -369,16 +369,16 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					 * Clone base class. Modify list by following the fieldPath to the list to get
 					 * clonedListHoldingClass.
 					 */
-					IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(baseClass);
+					IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(baseThing);
 
-					IOBIEThing clonedListHoldingClass = getListHoldingClassByFieldPath(fieldPath, clonedBaseClass);
+					IOBIEThing clonedListHoldingClass = getListHoldingClassByFieldPath(slotPath, clonedBaseClass);
 
 					/*
 					 * Add new list to the list holding class which is a property of the cloned base
 					 * class.
 					 */
 					Field genClassField = ReflectionUtils.getDeclaredFieldByName(clonedListHoldingClass.getClass(),
-							field.getName());
+							slot.getName());
 					genClassField.set(clonedListHoldingClass, newList);
 
 					/*
@@ -397,7 +397,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					// System.out.println("Candidate: " +
 					// generatedState.preFilledUsedObjects);
 
-					generatedClasses.add(new StateInstancePair(generatedState, candidateClass));
+					generatedThings.add(new StateInstancePair(generatedState, candidateClass));
 
 				} catch (SecurityException | IllegalAccessException e) {
 					e.printStackTrace();
@@ -426,10 +426,10 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	private IOBIEThing getListHoldingClassByFieldPath(List<FieldPath> fieldPath, IOBIEThing clonedBaseClass)
+	private IOBIEThing getListHoldingClassByFieldPath(List<SlotPath> fieldPath, IOBIEThing clonedBaseClass)
 			throws IllegalAccessException {
 		IOBIEThing clonedListHoldingClass = clonedBaseClass;
-		for (FieldPath f : fieldPath) {
+		for (SlotPath f : fieldPath) {
 			if (f.field.isAnnotationPresent(RelationTypeCollection.class)) {
 				clonedListHoldingClass = (IOBIEThing) ((List<IOBIEThing>) f.field.get(clonedListHoldingClass))
 						.get(f.objectsListIndex);

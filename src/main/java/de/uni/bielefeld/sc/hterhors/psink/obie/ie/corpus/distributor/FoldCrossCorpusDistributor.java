@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.ShuffleCorpusDistributor.Builder;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
 /**
@@ -40,8 +41,8 @@ public class FoldCrossCorpusDistributor extends AbstractCorpusDistributor {
 	 */
 	public final int n;
 
-	private FoldCrossCorpusDistributor(int n, long seed) {
-		log.info("Create new corpus diributor of type " + this.getClass().getName());
+	private FoldCrossCorpusDistributor(float corpusSizeFraction, int n, long seed) {
+		super(corpusSizeFraction);
 
 		this.n = n;
 		this.seed = seed;
@@ -86,20 +87,31 @@ public class FoldCrossCorpusDistributor extends AbstractCorpusDistributor {
 		}
 
 		public FoldCrossCorpusDistributor build() {
-			return new FoldCrossCorpusDistributor(n, seed);
+			return new FoldCrossCorpusDistributor(corpusSizeFraction, n, seed);
 		};
 
+		@Override
+		protected Builder getDistributor() {
+			return this;
+		}
 	}
 
 	@Override
 	public Distributor distributeInstances(BigramCorpusProvider corpusProvider) {
-		log.info("Number of instances per fold: " + corpusProvider.internalInstances.size() / n);
+		log.info("Number of instances per fold: " + corpusProvider.allExistingInternalInstances.size() / n);
 
 		return new Distributor() {
 
 			@Override
 			public Distributor distributeTrainingInstances(List<OBIEInstance> l) {
-				l.addAll(corpusProvider.internalInstances);
+
+				for (OBIEInstance obieInstance : corpusProvider.allExistingInternalInstances) {
+					final float fraction = (float) l.size() / corpusProvider.allExistingInternalInstances.size();
+
+					if (fraction >= corpusSizeFraction)
+						break;
+					l.add(obieInstance);
+				}
 				return this;
 			}
 

@@ -2,7 +2,9 @@ package de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,8 +63,10 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 
 	private NamedEntityLinkingAnnotations namedEntityLinkingAnnotations;
 
+	public final Set<Class<? extends IOBIEThing>> rootClassTypes;
+
 	public OBIEInstance(final String documentName, final String documentContent,
-			final InstanceEntityAnnotations goldAnnotations, Set<Class<? extends IOBIEThing>> goldRootClassTypes) {
+			final InstanceEntityAnnotations goldAnnotations, Set<Class<? extends IOBIEThing>> rootClassTypes) {
 		this.goldAnnotation = goldAnnotations;
 
 		this.name = documentName;
@@ -75,6 +79,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 			fromPositionTokens.put(token.getFromCharPosition(), token);
 			toPositionTokens.put(token.getToCharPosition(), token);
 		}
+		this.rootClassTypes = Collections.unmodifiableSet(new HashSet<>(rootClassTypes));
 	}
 
 	private List<String> getDocumentSentences(String rawDocumentContent) {

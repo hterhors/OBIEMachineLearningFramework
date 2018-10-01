@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +23,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.CartesianSearchEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.exceptions.NotSupportedException;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.ner.INamedEntitityLinker;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.eval.EvaluatePrediction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.EScorerType;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
@@ -34,6 +37,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.stopcrit.sampling.StopAtRepeat
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.AbstractOBIETemplate;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ModelFileNameUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import exceptions.UnkownTemplateRequestedException;
@@ -298,36 +302,97 @@ public abstract class AbstractOBIERunner {
 		return t;
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictOnTest() throws IOException,
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnTest() throws IOException,
 			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
-		return predict(corpusProvider.getTestCorpus().getInternalInstances());
+		return test(corpusProvider.getTestCorpus().getInternalInstances());
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictOnTrain()
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnTrain() throws IOException,
+			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
+		return test(corpusProvider.getTrainingCorpus().getInternalInstances());
+	}
+
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testInstance(OBIEInstance instance)
 			throws IOException, FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException,
 			Exception {
-		return predict(corpusProvider.getTrainingCorpus().getInternalInstances());
-	}
-
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictInstance(
-			OBIEInstance instance) throws IOException, FileNotFoundException, ClassNotFoundException,
-			UnkownTemplateRequestedException, Exception {
 		final List<OBIEInstance> instances = new ArrayList<>();
 		instances.add(instance);
-		return predict(instances);
+		return test(instances);
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictInstances(
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testInstances(
 			List<OBIEInstance> instances) throws IOException, FileNotFoundException, ClassNotFoundException,
 			UnkownTemplateRequestedException, Exception {
-		return predict(instances);
+		return test(instances);
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictOnDev() {
-		return predict(corpusProvider.getDevelopCorpus().getInternalInstances());
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnDev() {
+		return test(corpusProvider.getDevelopCorpus().getInternalInstances());
 	}
 
-	private List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predict(
+	public List<OBIEState> predictInstance(final OBIEInstance instance,
+			Set<Class<? extends INamedEntitityLinker>> entityLinker) {
+
+		DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler = buildTestDefaultSampler(model);
+
+		Trainer trainer = buildDefaultTrainer();
+
+		NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
+
+		final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
+			try {
+				return linkerClass.getConstructor(Set.class).newInstance(instance.rootClassTypes);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			throw new RuntimeException("Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
+		}).collect(Collectors.toSet());
+
+		for (INamedEntitityLinker l : linker) {
+			log.info("Apply: " + l.getClass().getSimpleName() + " to: " + instance.getName());
+			annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getContent()));
+			annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(instance.getContent()));
+		}
+		instance.setAnnotations(annotationbuilder.build());
+
+		return trainer.predict(sampler, initializer, Arrays.asList(instance));
+
+	}
+
+	public List<OBIEState> predictInstancesBatch(final List<OBIEInstance> instances,
+			Set<Class<? extends INamedEntitityLinker>> entityLinker) {
+
+		DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler = buildTestDefaultSampler(model);
+
+		Trainer trainer = buildDefaultTrainer();
+
+		NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
+
+		for (OBIEInstance instance : instances) {
+
+			final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
+				try {
+					return linkerClass.getConstructor(Set.class).newInstance(instance.rootClassTypes);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				throw new RuntimeException(
+						"Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
+			}).collect(Collectors.toSet());
+
+			for (INamedEntitityLinker l : linker) {
+				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + instance.getName());
+				annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getContent()));
+				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(instance.getContent()));
+			}
+			instance.setAnnotations(annotationbuilder.build());
+
+		}
+		return trainer.predict(sampler, initializer, instances);
+
+	}
+
+	private List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> test(
 			final List<OBIEInstance> instances) {
 
 		DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler = buildTestDefaultSampler(model);
@@ -351,8 +416,6 @@ public abstract class AbstractOBIERunner {
 
 		final File modelFile = ModelFileNameUtils.getModelFile(this.parameter, this.corpusProvider,
 				this.parameter.epochs);
-
-		log.info("Search for model: " + modelFile);
 
 		if (!modelFile.exists()) {
 			throw new IOException("Model does not exists: " + modelFile);
@@ -477,7 +540,7 @@ public abstract class AbstractOBIERunner {
 
 	public PRF1Container evaluateOnTest() throws Exception {
 
-		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = predictOnTest();
+		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = testOnTest();
 
 		/**
 		 * Train with purity evaluate finally with cartesian
@@ -492,7 +555,7 @@ public abstract class AbstractOBIERunner {
 
 	public void evaluatePerSlotOnTest(boolean detailedOutput) throws Exception {
 
-		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = predictOnTest();
+		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = testOnTest();
 
 		/**
 		 * Train with purity evaluate finally with cartesian

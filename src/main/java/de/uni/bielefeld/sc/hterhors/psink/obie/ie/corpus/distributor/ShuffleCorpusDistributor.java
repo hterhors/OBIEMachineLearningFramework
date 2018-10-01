@@ -53,8 +53,9 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 	 */
 	public final long seed;
 
-	private ShuffleCorpusDistributor(int trainingProportion, int developmentProportion, int testProportion, long seed) {
-		log.info("Create new corpus diributor of type " + this.getClass().getName());
+	private ShuffleCorpusDistributor(float corpusSizeFraction, int trainingProportion, int developmentProportion,
+			int testProportion, long seed) {
+		super(corpusSizeFraction);
 
 		this.trainingProportion = trainingProportion;
 		this.developmentProportion = developmentProportion;
@@ -63,20 +64,23 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 		this.rnd = new Random(seed);
 	}
 
-	private int totalAmount() {
+	private int proportionsSum() {
 		return trainingProportion + developmentProportion + testProportion;
 	}
 
 	public int numberOfTrainingData(final int totalNumberOfDocuments) {
-		return Math.round(((float) trainingProportion / (float) totalAmount()) * totalNumberOfDocuments);
+		return Math.round(corpusSizeFraction
+				* (((float) trainingProportion / (float) proportionsSum()) * totalNumberOfDocuments));
 	}
 
 	public int numberOfDevelopmentData(final int totalNumberOfDocuments) {
-		return Math.round(((float) developmentProportion / (float) totalAmount()) * totalNumberOfDocuments);
+		return Math.round(corpusSizeFraction
+				* (((float) developmentProportion / (float) proportionsSum()) * totalNumberOfDocuments));
 	}
 
 	public int numberOfTestData(final int totalNumberOfDocuments) {
-		return Math.round(((float) testProportion / (float) totalAmount()) * totalNumberOfDocuments);
+		return Math.round(
+				corpusSizeFraction * (((float) testProportion / (float) proportionsSum()) * totalNumberOfDocuments));
 	}
 
 	@Override
@@ -149,7 +153,13 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 		}
 
 		public ShuffleCorpusDistributor build() {
-			return new ShuffleCorpusDistributor(trainingProportion, developmentProportion, testProportion, seed);
+			return new ShuffleCorpusDistributor(corpusSizeFraction, trainingProportion, developmentProportion,
+					testProportion, seed);
+		}
+
+		@Override
+		protected Builder getDistributor() {
+			return this;
 		}
 
 	}
@@ -171,38 +181,42 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 
 		log.info("Collect and shuffle documents...");
 
-		Collections.shuffle(corpusProvider.internalInstances, rnd);
+		Collections.shuffle(corpusProvider.allExistingInternalInstances, rnd);
 
-		final int totalNumberOfDocuments = corpusProvider.internalInstances.size();
+		final int totalNumberOfDocuments = corpusProvider.allExistingInternalInstances.size();
 
 		final int numberForTraining = numberOfTrainingData(totalNumberOfDocuments);
 		final int numberForDevelopment = numberOfDevelopmentData(totalNumberOfDocuments);
 		final int numberForTest = numberOfTestData(totalNumberOfDocuments);
 
-		if (numberForTraining + numberForDevelopment + numberForTest != corpusProvider.internalInstances.size())
-			log.warn("WARN!!! Could not redistribute data accordingly! Change number of documents for data from "
-					+ numberForTest + " to "
-					+ (corpusProvider.internalInstances.size() - (numberForTraining + numberForDevelopment)) + "!");
+		if (numberForTraining + numberForDevelopment + numberForTest != (int) Math
+				.round(corpusProvider.allExistingInternalInstances.size() * corpusSizeFraction))
+			log.warn(
+					"WARN!!! Could not redistribute data accordingly! Change number of documents for data from "
+							+ numberForTest + " to "
+							+ (Math.round(corpusProvider.allExistingInternalInstances.size() * corpusSizeFraction)
+									- Math.round(corpusSizeFraction * (numberForTraining + numberForDevelopment)))
+							+ "!");
 
 		return new Distributor() {
 
 			@Override
 			public Distributor distributeTrainingInstances(List<OBIEInstance> trainingDocuments) {
-				trainingDocuments.addAll(corpusProvider.internalInstances.subList(0, numberForTraining));
+				trainingDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(0, numberForTraining));
 				return this;
 			}
 
 			@Override
 			public Distributor distributeDevelopmentInstances(List<OBIEInstance> developmentDocuments) {
-				developmentDocuments.addAll(corpusProvider.internalInstances.subList(numberForTraining,
+				developmentDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(numberForTraining,
 						numberForTraining + numberForDevelopment));
 				return this;
 			}
 
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
-				testDocuments.addAll(corpusProvider.internalInstances.subList(numberForTraining + numberForDevelopment,
-						corpusProvider.internalInstances.size()));
+				testDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(
+						numberForTraining + numberForDevelopment, corpusProvider.allExistingInternalInstances.size()));
 				return this;
 			}
 		};

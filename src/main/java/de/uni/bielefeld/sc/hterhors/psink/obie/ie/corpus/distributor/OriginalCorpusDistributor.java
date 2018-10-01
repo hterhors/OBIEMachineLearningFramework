@@ -1,11 +1,16 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.OBIECorpus.Instance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.ShuffleCorpusDistributor.Builder;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
 /**
@@ -24,16 +29,20 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private OriginalCorpusDistributor() {
-		log.info("Create new corpus diributor of type " + this.getClass().getName());
+	private OriginalCorpusDistributor(final float corpusSizeFraction) {
+		super(corpusSizeFraction);
 	}
 
 	public static class Builder extends AbstractConfigBuilder<Builder> {
 
 		public OriginalCorpusDistributor build() {
-			return new OriginalCorpusDistributor();
-		};
+			return new OriginalCorpusDistributor(corpusSizeFraction);
+		}
 
+		@Override
+		protected Builder getDistributor() {
+			return this;
+		}
 	}
 
 	/**
@@ -50,6 +59,11 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 	@Override
 	public Distributor distributeInstances(BigramCorpusProvider corpusProvider) {
 
+		final Map<String, OBIEInstance> easyAccessMap = new HashMap<>();
+		for (OBIEInstance internalInstance : corpusProvider.allExistingInternalInstances) {
+			easyAccessMap.put(internalInstance.getName(), internalInstance);
+		}
+
 		/**
 		 * TODO: Not very efficient! Convert interalINstances to Map with name as key.
 		 */
@@ -59,10 +73,19 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 			public Distributor distributeTrainingInstances(List<OBIEInstance> trainingDocuments) {
 
 				for (String name : corpusProvider.getRawCorpus().getTrainingInstances().keySet()) {
-					for (OBIEInstance internalInstance : corpusProvider.internalInstances) {
-						if (internalInstance.getName().equals(name))
-							trainingDocuments.add(internalInstance);
-					}
+					final float fraction = (float) trainingDocuments.size()
+							/ corpusProvider.getRawCorpus().getTrainingInstances().size();
+
+					if (fraction >= corpusSizeFraction)
+						break;
+
+					/*
+					 * As we work with the real distribution given the raw corpus,
+					 * allExistingInternalInstances may not contain the document if it violates
+					 * previous restrictions.
+					 */
+					if (easyAccessMap.containsKey(name))
+						trainingDocuments.add(easyAccessMap.get(name));
 				}
 				return this;
 			}
@@ -70,10 +93,19 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 			@Override
 			public Distributor distributeDevelopmentInstances(List<OBIEInstance> developmentDocuments) {
 				for (String name : corpusProvider.getRawCorpus().getDevelopInstances().keySet()) {
-					for (OBIEInstance internalInstance : corpusProvider.internalInstances) {
-						if (internalInstance.getName().equals(name))
-							developmentDocuments.add(internalInstance);
-					}
+					final float fraction = (float) developmentDocuments.size()
+							/ corpusProvider.getRawCorpus().getDevelopInstances().size();
+
+					if (fraction >= corpusSizeFraction)
+						break;
+
+					/*
+					 * As we work with the real distribution given the raw corpus,
+					 * allExistingInternalInstances may not contain the document if it violates
+					 * previous restrictions.
+					 */
+					if (easyAccessMap.containsKey(name))
+						developmentDocuments.add(easyAccessMap.get(name));
 				}
 				return this;
 			}
@@ -81,10 +113,19 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
 				for (String name : corpusProvider.getRawCorpus().getTestInstances().keySet()) {
-					for (OBIEInstance internalInstance : corpusProvider.internalInstances) {
-						if (internalInstance.getName().equals(name))
-							testDocuments.add(internalInstance);
-					}
+					final float fraction = (float) testDocuments.size()
+							/ corpusProvider.getRawCorpus().getTestInstances().size();
+
+					if (fraction >= corpusSizeFraction)
+						break;
+
+					/*
+					 * As we work with the real distribution given the raw corpus,
+					 * allExistingInternalInstances may not contain the document if it violates
+					 * previous restrictions.
+					 */
+					if (easyAccessMap.containsKey(name))
+						testDocuments.add(easyAccessMap.get(name));
 				}
 				return this;
 			}

@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramCorpusProvider;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.ShuffleCorpusDistributor.Builder;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
 /**
@@ -52,7 +53,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 	/**
 	 * The fraction of the training data to start with.
 	 */
-	public final double initialTrainingSelectionFraction;
+	public final float initialTrainingSelectionFraction;
 
 	/**
 	 * The proportion of the training data.
@@ -69,9 +70,9 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 	 */
 	public final int b;
 
-	private ActiveLearningDistributor(long initializationSelectionSeed, double initialTrainingSelectionFraction, int b,
-			final int trainingProportion, final int testProportion) {
-		log.info("Create new corpus diributor of type " + this.getClass().getName());
+	private ActiveLearningDistributor(float corpusSizeFraction, long initializationSelectionSeed,
+			float initialTrainingSelectionFraction, int b, final int trainingProportion, final int testProportion) {
+		super(corpusSizeFraction);
 
 		this.random = new Random(initializationSelectionSeed);
 		this.initialTrainingSelectionFraction = initialTrainingSelectionFraction;
@@ -86,11 +87,13 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 	}
 
 	public int numberOfTotalTrainingData(final int totalNumberOfDocuments) {
-		return Math.round(((float) trainingProportion / (float) totalAmount()) * totalNumberOfDocuments);
+		return Math.round(
+				corpusSizeFraction * ((float) trainingProportion / (float) totalAmount()) * totalNumberOfDocuments);
 	}
 
 	public int numberOfTestData(final int totalNumberOfDocuments) {
-		return Math.round(((float) testProportion / (float) totalAmount()) * totalNumberOfDocuments);
+		return Math
+				.round(corpusSizeFraction * ((float) testProportion / (float) totalAmount()) * totalNumberOfDocuments);
 	}
 
 	public static class Builder extends AbstractConfigBuilder<Builder> {
@@ -103,7 +106,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		/**
 		 * The fraction of the training data to start with.
 		 */
-		private double initialTrainingSelectionFraction = 1 / 10;
+		private float initialTrainingSelectionFraction = 1 / 10;
 
 		/**
 		 * The number of new training data per active learning step.
@@ -149,7 +152,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		 *                                         to set
 		 * @return
 		 */
-		public Builder setInitialTrainingSelectionFraction(double initialTrainingSelectionFraction) {
+		public Builder setInitialTrainingSelectionFraction(float initialTrainingSelectionFraction) {
 			this.initialTrainingSelectionFraction = initialTrainingSelectionFraction;
 			return this;
 
@@ -191,10 +194,14 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
 		@Override
 		public ActiveLearningDistributor build() {
-			return new ActiveLearningDistributor(initializationSelectionSeed, initialTrainingSelectionFraction, b,
-					trainingProportion, testProportion);
+			return new ActiveLearningDistributor(corpusSizeFraction, initializationSelectionSeed,
+					initialTrainingSelectionFraction, b, trainingProportion, testProportion);
 		};
 
+		@Override
+		protected Builder getDistributor() {
+			return this;
+		}
 	}
 
 	@Override
@@ -202,16 +209,19 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		/**
 		 * TODO: If development is given as input than take this as initial if desired.
 		 */
-		Collections.shuffle(corpusProvider.internalInstances, random);
+		Collections.shuffle(corpusProvider.allExistingInternalInstances, random);
 
-		final int totalNumberOfDocuments = corpusProvider.internalInstances.size();
+		final int totalNumberOfDocuments = Math
+				.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size());
 
 		final int numberForTraining = numberOfTotalTrainingData(totalNumberOfDocuments);
 		final int numberForTest = numberOfTestData(totalNumberOfDocuments);
 
-		if (numberForTraining + numberForTest != corpusProvider.internalInstances.size())
+		if (Math.round(corpusSizeFraction * (numberForTraining + numberForTest)) != Math
+				.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size()))
 			log.warn("WARN!!! Could not redistribute data accordingly! Change number of documents for data from "
-					+ numberForTest + " to " + (corpusProvider.internalInstances.size() - (numberForTraining)) + "!");
+					+ Math.round(corpusSizeFraction * (numberForTraining + numberForTest)) + " to "
+					+ Math.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size()) + "!");
 
 		final int trainIndex = (int) Math.round(initialTrainingSelectionFraction * numberForTraining);
 
@@ -219,20 +229,21 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
 			@Override
 			public Distributor distributeTrainingInstances(List<OBIEInstance> trainingDocuments) {
-				trainingDocuments.addAll(corpusProvider.internalInstances.subList(0, trainIndex));
+				trainingDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(0, trainIndex));
 				return this;
 			}
 
 			@Override
 			public Distributor distributeDevelopmentInstances(List<OBIEInstance> developmentDocuments) {
-				developmentDocuments.addAll(corpusProvider.internalInstances.subList(trainIndex, numberForTraining));
+				developmentDocuments
+						.addAll(corpusProvider.allExistingInternalInstances.subList(trainIndex, numberForTraining));
 				return this;
 			}
 
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
-				testDocuments.addAll(corpusProvider.internalInstances.subList(numberForTraining,
-						corpusProvider.internalInstances.size()));
+				testDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(numberForTraining,
+						corpusProvider.allExistingInternalInstances.size()));
 				return this;
 			}
 		};

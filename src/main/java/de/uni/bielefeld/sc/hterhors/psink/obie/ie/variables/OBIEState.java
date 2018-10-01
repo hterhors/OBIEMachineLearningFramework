@@ -263,8 +263,8 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		boolean containsAnnotation = false;
 		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
 
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(),
-					(int) token.getFromCharPosition(), (int) token.getToCharPosition());
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(), (int) token.getFromCharPosition(),
+					(int) token.getToCharPosition());
 
 			if (containsAnnotation)
 				return true;
