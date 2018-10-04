@@ -213,7 +213,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	/**
 	 * Returns the annotations for a given class type.
 	 * 
-	 * @param classType
+	 * @param classOrIndividualname
 	 * @return
 	 */
 	public Set<NERLIndividualAnnotation> getIndividualAnnotations(AbstractOBIEIndividual individual) {
@@ -235,11 +235,11 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * Checks whether this document contains annotation data for the given class
 	 * type
 	 * 
-	 * @param classType
+	 * @param classOrIndividualname
 	 * @return true if data is available, else false.
 	 */
 	public boolean containsIndividualAnnotations(AbstractOBIEIndividual individual) {
-		return individualRetrievals.containsKey(individual) && !individualRetrievals.get(individual).isEmpty();
+		return individual!=null && individualRetrievals.containsKey(individual) && !individualRetrievals.get(individual).isEmpty();
 	}
 
 	/**

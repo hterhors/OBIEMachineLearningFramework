@@ -263,7 +263,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		boolean containsAnnotation = false;
 		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
 
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(), (int) token.getFromCharPosition(),
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.getTemplateAnnotation(), (int) token.getFromCharPosition(),
 					(int) token.getToCharPosition());
 
 			if (containsAnnotation)
@@ -391,7 +391,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		builder.append("]: ");
 		for (TemplateAnnotation e : prediction.getTemplateAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.get(), parameter.investigationRestriction));
+			builder.append(OBIEClassFormatter.format(e.getTemplateAnnotation(), parameter.investigationRestriction));
 			builder.append("\n");
 		}
 		return builder.toString();

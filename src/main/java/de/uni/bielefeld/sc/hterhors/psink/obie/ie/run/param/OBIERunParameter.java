@@ -300,14 +300,13 @@ public class OBIERunParameter implements Serializable {
 			IInitializeNumberOfObjects numberOfInitializedObjects, IOBIEEvaluator evaluator,
 			final int maxNumberOfEntityElements, final int maxNumberOfDataTypeElements, Regularizer regularizer,
 			int maxNumberOfSamplingSteps, Random rndForSampling, boolean ignoreEmptyInstancesonEvaluation,
-			final AbstractCorpusDistributor corpusConfiguration,
-			AbstractOntologyEnvironment ontologyEnvironment) {
+			final AbstractCorpusDistributor corpusConfiguration, AbstractOntologyEnvironment ontologyEnvironment) {
 
 		if (!validate()) {
 			throw new IllegalStateException("The given paramters do not match.");
 		}
 
-		requireElements(templates);
+//		requireElements(templates);
 		requireGreaterThanZero(epochs);
 		Objects.requireNonNull(rootDirectory);
 		requireElements(rootSearchTypes);
@@ -471,15 +470,15 @@ public class OBIERunParameter implements Serializable {
 				+ regularizer + ", templates=" + templates + ", runID=" + runID + ", rootDirectory=" + rootDirectory
 				+ ", epochs=" + epochs + ", optimizer=" + optimizer + ", scorerType=" + scorerType + ", personalNotes="
 				+ personalNotes + ", rootSearchTypes=" + rootSearchTypes + ", initializer=" + initializer
-				+ ", environment=" + projectEnvironment + ", explorationCondition=" + explorationCondition + ", explorers="
-				+ explorers + ", svmParam=" + svmParam + ", investigationRestriction=" + investigationRestriction
-				+ ", initializationObjects=" + initializationObjects + ", exploreExistingTemplates="
-				+ exploreExistingTemplates + ", enableDiscourseProgression=" + enableDiscourseProgression
-				+ ", exploreOnOntologyLevel=" + exploreOnOntologyLevel + ", numberOfInitializedObjects="
-				+ numberOfInitializedObjects + ", maxNumberOfEntityElements=" + maxNumberOfEntityElements
-				+ ", evaluator=" + evaluator + ", maxNumberOfDataTypeElements=" + maxNumberOfDataTypeElements
-				+ ", rndForSampling=" + rndForSampling + ", ignoreEmptyInstancesonEvaluation="
-				+ ignoreEmptyInstancesonEvaluation + "]";
+				+ ", environment=" + projectEnvironment + ", explorationCondition=" + explorationCondition
+				+ ", explorers=" + explorers + ", svmParam=" + svmParam + ", investigationRestriction="
+				+ investigationRestriction + ", initializationObjects=" + initializationObjects
+				+ ", exploreExistingTemplates=" + exploreExistingTemplates + ", enableDiscourseProgression="
+				+ enableDiscourseProgression + ", exploreOnOntologyLevel=" + exploreOnOntologyLevel
+				+ ", numberOfInitializedObjects=" + numberOfInitializedObjects + ", maxNumberOfEntityElements="
+				+ maxNumberOfEntityElements + ", evaluator=" + evaluator + ", maxNumberOfDataTypeElements="
+				+ maxNumberOfDataTypeElements + ", rndForSampling=" + rndForSampling
+				+ ", ignoreEmptyInstancesonEvaluation=" + ignoreEmptyInstancesonEvaluation + "]";
 	}
 
 	public static class OBIEParameterBuilder {
@@ -542,7 +541,7 @@ public class OBIERunParameter implements Serializable {
 		private Random rndForSampling = new Random();
 
 		private Optimizer optimizer = new SGD(0.001, 0, 0.0001, false);
-		
+
 		private int epochs = 100;
 
 		private int maxNumberOfEntityElements = 7;

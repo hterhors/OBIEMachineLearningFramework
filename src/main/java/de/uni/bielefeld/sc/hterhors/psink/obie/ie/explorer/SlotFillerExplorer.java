@@ -97,11 +97,11 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 				final int rootEntitySentenceIndex;
 				if (enableDiscourseProgression) {
-					if (psinkAnnotation.get().getCharacterOnset() == null) {
+					if (psinkAnnotation.getTemplateAnnotation().getCharacterOnset() == null) {
 						rootEntitySentenceIndex = 0;
 					} else {
 						rootEntitySentenceIndex = previousState.getInstance()
-								.charPositionToToken(psinkAnnotation.get().getCharacterOnset()).getSentenceIndex();
+								.charPositionToToken(psinkAnnotation.getTemplateAnnotation().getCharacterOnset()).getSentenceIndex();
 					}
 				} else {
 					rootEntitySentenceIndex = 0;
@@ -110,7 +110,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				this.currentInstanceAnnotationID = psinkAnnotation.getAnnotationID();
 
 				for (StateInstancePair state : topDownRecursiveFieldFilling(previousState.getInstance(),
-						psinkAnnotation.get(), psinkAnnotation.rootClassType, psinkAnnotation.rootClassType,
+						psinkAnnotation.getTemplateAnnotation(), psinkAnnotation.rootClassType, psinkAnnotation.rootClassType,
 						rootEntitySentenceIndex, true)) {
 					generatedStates.add(state.state);
 				}
@@ -176,7 +176,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				OBIEState generatedState = new OBIEState(this.currentState);
 				TemplateAnnotation entity = generatedState.getCurrentPrediction()
 						.getEntity(this.currentInstanceAnnotationID);
-				entity.setAnnotationInstance(null);
+				entity.setTemplateAnnotation(null);
 
 				generatedInstances.add(new StateInstancePair(generatedState, null));
 			}
@@ -359,7 +359,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				generatedState.addUsedPreFilledObject(filledCandidateInstance);
 
 			}
-			entity.setAnnotationInstance(clonedClass);
+			entity.setTemplateAnnotation(clonedClass);
 
 			// System.out.println("Candidate: " +
 			// generatedState.preFilledUsedObjects);
@@ -476,7 +476,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			// generatedState.preFilledUsedObjects.forEach(System.out::println);
 			// System.out.println("------");
 
-			entity.setAnnotationInstance(newClass);
+			entity.setTemplateAnnotation(newClass);
 
 			generatedClasses.add(new StateInstancePair(generatedState, newClass));
 
@@ -521,7 +521,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 				generatedState.removeRecUsedPreFilledObject(childInstance);
 
-				entity.setAnnotationInstance(genClass);
+				entity.setTemplateAnnotation(genClass);
 
 				generatedInstances.add(new StateInstancePair(generatedState, genClass));
 

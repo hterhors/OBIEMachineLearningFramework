@@ -21,7 +21,7 @@ public class TemplateAnnotation implements Serializable {
 
 	public TemplateAnnotation(TemplateAnnotation e) {
 		this.rootClassType = e.rootClassType;
-		this.obieAnnotation = OBIEUtils.deepConstructorClone(e.obieAnnotation);
+		this.templateAnnotation = OBIEUtils.deepConstructorClone(e.templateAnnotation);
 		this.annotationID = e.annotationID;
 		this.initClass = e.initClass;
 	}
@@ -56,7 +56,7 @@ public class TemplateAnnotation implements Serializable {
 	 */
 	final public Class<? extends IOBIEThing> rootClassType;
 
-	private IOBIEThing obieAnnotation;
+	private IOBIEThing templateAnnotation;
 	final String annotationID;
 
 	public IOBIEThing getInitializationClass() {
@@ -72,16 +72,16 @@ public class TemplateAnnotation implements Serializable {
 		this.initClass = OBIEUtils.deepConstructorClone(obieClass);
 		this.rootClassType = rootClassType;
 		this.annotationID = UUID.randomUUID().toString();
-		this.obieAnnotation = obieClass;
+		this.templateAnnotation = obieClass;
 
 	}
 
-	public void setAnnotationInstance(IOBIEThing annotationInstance) {
-		this.obieAnnotation = annotationInstance;
+	public void setTemplateAnnotation(IOBIEThing annotationInstance) {
+		this.templateAnnotation = annotationInstance;
 	}
 
-	public IOBIEThing get() {
-		return obieAnnotation;
+	public IOBIEThing getTemplateAnnotation() {
+		return templateAnnotation;
 	}
 
 	public String getAnnotationID() {
@@ -93,7 +93,7 @@ public class TemplateAnnotation implements Serializable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((annotationID == null) ? 0 : annotationID.hashCode());
-		result = prime * result + ((obieAnnotation == null) ? 0 : obieAnnotation.hashCode());
+		result = prime * result + ((templateAnnotation == null) ? 0 : templateAnnotation.hashCode());
 		return result;
 	}
 
@@ -111,17 +111,17 @@ public class TemplateAnnotation implements Serializable {
 				return false;
 		} else if (!annotationID.equals(other.annotationID))
 			return false;
-		if (obieAnnotation == null) {
-			if (other.obieAnnotation != null)
+		if (templateAnnotation == null) {
+			if (other.templateAnnotation != null)
 				return false;
-		} else if (!obieAnnotation.equals(other.obieAnnotation))
+		} else if (!templateAnnotation.equals(other.templateAnnotation))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "InternalAnnotation [" + OBIEClassFormatter.format(obieAnnotation) + "]";
+		return "InternalAnnotation [" + OBIEClassFormatter.format(templateAnnotation) + "]";
 	}
 
 }

@@ -176,10 +176,9 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 				|| predictedInstance == EmptyOBIEInstance.emptyInstance)))
 			return zeroScore;
 
-		// System.out.println("******************************");
-		// System.out.println("Start score: " + score);
-		// System.out.println("Compare: " + goldClass);
-		// System.out.println("With: " + predictedClass);
+//		System.out.println("******************************");
+//		System.out.println("Compare: " + goldInstance);
+//		System.out.println("With: " + predictedInstance);
 
 		final CacheKey ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
 
@@ -406,9 +405,16 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 	 */
 	private boolean checkForSameType(IOBIEThing goldInstance, IOBIEThing predictedInstance) {
 
-		boolean sameType = goldInstance.getIndividual() == predictedInstance.getIndividual();
+		if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() == null)
+			return true;
 
-		return sameType;
+		if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() != null)
+			return false;
+
+		if (goldInstance.getIndividual() != null && predictedInstance.getIndividual() == null)
+			return false;
+
+		return goldInstance.getIndividual().equals(predictedInstance.getIndividual());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -501,7 +507,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			adderScore = compareObjectWise(gold, pred, depth);
 		}
 
+//		System.out.println(adderScore);
+
 		score.add(adderScore);
+
 		return score;
 
 	}

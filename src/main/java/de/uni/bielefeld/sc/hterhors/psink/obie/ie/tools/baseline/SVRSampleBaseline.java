@@ -432,7 +432,7 @@ public class SVRSampleBaseline {
 			OBIEState previousState = new OBIEState(trainInstance, parameter);
 
 			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 
 			List<OBIEState> previousStates = new ArrayList<>();
 
@@ -497,7 +497,7 @@ public class SVRSampleBaseline {
 		selectedStates.forEach(newState -> {
 
 			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 
 			data.addFeatureDataPoint(newState.toTrainingPoint(data, true).setScore(evaluator.f1(gold, prediction)));
 
@@ -537,7 +537,7 @@ public class SVRSampleBaseline {
 		previousStates.forEach(newState -> {
 
 			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 
 			data.addFeatureDataPoint(newState.toTrainingPoint(data, true).setScore(evaluator.f1(gold, prediction)));
 
@@ -583,7 +583,7 @@ public class SVRSampleBaseline {
 		 */
 		for (OBIEState genState : generatedStates) {
 			final List<IOBIEThing> prediction = genState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 			genState.setObjectiveScore(evaluator.f1(gold, prediction));
 		}
 		/*

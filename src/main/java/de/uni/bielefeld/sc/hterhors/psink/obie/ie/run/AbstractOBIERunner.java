@@ -455,9 +455,9 @@ public abstract class AbstractOBIERunner {
 					int numberOfEpochs) {
 				final OBIEState state = (OBIEState) finalState;
 				List<IOBIEThing> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream()
-						.map(s -> s.get()).collect(Collectors.toList());
+						.map(s -> s.getTemplateAnnotation()).collect(Collectors.toList());
 				List<IOBIEThing> gold = state.getInstance().getGoldAnnotation().getTemplateAnnotations().stream()
-						.map(s -> s.get()).collect(Collectors.toList());
+						.map(s -> s.getTemplateAnnotation()).collect(Collectors.toList());
 
 				try {
 					PRF1 s = parameter.evaluator.prf1(gold, predictions);

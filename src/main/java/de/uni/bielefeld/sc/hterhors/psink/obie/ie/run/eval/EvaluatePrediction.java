@@ -1,5 +1,6 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.eval;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,10 +22,10 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.IOBIEEval
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.NamedEntityLinkingEvaluator;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction.RestrictedField;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import evaluation.EvaluationUtil;
 import learning.ObjectiveFunction;
 
@@ -49,7 +50,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.get().equals(initializingObject))
+				if (!resultEntity.getTemplateAnnotation().equals(initializingObject))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
 
@@ -127,7 +128,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
+				if (!resultEntity.getTemplateAnnotation().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
@@ -220,7 +221,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
+				if (!resultEntity.getTemplateAnnotation().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
 
@@ -293,7 +294,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentPrediction()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.get().equals(resultEntity.getInitializationClass()))
+				if (!resultEntity.getTemplateAnnotation().equals(resultEntity.getInitializationClass()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
@@ -321,7 +322,7 @@ public class EvaluatePrediction {
 		List<Set<RestrictedField>> restrictFieldsList = InvestigationRestriction
 				.getFieldRestrictionCombinations(classType, InvestigationRestriction.getMainSingleFields(classType));
 
-		Set<InvestigationRestriction> restrictions = new HashSet<>();
+		List<InvestigationRestriction> restrictions = new ArrayList<>();
 		restrictions.add(new InvestigationRestriction(classType, Collections.emptySet(), true));
 		for (Set<RestrictedField> set : restrictFieldsList) {
 			if (set.size() > 1) {

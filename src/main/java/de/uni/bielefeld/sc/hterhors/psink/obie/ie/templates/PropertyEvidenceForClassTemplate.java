@@ -66,7 +66,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			addFactors(factors, entity.rootClassType, state.getInstance(), entity.get());
+			addFactors(factors, entity.rootClassType, state.getInstance(), entity.getTemplateAnnotation());
 		}
 		return factors;
 	}
@@ -115,7 +115,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 		Vector featureVector = factor.getFeatureVector();
 
 		final Set<Class<? extends IOBIEThing>> relatedClasses = OntologyAnalyzer
-				.getRelatedClassesTypesUnderRoot(factor.getFactorScope().relatedClassType);
+				.getRelatedClassTypesUnderRoot(factor.getFactorScope().relatedClassType);
 
 		for (Class<? extends IOBIEThing> relatedClassType : relatedClasses) {
 			if (relatedClassType.isAnnotationPresent(DatatypeProperty.class))

@@ -16,6 +16,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.google.j2objc.annotations.ReflectionSupport;
+
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyFieldNames;
@@ -63,6 +65,7 @@ public class ExplorationUtils {
 	 * @param field representing the property
 	 * @return true if the class is just a auxiliary construct class, else false.
 	 */
+	@SuppressWarnings("unchecked")
 	public static boolean isAuxiliaryProperty(Class<?> propertyInterface) {
 
 		/**
@@ -78,7 +81,7 @@ public class ExplorationUtils {
 		if (!propertyInterface.isAnnotationPresent(ImplementationClass.class))
 			return false;
 
-		final Class<?> implClass = propertyInterface.getAnnotation(ImplementationClass.class).get();
+		final Class<? extends IOBIEThing> implClass = propertyInterface.getAnnotation(ImplementationClass.class).get();
 
 		/*
 		 * No NamedIndividual
@@ -88,8 +91,18 @@ public class ExplorationUtils {
 		/*
 		 * No DataType
 		 */
-		if (implClass.isAnnotationPresent(NamedIndividual.class))
-			return false;
+		try {
+//			if (!((IndividualFactory<?>) implClass.getField(OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME)
+//					.get(null)).getIndividuals().isEmpty())
+			if (!((IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
+					.getDeclaredFieldByName(implClass, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null))
+							.getIndividuals().isEmpty())
+//			if (implClass.isAnnotationPresent(NamedIndividual.class))
+				return false;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		/**
 		 * TODO: not just the first interface... or get interfaces by annotation... if a
@@ -454,9 +467,6 @@ public class ExplorationUtils {
 		}
 	}
 
-	
-	
-	
 	private static void addSlotTypeIndividualCandidates(OBIEInstance instance,
 			Class<? extends IOBIEThing> slotSuperType, Set<IOBIEThing> candidates,
 			AbstractOBIEIndividual individualCandidate,
@@ -546,7 +556,6 @@ public class ExplorationUtils {
 			}
 		}
 	}
-
 
 	private static void fillSemanticInterpretationField(IOBIEThing newInstance, String dtOrTextValue)
 			throws IllegalArgumentException, IllegalAccessException {

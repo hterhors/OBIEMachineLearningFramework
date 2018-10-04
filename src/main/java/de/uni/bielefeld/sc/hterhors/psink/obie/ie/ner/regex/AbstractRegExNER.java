@@ -74,9 +74,6 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 			addOrMergePatterns(regExPatternForClasses, collectRegexPatternForClasses(rootClassType));
 
-			/*
-			 * TODO: insert
-			 */
 			addOrMergePatterns(regExPatternForIndividuals, collectRegexPatternForIndividuals(rootClassType));
 
 		}
@@ -300,7 +297,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 		Map<Class<? extends R>, Set<Pattern>> extendedAuxiliaryClassPattern = new HashMap<>();
 
 		Set<Class<? extends IOBIEThing>> relatedRootClasses = OntologyAnalyzer
-				.getRelatedClassesTypesUnderRoot(rootClassType);
+				.getRelatedClassTypesUnderRoot(rootClassType);
 
 		/*
 		 * Do not extend root class. This would be to much and it is not important as

@@ -18,9 +18,9 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.InterTokenTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import factors.Factor;
 import learning.Vector;
 
@@ -40,9 +40,9 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 	private static final String TOKEN_SPLITTER_SPACE = " ";
 
-	private static final String END_DOLLAR = "$";
+	private static final String END_SIGN = "$";
 
-	private static final String START_CIRCUMFLEX = "^";
+	private static final String START_SIGN = "^";
 
 	private static final int MIN_TOKEN_LENGTH = 2;
 
@@ -65,13 +65,13 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 	class Scope extends OBIEFactorScope {
 
-		public Class<? extends IOBIEThing> classType;
+		public String classOrIndividualName;
 		public Set<String> surfaceForms;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables, Class<? extends IOBIEThing> classType,
-				Set<String> surfaceForms, Class<? extends IOBIEThing> entityRootClassType) {
-			super(influencedVariables, entityRootClassType, thisTemplate, entityRootClassType, classType, surfaceForms);
-			this.classType = classType;
+		public Scope(String classOrIndividualName, Set<String> surfaceForms,
+				Class<? extends IOBIEThing> entityRootClassType) {
+			super(thisTemplate, entityRootClassType, classOrIndividualName, surfaceForms);
+			this.classOrIndividualName = classOrIndividualName;
 			this.surfaceForms = surfaceForms;
 		}
 
@@ -82,7 +82,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		List<Scope> factors = new ArrayList<>();
 
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.get());
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.getTemplateAnnotation());
 		}
 
 		return factors;
@@ -102,9 +102,8 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		final Set<String> surfaceForms = getSurfaceForms(internalInstance, scioClass);
 
 		if (surfaceForms != null) {
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-			// influencedVariables.add(scioClass.getClass());
-			factors.add(new Scope(influencedVariables, scioClass.getClass(), surfaceForms, rootClassType));
+			factors.add(new Scope(scioClass.getClass().getSimpleName(), surfaceForms, rootClassType));
+			factors.add(new Scope(scioClass.getIndividual().name, surfaceForms, rootClassType));
 		}
 		// }
 
@@ -154,8 +153,13 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 					surfaceForms = new HashSet<>();
 					surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
 				} else {
-					surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(filler.getClass())
-							.stream().map(nera -> nera.text).collect(Collectors.toSet());
+					surfaceForms = new HashSet<>();
+					surfaceForms.addAll(
+							internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(filler.getClass())
+									.stream().map(nera -> nera.text).collect(Collectors.toList()));
+					surfaceForms.addAll(internalInstance.getNamedEntityLinkingAnnotations()
+							.getIndividualAnnotations(filler.getIndividual()).stream().map(nera -> nera.text)
+							.collect(Collectors.toList()));
 				}
 			} else {
 				return null;
@@ -185,29 +189,31 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 		Vector featureVector = factor.getFeatureVector();
 
-		final Class<? extends IOBIEThing> classType = factor.getFactorScope().classType;
+		final String name = factor.getFactorScope().classOrIndividualName;
 
 		final Set<String> surfaceForms = factor.getFactorScope().surfaceForms;
 
 		for (String surfaceForm : surfaceForms) {
-			getTokenNgrams(featureVector, classType, surfaceForm);
+			getTokenNgrams(featureVector, name, surfaceForm);
 		}
 
 	}
 
-	private void getTokenNgrams(Vector featureVector, Class<? extends IOBIEThing> classType, String cleanedMention) {
+	private void getTokenNgrams(Vector featureVector, String name, String cleanedMention) {
 
-		final String cM = START_CIRCUMFLEX + TOKEN_SPLITTER_SPACE + cleanedMention + TOKEN_SPLITTER_SPACE + END_DOLLAR;
+		final String cM = START_SIGN + TOKEN_SPLITTER_SPACE + cleanedMention + TOKEN_SPLITTER_SPACE + END_SIGN;
 
 		final String[] tokens = cM.split(TOKEN_SPLITTER_SPACE);
 
 		final int maxNgramSize = tokens.length;
-		final String className = classType.getSimpleName();
 
-		featureVector.set(LEFT + className + RIGHT + TOKEN_SPLITTER_SPACE + cM, true);
+		featureVector.set(LEFT + name + RIGHT + TOKEN_SPLITTER_SPACE + cM, true);
 
-		if (classType.isAnnotationPresent(DatatypeProperty.class))
-			return;
+		/*
+		 * TODO: need this?
+		 */
+//		if (name.isAnnotationPresent(DatatypeProperty.class))
+//			return;
 
 		for (int ngram = 1; ngram < maxNgramSize; ngram++) {
 			for (int i = 0; i < maxNgramSize - 1; i++) {
@@ -245,7 +251,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 				if (featureName.isEmpty())
 					continue;
 
-				featureVector.set(LEFT + className + RIGHT + TOKEN_SPLITTER_SPACE + featureName, true);
+				featureVector.set(LEFT + name + RIGHT + TOKEN_SPLITTER_SPACE + featureName, true);
 
 			}
 		}

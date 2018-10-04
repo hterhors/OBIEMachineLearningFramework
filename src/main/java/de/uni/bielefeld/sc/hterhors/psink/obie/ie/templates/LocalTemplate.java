@@ -57,17 +57,16 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 	class Scope extends OBIEFactorScope {
 
-		final OBIEInstance internalInstance;
+		final OBIEInstance instance;
 		final String fromClassName;
 		final String toClassName;
 		final int sentenceDistance;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable, final String fromClassName,
-				final String toClassName, int sentenceDistance, OBIEInstance internalInstance,
-				Class<? extends IOBIEThing> entityRootClassType) {
-			super(influencedVariable, entityRootClassType, LocalTemplate.this, internalInstance, fromClassName,
-					toClassName, sentenceDistance, entityRootClassType);
-			this.internalInstance = internalInstance;
+		public Scope(final String fromClassName, final String toClassName, int sentenceDistance,
+				OBIEInstance internalInstance, Class<? extends IOBIEThing> entityRootClassType) {
+			super(LocalTemplate.this, internalInstance, fromClassName, toClassName, sentenceDistance,
+					entityRootClassType);
+			this.instance = internalInstance;
 			this.fromClassName = fromClassName;
 			this.toClassName = toClassName;
 			this.sentenceDistance = sentenceDistance;
@@ -80,7 +79,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null,
-					entity.get());
+					entity.getTemplateAnnotation());
 		}
 
 		return factors;
@@ -95,11 +94,12 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factor parent - child relation
 		 */
 		if (parent != null) {
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
+
 			if (enableDistantSupervision) {
 
 				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(child.getClass())
-						&& internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(parent.getClass())) {
+						&& internalInstance.getNamedEntityLinkingAnnotations()
+								.containsClassAnnotations(parent.getClass())) {
 					Set<NERLClassAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
 							.getClassAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
 
@@ -115,8 +115,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 						for (NERLClassAnnotation parentNera : parentNeras) {
 							for (NERLClassAnnotation childNera : childNeras) {
 
-								Integer fromPosition = Integer
-										.valueOf(parentNera.onset + parentNera.text.length());
+								Integer fromPosition = Integer.valueOf(parentNera.onset + parentNera.text.length());
 								Class<? extends IOBIEThing> classType1 = parentNera.classType;
 								Integer toPosition = Integer.valueOf(childNera.onset);
 								Class<? extends IOBIEThing> classType2 = childNera.classType;
@@ -130,8 +129,8 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 									toPosition = Integer.valueOf(parentNera.onset);
 									classType2 = parentNera.classType;
 								}
-								addFactor(factors, influencedVariables, fromPosition, toPosition, classType1,
-										classType2, internalInstance, rootClassType);
+								addFactor(factors, fromPosition, toPosition, classType1, classType2, internalInstance,
+										rootClassType);
 
 							}
 						}
@@ -159,8 +158,8 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 						classType1 = child.getClass();
 						classType2 = parent.getClass();
 					}
-					addFactor(factors, influencedVariables, fromPosition, toPosition, classType1, classType2,
-							internalInstance, rootClassType);
+					addFactor(factors, fromPosition, toPosition, classType1, classType2, internalInstance,
+							rootClassType);
 				}
 			}
 		}
@@ -180,10 +179,9 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	private void addFactor(final List<Scope> factors, final Set<Class<? extends IOBIEThing>> influencedVariables,
-			Integer fromPosition, Integer toPosition, Class<? extends IOBIEThing> classType1,
-			Class<? extends IOBIEThing> classType2, OBIEInstance internalInstance,
-			Class<? extends IOBIEThing> rootClassType) {
+	private void addFactor(final List<Scope> factors, Integer fromPosition, Integer toPosition,
+			Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
+			OBIEInstance internalInstance, Class<? extends IOBIEThing> rootClassType) {
 		/*
 		 * Inclusive
 		 */
@@ -198,8 +196,8 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 			final int class2SentenceIndex = internalInstance.charPositionToToken(toPosition).getSentenceIndex();
 			final int distance = Math.abs(class1SentenceIndex - class2SentenceIndex);
 
-			factors.add(new Scope(influencedVariables, classType1.getSimpleName(), classType2.getSimpleName(), distance,
-					internalInstance, rootClassType));
+			factors.add(new Scope(classType1.getSimpleName(), classType2.getSimpleName(), distance, internalInstance,
+					rootClassType));
 
 			for (Class<? extends IOBIEThing> rootClassType1 : classType1.getAnnotation(SuperRootClasses.class).get()) {
 				if (!rootClassType1.isAnnotationPresent(DatatypeProperty.class))
@@ -213,8 +211,8 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 							 * Add features for root classes of annotations.
 							 */
 
-							factors.add(new Scope(influencedVariables, rootClassType1.getSimpleName(),
-									rootClassType2.getSimpleName(), distance, internalInstance, rootClassType));
+							factors.add(new Scope(rootClassType1.getSimpleName(), rootClassType2.getSimpleName(),
+									distance, internalInstance, rootClassType));
 
 					}
 			}

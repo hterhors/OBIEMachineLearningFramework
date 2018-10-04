@@ -1,6 +1,8 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -16,10 +18,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLIndividualAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 
@@ -29,40 +35,82 @@ public class HighFrequencyUtils {
 
 	public static Logger log = LogManager.getLogger(HighFrequencyUtils.class);
 
-	public static FrequencyPair determineMostFrequentClass(Class<? extends IOBIEThing> interfaceType,
-			OBIEInstance instance) {
-		final List<FrequencyPair> l = determineMostFrequentClasses(interfaceType, instance, 1);
+	public static ClassFrequencyPair getMostFrequentClass(Class<? extends IOBIEThing> slotType, OBIEInstance instance) {
+		final List<ClassFrequencyPair> l = getMostFrequentClasses(slotType, instance, 1);
 		if (l != null && !l.isEmpty())
 			return l.get(0);
 
-		return FrequencyPair.nullValue;
+		return ClassFrequencyPair.nullValue;
 	}
 
-	private static final Map<CacheKey, List<FrequencyPair>> cache = new ConcurrentHashMap<>();
+	public static IndividualFrequencyPair getMostFrequentIndividual(Class<? extends IOBIEThing> slotType,
+			OBIEInstance instance) {
+		final List<IndividualFrequencyPair> l = getMostFrequentIndividuals(slotType, instance, 1);
+		if (l != null && !l.isEmpty())
+			return l.get(0);
 
-	public static class FrequencyPair {
+		return IndividualFrequencyPair.nullValue;
+	}
 
-		public static final FrequencyPair nullValue = new FrequencyPair(null, null, null, 0);
-		final public Class<IOBIEThing> bestClass;
+	private static final Map<ClassCacheKey, List<ClassFrequencyPair>> classCache = new ConcurrentHashMap<>();
+
+	private static final Map<ClassCacheKey, List<IndividualFrequencyPair>> individualCache = new ConcurrentHashMap<>();
+
+	public static class ClassFrequencyPair implements Comparable<ClassFrequencyPair> {
+
+		public static final ClassFrequencyPair nullValue = new ClassFrequencyPair(null, null, null, 0);
+		final public Class<? extends IOBIEThing> clazz;
 		final public int frequency;
-		final public String dataTypeValue;
+		final public String datatypeValue;
 		final public String textMention;
 
-		public FrequencyPair(Class<IOBIEThing> bestClass, String textMention, String dataTypeValue, int frequency) {
-			this.bestClass = bestClass;
+		public ClassFrequencyPair(Class<? extends IOBIEThing> clazz, String textMention, String dataTypeValue,
+				int frequency) {
+			this.clazz = clazz;
 			this.frequency = frequency;
 			this.textMention = textMention;
-			this.dataTypeValue = dataTypeValue;
+			this.datatypeValue = dataTypeValue;
+		}
+
+		@Override
+		public int compareTo(ClassFrequencyPair o) {
+			return -Integer.compare(frequency, o.frequency);
+		}
+	}
+
+	public static class IndividualFrequencyPair implements Comparable<IndividualFrequencyPair> {
+
+		public static final IndividualFrequencyPair nullValue = new IndividualFrequencyPair(null, null, null, 0);
+		final public AbstractOBIEIndividual individual;
+		final public Class<? extends IOBIEThing> belongingClazz;
+		final public int frequency;
+		final public String textMention;
+
+		public IndividualFrequencyPair(Class<? extends IOBIEThing> belongingClazz, AbstractOBIEIndividual individual,
+				String textMention, int frequency) {
+			this.individual = individual;
+			if (belongingClazz != null) {
+				this.belongingClazz = belongingClazz.getAnnotation(ImplementationClass.class).get();
+			} else {
+				this.belongingClazz = null;
+			}
+			this.frequency = frequency;
+			this.textMention = textMention;
+		}
+
+		@Override
+		public int compareTo(IndividualFrequencyPair o) {
+			return Integer.compare(frequency, o.frequency);
 		}
 
 	}
 
-	private static class CacheKey {
+	private static class ClassCacheKey {
 
-		Class<? extends IOBIEThing> classType;
-		String instanceName;
+		final Class<? extends IOBIEThing> classType;
+		final String instanceName;
 
-		public CacheKey(Class<? extends IOBIEThing> classType, String instanceName) {
+		public ClassCacheKey(Class<? extends IOBIEThing> classType, String instanceName) {
 			this.classType = classType;
 			this.instanceName = instanceName;
 		}
@@ -84,7 +132,7 @@ public class HighFrequencyUtils {
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			CacheKey other = (CacheKey) obj;
+			ClassCacheKey other = (ClassCacheKey) obj;
 			if (classType == null) {
 				if (other.classType != null)
 					return false;
@@ -101,18 +149,18 @@ public class HighFrequencyUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static List<FrequencyPair> determineMostFrequentClasses(Class<? extends IOBIEThing> interfaceType,
+	public static List<ClassFrequencyPair> getMostFrequentClasses(Class<? extends IOBIEThing> interfaceType,
 			OBIEInstance instance, final int n) {
 
-		CacheKey ck = new CacheKey(interfaceType, instance.getName());
+		ClassCacheKey ck = new ClassCacheKey(interfaceType, instance.getName());
 
-		if (cache.containsKey(ck)) {
-			return cache.get(ck).subList(0, Math.min(n, cache.get(ck).size()));
+		if (classCache.containsKey(ck)) {
+			return classCache.get(ck).subList(0, Math.min(n, classCache.get(ck).size()));
 		}
 
 		NamedEntityLinkingAnnotations ner = instance.getNamedEntityLinkingAnnotations();
 
-		List<FrequencyPair> bestClasses = new ArrayList<>();
+		List<ClassFrequencyPair> bestClasses = new ArrayList<>();
 
 		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> evidences = new HashMap<>();
 		final List<Class<? extends IOBIEThing>> bestClassTypes = new ArrayList<>();
@@ -165,50 +213,14 @@ public class HighFrequencyUtils {
 		}
 
 		if (evidences.isEmpty()) {
-			cache.put(ck, bestClasses);
+			classCache.put(ck, bestClasses);
 			return bestClasses;
 		}
 
-		final List<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>> entryList = new ArrayList<>(
-				evidences.entrySet());
-
-		/*
-		 * Sort entries, to get in same order. This is needed to keep same order over
-		 * multiple runs. Then we can sort with random seed.
-		 */
-		Collections.sort(entryList,
-				new Comparator<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>>() {
-
-					@Override
-					public int compare(Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o1,
-							Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o2) {
-						return -Integer.compare(o1.getValue().size(), o2.getValue().size());
-					}
-				});
-		/*
-		 * Shuffle list so entries with same values appears in different orders every
-		 * time.
-		 */
-		Collections.shuffle(entryList, new Random(SEED));
-
-		/*
-		 * Sort entries according to their frequency
-		 */
-		Collections.sort(entryList,
-				new Comparator<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>>() {
-
-					@Override
-					public int compare(Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o1,
-							Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> o2) {
-						return -Integer.compare(o1.getValue().size(), o2.getValue().size());
-					}
-				});
+		final List<Map.Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>>> entryList = sort(evidences);
 
 		for (int i = 0; i < entryList.size(); i++) {
-			bestClassTypes.add(entryList.get(i).getKey());
-		}
-
-		for (Class<? extends IOBIEThing> bestClassType : bestClassTypes) {
+			final Class<? extends IOBIEThing> bestClassType = entryList.get(i).getKey();
 			/**
 			 * TODO: NOTE: get random from set! Maybe buggy, if we are not only interested
 			 * in the class type.
@@ -219,15 +231,134 @@ public class HighFrequencyUtils {
 			final NERLClassAnnotation nerAnnotation = evidences.get(bestClassType).iterator().next();
 			log.debug(nerAnnotation);
 			if (interfaceType.isAnnotationPresent(DatatypeProperty.class)) {
-				bestClasses.add(new FrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text,
+				bestClasses.add(new ClassFrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text,
 						nerAnnotation.getDTValueIfAnyElseTextMention(), evidences.get(bestClassType).size()));
 			} else {
-				bestClasses.add(new FrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text, null,
+				bestClasses.add(new ClassFrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text, null,
 						evidences.get(bestClassType).size()));
 			}
 		}
-		cache.put(ck, bestClasses);
-		return cache.get(ck).subList(0, Math.min(n, cache.get(ck).size()));
+		classCache.put(ck, bestClasses);
+		return classCache.get(ck).subList(0, Math.min(n, classCache.get(ck).size()));
+	}
+
+	public static List<IndividualFrequencyPair> getMostFrequentIndividuals(Class<? extends IOBIEThing> slotType,
+			OBIEInstance instance, final int n) {
+
+		try {
+
+			ClassCacheKey ck = new ClassCacheKey(slotType, instance.getName());
+
+			if (individualCache.containsKey(ck)) {
+				return individualCache.get(ck).subList(0, Math.min(n, individualCache.get(ck).size()));
+			}
+
+			final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> evidences = new HashMap<>();
+			/*
+			 * Get nerl-annotations.
+			 */
+			final NamedEntityLinkingAnnotations nerlas = instance.getNamedEntityLinkingAnnotations();
+
+			final Field factoryField = ReflectionUtils.getDeclaredFieldByName(
+					slotType.getAnnotation(ImplementationClass.class).get(),
+					OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME);
+
+			/*
+			 * Get possible individuals for given class
+			 */
+
+			final IndividualFactory<?> factory = (IndividualFactory<?>) factoryField.get(null);
+			/*
+			 * For each individual search for nerl-annotations. If some exists store in list
+			 * as evidence.
+			 */
+			for (AbstractOBIEIndividual individual : factory.getIndividuals()) {
+
+				final Set<NERLIndividualAnnotation> individualNerlAnnotations;
+				if ((individualNerlAnnotations = nerlas.getIndividualAnnotations(individual)) != null)
+					evidences.put(individual, individualNerlAnnotations);
+
+			}
+			/*
+			 * If no evidence save empty list in cache.
+			 */
+			if (evidences.isEmpty()) {
+				individualCache.put(ck, Collections.emptyList());
+				return individualCache.get(ck);
+			}
+
+			/*
+			 * Sort individuals.
+			 */
+			final List<Map.Entry<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>>> entryList = sort(evidences);
+
+			final List<IndividualFrequencyPair> sortedIFPairs = new ArrayList<>();
+
+			for (int i = 0; i < entryList.size(); i++) {
+				AbstractOBIEIndividual bestClassType = entryList.get(i).getKey();
+				/**
+				 * TODO: NOTE: get random from set! Maybe buggy, if we are not only interested
+				 * in the class type but also in the textmention.
+				 */
+				if (!evidences.get(bestClassType).iterator().hasNext())
+					continue;
+
+				final NERLIndividualAnnotation nerAnnotation = evidences.get(bestClassType).iterator().next();
+
+				log.debug(nerAnnotation);
+
+				sortedIFPairs.add(new IndividualFrequencyPair(slotType, nerAnnotation.relatedIndividual,
+						nerAnnotation.text, evidences.get(bestClassType).size()));
+			}
+			/*
+			 * Put all sorted pairs but return only n.
+			 */
+			individualCache.put(ck, sortedIFPairs);
+			return individualCache.get(ck).subList(0, Math.min(n, individualCache.get(ck).size()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return null;
+	}
+
+	/**
+	 * Sorts a list of Map entries.
+	 * 
+	 * @param evidences
+	 * @return
+	 */
+	private static <K, V> List<Map.Entry<K, Set<V>>> sort(final Map<K, Set<V>> evidences) {
+		final List<Map.Entry<K, Set<V>>> entryList = new ArrayList<>(evidences.entrySet());
+
+		/*
+		 * Sort entries, to get in same order. This is needed to keep same order over
+		 * multiple runs. Then we can sort with random seed.
+		 */
+		Collections.sort(entryList, new Comparator<Map.Entry<K, Set<V>>>() {
+
+			@Override
+			public int compare(Entry<K, Set<V>> o1, Entry<K, Set<V>> o2) {
+				return -Integer.compare(o1.getValue().size(), o2.getValue().size());
+			}
+		});
+		/*
+		 * Shuffle list so entries with same values appears in different orders every
+		 * time.
+		 */
+		Collections.shuffle(entryList, new Random(SEED));
+
+		/*
+		 * Sort entries according to their frequency
+		 */
+		Collections.sort(entryList, new Comparator<Map.Entry<K, Set<V>>>() {
+
+			@Override
+			public int compare(Entry<K, Set<V>> o1, Entry<K, Set<V>> o2) {
+				return -Integer.compare(o1.getValue().size(), o2.getValue().size());
+			}
+		});
+		return entryList;
 	}
 
 }

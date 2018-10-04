@@ -81,7 +81,7 @@ public class InitializerUtils {
 	public static Set<IOBIEThing> getFullCorrect(InstanceEntityAnnotations instanceAnnotations) {
 		Set<IOBIEThing> set = new HashSet<>();
 		for (TemplateAnnotation goldAnnotation : instanceAnnotations.getTemplateAnnotations()) {
-			set.add(OBIEUtils.deepConstructorClone(goldAnnotation.get()));
+			set.add(OBIEUtils.deepConstructorClone(goldAnnotation.getTemplateAnnotation()));
 
 		}
 		return set;

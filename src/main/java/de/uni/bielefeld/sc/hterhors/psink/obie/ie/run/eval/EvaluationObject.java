@@ -11,7 +11,7 @@ public class EvaluationObject {
 	private final InvestigationRestriction investigationRestriction;
 
 	public EvaluationObject(TemplateAnnotation resultEntity, InvestigationRestriction investigationRestriction) {
-		this.scioClass = resultEntity.get();
+		this.scioClass = resultEntity.getTemplateAnnotation();
 		this.investigationRestriction = investigationRestriction;
 	}
 

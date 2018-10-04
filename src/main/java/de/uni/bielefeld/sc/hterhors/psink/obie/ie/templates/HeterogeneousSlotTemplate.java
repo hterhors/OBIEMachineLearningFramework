@@ -96,11 +96,11 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 		Map<Class<? extends IOBIEThing>, Map<String, Integer>> countBy = new HashMap<>();
 
 		for (TemplateAnnotation ann : list) {
-			countBy.putIfAbsent(ann.get().getClass(), new HashMap<>());
-			if (ann.get().getClass().isAnnotationPresent(DatatypeProperty.class)) {
-				final String text = ((IDatatype) ann.get()).getSemanticValue();
-				countBy.get(ann.get().getClass()).put(text,
-						countBy.get(ann.get().getClass()).getOrDefault(text, 0) + 1);
+			countBy.putIfAbsent(ann.getTemplateAnnotation().getClass(), new HashMap<>());
+			if (ann.getTemplateAnnotation().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+				final String text = ((IDatatype) ann.getTemplateAnnotation()).getSemanticValue();
+				countBy.get(ann.getTemplateAnnotation().getClass()).put(text,
+						countBy.get(ann.getTemplateAnnotation().getClass()).getOrDefault(text, 0) + 1);
 			}
 
 		}

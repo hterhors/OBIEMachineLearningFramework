@@ -68,7 +68,7 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			factors.addAll(
-					addFactorRecursive(state.getInstance(), entity.rootClassType, entity.get()));
+					addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getTemplateAnnotation()));
 		}
 		return factors;
 	}

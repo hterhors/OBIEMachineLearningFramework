@@ -132,9 +132,9 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		 */
 		state.getCurrentPrediction().getTemplateAnnotations().stream().forEach(a -> {
 
-			countRootClasses.put(a.get().getClass(),
-					1 + countRootClasses.getOrDefault(a.get().getClass(), 0));
-			entityRootClassTypeMapper.put(a.get().getClass(), a.rootClassType);
+			countRootClasses.put(a.getTemplateAnnotation().getClass(),
+					1 + countRootClasses.getOrDefault(a.getTemplateAnnotation().getClass(), 0));
+			entityRootClassTypeMapper.put(a.getTemplateAnnotation().getClass(), a.rootClassType);
 
 		});
 
@@ -151,7 +151,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (TemplateAnnotation annotation : state.getCurrentPrediction().getTemplateAnnotations()) {
 
-			final IOBIEThing entityScioClass = annotation.get();
+			final IOBIEThing entityScioClass = annotation.getTemplateAnnotation();
 
 			final int index = indexRootClassCounter.getOrDefault(entityScioClass.getClass(), 0);
 

@@ -36,19 +36,17 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 	class Scope extends OBIEFactorScope {
 
-		final Class<? extends IOBIEThing> parentClassType;
+		final String templateName;
 		final int numberOfSlotFiller;
 		final int numberOfDistinctSlotFiller;
 		final String propertyNameChain;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
-				Class<? extends IOBIEThing> parentClassType, int numberOfSlotFiller, String propertyNameChain,
-				int numberOfDistinctSlotFiller) {
-			super(influencedVariable, entityRootClassType, template, parentClassType, numberOfSlotFiller,
-					numberOfDistinctSlotFiller, propertyNameChain, entityRootClassType);
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+				String templateName, int numberOfSlotFiller, String propertyNameChain, int numberOfDistinctSlotFiller) {
+			super(template, templateName, numberOfSlotFiller, numberOfDistinctSlotFiller, propertyNameChain,
+					entityRootClassType);
 			this.numberOfSlotFiller = numberOfSlotFiller;
-			this.parentClassType = parentClassType;
+			this.templateName = templateName;
 			this.propertyNameChain = propertyNameChain;
 			this.numberOfDistinctSlotFiller = numberOfDistinctSlotFiller;
 		}
@@ -60,7 +58,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, entity.get()));
+			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getTemplateAnnotation()));
 		}
 
 		return factors;
@@ -72,22 +70,19 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<Scope> addFactorRecursive(final Class<? extends IOBIEThing> entityRootClassType,
-			final Class<? extends IOBIEThing> parentClassType, IOBIEThing scioClass, String propertyNameChain,
+	private List<Scope> addFactorRecursive(final Class<? extends IOBIEThing> templateRootClassType,
+			final Class<? extends IOBIEThing> parentClassType, IOBIEThing obieThing, String propertyNameChain,
 			int numberOfSlotFiller, int numberOfDistinctSlotFiller) {
 		List<Scope> factors = new ArrayList<>();
-
-		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-//		influencedVariables.add(parentClassType);
 
 		if (parentClassType != null) {
 			for (Class<? extends IOBIEThing> parentClass : parentClassType.getAnnotation(SuperRootClasses.class)
 					.get()) {
-				factors.add(new Scope(influencedVariables, entityRootClassType, this, parentClass, numberOfSlotFiller,
+				factors.add(new Scope(templateRootClassType, this, parentClass.getSimpleName(), numberOfSlotFiller,
 						propertyNameChain, numberOfDistinctSlotFiller));
 			}
 		}
-		if (scioClass == null)
+		if (obieThing == null)
 			return factors;
 		/*
 		 * Add factors for object type properties.
@@ -95,22 +90,22 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		 * Parent-Child relation
 		 */
 
-		ReflectionUtils.getDeclaredOntologyFields(scioClass.getClass()).forEach(field -> {
+		ReflectionUtils.getDeclaredOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(scioClass));
+					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));
 
 					final int num = data.size();
 					final int distinctNum = distinctSize(data, field.isAnnotationPresent(DatatypeProperty.class));
 
 					for (IOBIEThing listObject : data) {
-						factors.addAll(addFactorRecursive(entityRootClassType, scioClass.getClass(), listObject,
+						factors.addAll(addFactorRecursive(templateRootClassType, obieThing.getClass(), listObject,
 								propertyNameChain + "->" + field.getName(), num, distinctNum));
 					}
 				} else {
-					factors.addAll(addFactorRecursive(entityRootClassType, scioClass.getClass(),
-							(IOBIEThing) field.get(scioClass), propertyNameChain + "->" + field.getName(),
-							field.get(scioClass) == null ? 0 : 1, 1));
+					factors.addAll(addFactorRecursive(templateRootClassType, obieThing.getClass(),
+							(IOBIEThing) field.get(obieThing), propertyNameChain + "->" + field.getName(),
+							field.get(obieThing) == null ? 0 : 1, 1));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -141,8 +136,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
-		final String parentClassName = factor.getFactorScope().parentClassType == null ? null
-				: factor.getFactorScope().parentClassType.getSimpleName();
+		final String parentClassName = factor.getFactorScope().templateName;
 		final boolean slotIsFilled = factor.getFactorScope().numberOfSlotFiller > 0;
 
 		final String propertyNameChain = factor.getFactorScope().propertyNameChain;

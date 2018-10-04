@@ -91,7 +91,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			factors.addAll(
-					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
+					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getTemplateAnnotation()));
 		}
 		return factors;
 	}

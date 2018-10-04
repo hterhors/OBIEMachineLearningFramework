@@ -115,11 +115,9 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 		final Position fromPosition;
 		final Position toPosition;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable, final Position fromPosition,
-				final Position toPosition, Class<? extends IOBIEThing> entityRootClassType,
-				final OBIEInstance internalInstance) {
-			super(influencedVariable, entityRootClassType, InBetweenContextTemplate.this, internalInstance,
-					fromPosition, toPosition, entityRootClassType);
+		public Scope(final Position fromPosition, final Position toPosition,
+				Class<? extends IOBIEThing> entityRootClassType, final OBIEInstance internalInstance) {
+			super(InBetweenContextTemplate.this, internalInstance, fromPosition, toPosition, entityRootClassType);
 			this.internalInstance = internalInstance;
 			this.fromPosition = fromPosition;
 			this.toPosition = toPosition;
@@ -131,8 +129,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null,
-					entity.get());
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null, entity.getTemplateAnnotation());
 		}
 
 		return factors;
@@ -148,11 +145,11 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factor parent - child relation
 		 */
 		if (parent != null) {
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 			if (enableDistantSupervision) {
 
 				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(child.getClass())
-						&& internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(parent.getClass())) {
+						&& internalInstance.getNamedEntityLinkingAnnotations()
+								.containsClassAnnotations(parent.getClass())) {
 					Set<NERLClassAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
 							.getClassAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
 
@@ -170,8 +167,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 						for (NERLClassAnnotation parentNera : parentNeras) {
 							for (NERLClassAnnotation childNera : childNeras) {
 
-								Integer fromPosition = Integer
-										.valueOf(parentNera.onset + parentNera.text.length());
+								Integer fromPosition = Integer.valueOf(parentNera.onset + parentNera.text.length());
 								Class<? extends IOBIEThing> classType1 = parentNera.classType;
 								Integer toPosition = Integer.valueOf(childNera.onset);
 								Class<? extends IOBIEThing> classType2 = childNera.classType;
@@ -185,16 +181,16 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 									toPosition = Integer.valueOf(parentNera.onset);
 									classType2 = parentNera.classType;
 								}
-								addFactor(factors, influencedVariables, fromPosition, toPosition, classType1,
-										classType2, internalInstance, rootClassType);
+								addFactor(factors, fromPosition, toPosition, classType1, classType2, internalInstance,
+										rootClassType);
 
 							}
 						}
 					} else {
 						/*
-						 * TODO: no child neras found. to nothing? This happens if the ner for data type
+						 * TODO: no child neras found. do nothing? This happens if the ner for data type
 						 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
-						 * not be pares by the semantic interpretation. Thus the child neras are emtpy.
+						 * not be parsed by the semantic interpretation. Thus the child neras are empty.
 						 */
 					}
 				}
@@ -215,8 +211,8 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 						classType1 = child.getClass();
 						classType2 = parent.getClass();
 					}
-					addFactor(factors, influencedVariables, fromPosition, toPosition, classType1, classType2,
-							internalInstance, rootClassType);
+					addFactor(factors, fromPosition, toPosition, classType1, classType2, internalInstance,
+							rootClassType);
 				}
 			}
 		}
@@ -236,10 +232,9 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	private void addFactor(final List<Scope> factors, final Set<Class<? extends IOBIEThing>> influencedVariables,
-			Integer fromPosition, Integer toPosition, Class<? extends IOBIEThing> classType1,
-			Class<? extends IOBIEThing> classType2, OBIEInstance internalInstance,
-			Class<? extends IOBIEThing> rootEntityType) {
+	private void addFactor(final List<Scope> factors, Integer fromPosition, Integer toPosition,
+			Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
+			OBIEInstance internalInstance, Class<? extends IOBIEThing> rootEntityType) {
 		try {
 
 			/*
@@ -252,7 +247,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 			int toTokenIndex = internalInstance.charPositionToTokenPosition(toPosition);
 
 			if (toTokenIndex - fromTokenIndex <= MAX_TOKENS_DISTANCE && toTokenIndex - fromTokenIndex >= 0) {
-				factors.add(new Scope(influencedVariables, new Position(classType1.getSimpleName(), fromTokenIndex),
+				factors.add(new Scope(new Position(classType1.getSimpleName(), fromTokenIndex),
 						new Position(classType2.getSimpleName(), toTokenIndex), rootEntityType, internalInstance));
 
 				for (Class<? extends IOBIEThing> rootClassType1 : classType1.getAnnotation(SuperRootClasses.class)
@@ -268,8 +263,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 								 * Add features for root classes of annotations.
 								 */
 
-								factors.add(new Scope(influencedVariables,
-										new Position(rootClassType1.getSimpleName(), fromTokenIndex),
+								factors.add(new Scope(new Position(rootClassType1.getSimpleName(), fromTokenIndex),
 										new Position(rootClassType2.getSimpleName(), toTokenIndex), rootEntityType,
 										internalInstance));
 

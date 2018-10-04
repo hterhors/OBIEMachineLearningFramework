@@ -55,7 +55,7 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 		final Map<Class<? extends IOBIEThing>, Integer> countEmptyClasses = new HashMap<>();
 
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			if (entity.get().equals(entity.getInitializationClass())) {
+			if (entity.getTemplateAnnotation().equals(entity.getInitializationClass())) {
 				countEmptyClasses.put(entity.rootClassType,
 						countEmptyClasses.getOrDefault(entity.rootClassType, 0) + 1);
 			}

@@ -72,7 +72,7 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			try {
 				factors.addAll(
-						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
+						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getTemplateAnnotation()));
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}

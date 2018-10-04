@@ -123,7 +123,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 			List<StateInstancePair> generatedClasses = new ArrayList<>();
 
-			IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(psinkAnnotation.get());
+			IOBIEThing clonedBaseClass = OBIEUtils.deepConstructorClone(psinkAnnotation.getTemplateAnnotation());
 
 			topDownRecursiveListCardinalityChanger(previousState.getInstance(), generatedClasses, clonedBaseClass,
 					clonedBaseClass, new ArrayList<SlotPath>());
@@ -267,7 +267,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 				OBIEState generatedState = new OBIEState(this.currentState);
 				TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentAnnotationID);
-				entity.setAnnotationInstance(clonedBaseClass);
+				entity.setTemplateAnnotation(clonedBaseClass);
 
 				generatedState.removeRecUsedPreFilledObject(listOfClassesForField.get(i));
 				// System.out.println("Candidate: " +
@@ -390,7 +390,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					OBIEState generatedState = new OBIEState(this.currentState);
 					TemplateAnnotation entity = generatedState.getCurrentPrediction()
 							.getEntity(this.currentAnnotationID);
-					entity.setAnnotationInstance(clonedBaseClass);
+					entity.setTemplateAnnotation(clonedBaseClass);
 
 					generatedState.addUsedPreFilledObject(candidateClass);
 

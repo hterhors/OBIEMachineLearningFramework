@@ -479,7 +479,7 @@ public class WEKABaseline {
 			OBIEState previousState = new OBIEState(trainInstance, parameter);
 
 			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 
 			List<OBIEState> previousStates = new ArrayList<>();
 
@@ -544,7 +544,7 @@ public class WEKABaseline {
 		selectedStates.forEach(newState -> {
 
 			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
 					newState.toTrainingPoint(trainingData, true).setScore(objectiveFunction.f1(gold, prediction)));
@@ -585,7 +585,7 @@ public class WEKABaseline {
 		previousStates.forEach(newState -> {
 
 			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
 					newState.toTrainingPoint(trainingData, true).setScore(objectiveFunction.f1(gold, prediction)));
@@ -632,7 +632,7 @@ public class WEKABaseline {
 		 */
 		for (OBIEState genState : generatedStates) {
 			final List<IOBIEThing> prediction = genState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
 			genState.setObjectiveScore(objectiveFunction.f1(gold, prediction));
 		}
 		/*

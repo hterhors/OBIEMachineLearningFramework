@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
@@ -15,18 +16,25 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.TokenContextTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLIndividualAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import factors.Factor;
 import learning.Vector;
 
 public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private static final String SPLITTER = " ";
 	private static final String RIGHT = ">";
 	private static final String LEFT = "<";
+
 	private static Logger log = LogManager.getFormatterLogger(TokenContextTemplate.class.getName());
 
 	private final AbstractOBIETemplate<?> thisTemplate;
@@ -43,13 +51,12 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	}
 
 	static class Position {
-		final public Class<? extends IOBIEThing> classType;
+		final public String classOrIndividualName;
 		final public int beginTokenIndex;
 		final public int endTokenIndex;
 
-		public Position(Class<? extends IOBIEThing> classType, int beginTokenIndex, int endTokenIndex) {
-			super();
-			this.classType = classType;
+		public Position(final String classOrIndividualName, int beginTokenIndex, int endTokenIndex) {
+			this.classOrIndividualName = classOrIndividualName;
 			this.beginTokenIndex = beginTokenIndex;
 			this.endTokenIndex = endTokenIndex;
 		}
@@ -59,7 +66,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + beginTokenIndex;
-			result = prime * result + ((classType == null) ? 0 : classType.hashCode());
+			result = prime * result + ((classOrIndividualName == null) ? 0 : classOrIndividualName.hashCode());
 			result = prime * result + endTokenIndex;
 			return result;
 		}
@@ -75,10 +82,10 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 			Position other = (Position) obj;
 			if (beginTokenIndex != other.beginTokenIndex)
 				return false;
-			if (classType == null) {
-				if (other.classType != null)
+			if (classOrIndividualName == null) {
+				if (other.classOrIndividualName != null)
 					return false;
-			} else if (!classType.equals(other.classType))
+			} else if (!classOrIndividualName.equals(other.classOrIndividualName))
 				return false;
 			if (endTokenIndex != other.endTokenIndex)
 				return false;
@@ -92,10 +99,9 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		final OBIEInstance instance;
 		final Set<Position> positions;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable, final Set<Position> positions,
-				Class<? extends IOBIEThing> entityRootClassType, OBIEInstance internalInstance) {
-			super(influencedVariable, entityRootClassType, thisTemplate, internalInstance, positions,
-					entityRootClassType);
+		public Scope(final Set<Position> positions, Class<? extends IOBIEThing> entityRootClassType,
+				OBIEInstance internalInstance) {
+			super(thisTemplate, internalInstance, positions, entityRootClassType);
 			this.instance = internalInstance;
 			this.positions = positions;
 		}
@@ -108,63 +114,84 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
 			addFactorRecursive(factors, state.getInstance().getInstance(), entity.rootClassType,
-					entity.get());
+					entity.getTemplateAnnotation());
 		}
 		return factors;
 	}
 
 	private void addFactorRecursive(List<Scope> factors, OBIEInstance internalInstance,
-			Class<? extends IOBIEThing> rootClassType, IOBIEThing scioClass) {
+			Class<? extends IOBIEThing> rootClassType, IOBIEThing obieThing) {
 
-		if (scioClass == null)
+		if (obieThing == null)
 			return;
 
 		final Set<Position> positions = new HashSet<>();
 
 		try {
 			if (enableDistantSupervision) {
-				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(scioClass.getClass())) {
+				if (internalInstance.getNamedEntityLinkingAnnotations()
+						.containsClassAnnotations(obieThing.getClass())) {
 					for (NERLClassAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
-							.getClassAnnotations(scioClass.getClass())) {
-						positions.add(new Position(nera.classType,
+							.getClassAnnotations(obieThing.getClass())) {
+						positions.add(new Position(nera.classType.getSimpleName(),
+								internalInstance.charPositionToTokenPosition(nera.onset),
+								internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+					}
+				}
+				if (internalInstance.getNamedEntityLinkingAnnotations()
+						.containsIndividualAnnotations(obieThing.getIndividual())) {
+					for (NERLIndividualAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
+							.getIndividualAnnotations(obieThing.getIndividual())) {
+						positions.add(new Position(nera.relatedIndividual.name,
 								internalInstance.charPositionToTokenPosition(nera.onset),
 								internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
 					}
 				}
 			} else {
-				if (scioClass.getCharacterOnset() != null && scioClass.getCharacterOffset() != null) {
-					final Class<? extends IOBIEThing> classType = scioClass.getClass();
-					final int beginTokenIndex = internalInstance
-							.charPositionToTokenPosition(scioClass.getCharacterOnset());
-					final int endTokenIndex = internalInstance
-							.charPositionToTokenPosition(scioClass.getCharacterOffset());
-					positions.add(new Position(classType, beginTokenIndex, endTokenIndex));
+				if (obieThing.getCharacterOnset() != null && obieThing.getCharacterOffset() != null) {
+
+					forClass: {
+						final Class<? extends IOBIEThing> classType = obieThing.getClass();
+						final int beginTokenIndex = internalInstance
+								.charPositionToTokenPosition(obieThing.getCharacterOnset());
+						final int endTokenIndex = internalInstance
+								.charPositionToTokenPosition(obieThing.getCharacterOffset());
+						positions.add(new Position(classType.getSimpleName(), beginTokenIndex, endTokenIndex));
+					}
+
+					forIndividual: {
+						final AbstractOBIEIndividual individual = obieThing.getIndividual();
+						if (individual == null)
+							break forIndividual;
+						final int beginTokenIndex = internalInstance
+								.charPositionToTokenPosition(obieThing.getCharacterOnset());
+						final int endTokenIndex = internalInstance
+								.charPositionToTokenPosition(obieThing.getCharacterOffset());
+						positions.add(new Position(individual.name, beginTokenIndex, endTokenIndex));
+					}
 				}
 			}
 
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-			// influencedVariables.add(scioClass.getClass());
-
-			factors.add(new Scope(influencedVariables, positions, rootClassType, internalInstance));
+			factors.add(new Scope(positions, rootClassType, internalInstance));
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.warn(scioClass.getTextMention());
-			log.warn(scioClass);
-			log.warn(scioClass.getClass().getSimpleName() + "->" + scioClass.getTextMention());
+			log.warn(obieThing.getTextMention());
+			log.warn(obieThing);
+			log.warn(obieThing.getClass().getSimpleName() + "->" + obieThing.getTextMention());
 			System.exit(1);
 		}
 
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getDeclaredOntologyFields(scioClass.getClass()).forEach(field -> {
+		ReflectionUtils.getDeclaredOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-					for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
+					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
 						addFactorRecursive(factors, internalInstance, rootClassType, element);
 					}
 				} else {
-					addFactorRecursive(factors, internalInstance, rootClassType, (IOBIEThing) field.get(scioClass));
+					addFactorRecursive(factors, internalInstance, rootClassType, (IOBIEThing) field.get(obieThing));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -181,7 +208,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (Position position : factor.getFactorScope().positions) {
 
-			String className = position.classType.getSimpleName();
+			String className = position.classOrIndividualName;
 			int beginTokenIndex = position.beginTokenIndex;
 			int endTokenIndex = position.endTokenIndex;
 

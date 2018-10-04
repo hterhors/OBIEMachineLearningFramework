@@ -181,7 +181,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		for (OBIEInstance internalInstance : trainingDocuments) {
 			for (TemplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
 					.getTemplateAnnotations()) {
-				checkForTextualAnnotations(internalAnnotation.get(), internalInstance.getName(),
+				checkForTextualAnnotations(internalAnnotation.getTemplateAnnotation(), internalInstance.getName(),
 						internalInstance.getContent());
 			}
 		}
@@ -260,7 +260,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
 
-				if (!testLimitToAnnnotationElementsRecursively(annotation.get(), parameter.maxNumberOfEntityElements,
+				if (!testLimitToAnnnotationElementsRecursively(annotation.getTemplateAnnotation(), parameter.maxNumberOfEntityElements,
 						parameter.maxNumberOfDataTypeElements)) {
 					log.debug("Number of elements in annotation exceeds limit of: "
 							+ parameter.maxNumberOfEntityElements + " for object property OR "
