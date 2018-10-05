@@ -14,10 +14,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.LabeledInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.RegExTokenizer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.SentenceSplitter;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tokenizer.RegExTokenizer;
+import de.hterhors.obie.core.tokenizer.SentenceSplitter;
+import de.hterhors.obie.core.tokenizer.Token;
 
 /**
  * The BiGram Document contains information about the annotations (training or

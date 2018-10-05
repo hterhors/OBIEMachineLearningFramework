@@ -18,15 +18,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.IndividualFactory;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.tools.ml.variables.NERLIndividualAnnotation;
 import de.hterhors.obie.tools.ml.variables.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public class HighFrequencyUtils {
 

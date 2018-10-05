@@ -14,6 +14,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
+import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.evaluation.PRF1Container;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.tools.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.tools.ml.evaluation.evaluator.NamedEntityLinkingEvaluator;
@@ -23,9 +26,6 @@ import de.hterhors.obie.tools.ml.variables.InstanceEntityAnnotations;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
 import de.hterhors.obie.tools.ml.variables.TemplateAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1Container;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import evaluation.EvaluationUtil;
 import learning.ObjectiveFunction;
 

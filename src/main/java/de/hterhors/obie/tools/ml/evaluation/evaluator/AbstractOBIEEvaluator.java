@@ -8,15 +8,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.instances.EmptyOBIEInstance;
+import de.hterhors.obie.core.ontology.interfaces.IDatatype;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.evaluation.IOrListCondition;
 import de.hterhors.obie.tools.ml.run.InvestigationRestriction;
 import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.instances.EmptyOBIEInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 

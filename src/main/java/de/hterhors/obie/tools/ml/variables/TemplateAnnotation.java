@@ -8,9 +8,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.UUID;
 
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.utils.OBIEUtils;
 import de.hterhors.obie.tools.ml.utils.OBIEClassFormatter;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.utils.OBIEUtils;
 
 public class TemplateAnnotation implements Serializable {
 

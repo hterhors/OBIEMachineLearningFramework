@@ -11,6 +11,11 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.tools.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.tools.ml.templates.DocumentClassificationTemplate.Scope;
 import de.hterhors.obie.tools.ml.templates.scope.OBIEFactorScope;
@@ -18,11 +23,6 @@ import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
 import de.hterhors.obie.tools.ml.variables.TemplateAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.OntologyModelContent;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import factors.Factor;
 import learning.Vector;
 

@@ -8,10 +8,10 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.tools.corpus.OBIECorpus.Instance;
 import de.hterhors.obie.tools.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.tools.ml.corpus.distributor.ShuffleCorpusDistributor.Builder;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.OBIECorpus.Instance;
 
 /**
  * Takes the original distribution of documents into training, development and

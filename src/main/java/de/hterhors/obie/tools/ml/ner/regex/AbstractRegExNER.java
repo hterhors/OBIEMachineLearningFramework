@@ -15,6 +15,12 @@ import org.apache.jena.sparql.function.library.leviathan.root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.OntologyAnalyzer;
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.dtinterpreter.IDatatypeInterpretation;
 import de.hterhors.obie.tools.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.tools.ml.ner.INamedEntitityLinker;
@@ -22,12 +28,6 @@ import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
 import de.hterhors.obie.tools.ml.variables.INERLAnnotation;
 import de.hterhors.obie.tools.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.tools.ml.variables.NERLIndividualAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.OntologyAnalyzer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.OntologyModelContent;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEntitityLinker, Serializable {
 

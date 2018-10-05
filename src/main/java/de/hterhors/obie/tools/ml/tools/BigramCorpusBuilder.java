@@ -8,12 +8,12 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractOntologyEnvironment;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.projects.AbstractProjectEnvironment;
+import de.hterhors.obie.core.tools.corpus.CorpusFileTools;
 import de.hterhors.obie.tools.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.tools.ml.ner.INamedEntitityLinker;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOntologyEnvironment;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.projects.AbstractProjectEnvironment;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.CorpusFileTools;
 
 public class BigramCorpusBuilder {
 

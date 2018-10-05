@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.evaluation.IOrListCondition;
 import de.hterhors.obie.tools.ml.run.InvestigationRestriction;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 /**
  * How to use this as evaluation but not extends abstract evaluator implementing

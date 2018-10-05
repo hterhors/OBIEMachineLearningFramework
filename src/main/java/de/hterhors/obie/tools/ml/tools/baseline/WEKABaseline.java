@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.tools.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.tools.ml.explorer.SlotFillerExplorer;
@@ -34,7 +35,6 @@ import de.hterhors.obie.tools.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.tools.ml.variables.InstanceEntityAnnotations;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import factors.Factor;
 import factors.FactorGraph;
 import factors.FactorPool;

@@ -5,8 +5,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.NotImplementedException;
 
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.templates.AbstractOBIETemplate;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import factors.FactorScope;
 
 public class OBIEFactorScope extends FactorScope {

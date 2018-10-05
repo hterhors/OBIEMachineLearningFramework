@@ -3,14 +3,14 @@ package de.hterhors.obie.tools.ml.utils;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.interfaces.IDatatype;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tools.visualization.graphml.templates.NamedIndividual;
 import de.hterhors.obie.tools.ml.run.InvestigationRestriction;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.visualization.graphml.templates.NamedIndividual;
 
 public class OBIEClassFormatter {
 

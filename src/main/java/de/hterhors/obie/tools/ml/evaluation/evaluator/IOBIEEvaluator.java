@@ -2,10 +2,10 @@ package de.hterhors.obie.tools.ml.evaluation.evaluator;
 
 import java.util.List;
 
+import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.evaluation.IOrListCondition;
 import de.hterhors.obie.tools.ml.run.InvestigationRestriction;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public interface IOBIEEvaluator {
 

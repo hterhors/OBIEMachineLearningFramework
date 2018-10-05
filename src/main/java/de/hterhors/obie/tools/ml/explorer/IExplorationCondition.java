@@ -1,6 +1,6 @@
 package de.hterhors.obie.tools.ml.explorer;
 
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 
 public interface IExplorationCondition {
 

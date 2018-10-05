@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.tools.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
 import de.hterhors.obie.tools.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
 import de.hterhors.obie.tools.ml.variables.TemplateAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 
 public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 

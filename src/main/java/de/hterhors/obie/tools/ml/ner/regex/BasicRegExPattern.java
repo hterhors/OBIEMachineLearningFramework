@@ -10,13 +10,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import de.hterhors.obie.core.OntologyAnalyzer;
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.IndividualFactory;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.OntologyAnalyzer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public abstract class BasicRegExPattern {
 

@@ -23,6 +23,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tools.corpus.CorpusFileTools;
+import de.hterhors.obie.core.tools.corpus.OBIECorpus;
+import de.hterhors.obie.core.tools.corpus.OBIECorpus.Instance;
 import de.hterhors.obie.tools.ml.activelearning.IActiveLearningDocumentRanker;
 import de.hterhors.obie.tools.ml.corpus.distributor.AbstractCorpusDistributor;
 import de.hterhors.obie.tools.ml.corpus.distributor.ActiveLearningDistributor;
@@ -36,12 +42,6 @@ import de.hterhors.obie.tools.ml.variables.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
 import de.hterhors.obie.tools.ml.variables.TemplateAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.CorpusFileTools;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.OBIECorpus;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.OBIECorpus.Instance;
 
 /**
  * This class provide the corpora for training, development and test data.

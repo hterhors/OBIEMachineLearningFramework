@@ -1,6 +1,6 @@
 package de.hterhors.obie.tools.ml.templates.utils;
 
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 
 public class ClassTypePositionPair {
 

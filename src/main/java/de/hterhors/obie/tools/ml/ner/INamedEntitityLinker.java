@@ -3,10 +3,10 @@ package de.hterhors.obie.tools.ml.ner;
 import java.util.Map;
 import java.util.Set;
 
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.tools.ml.variables.NERLIndividualAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 public interface INamedEntitityLinker {
 

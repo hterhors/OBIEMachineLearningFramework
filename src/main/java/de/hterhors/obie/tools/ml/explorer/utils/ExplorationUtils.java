@@ -16,22 +16,22 @@ import java.util.stream.Collectors;
 
 import com.google.j2objc.annotations.ReflectionSupport;
 
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.IndividualFactory;
+import de.hterhors.obie.core.ontology.OntologyFieldNames;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.DirectSiblings;
+import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.interfaces.IDatatype;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tools.visualization.graphml.templates.NamedIndividual;
 import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
 import de.hterhors.obie.tools.ml.variables.INERLAnnotation;
 import de.hterhors.obie.tools.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.tools.ml.variables.NERLIndividualAnnotation;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyFieldNames;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectSiblings;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.visualization.graphml.templates.NamedIndividual;
 
 /**
  * 

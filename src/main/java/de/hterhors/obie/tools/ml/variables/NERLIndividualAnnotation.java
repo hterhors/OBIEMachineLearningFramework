@@ -2,7 +2,7 @@ package de.hterhors.obie.tools.ml.variables;
 
 import java.io.Serializable;
 
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
 
 public class NERLIndividualAnnotation implements INERLAnnotation {
 

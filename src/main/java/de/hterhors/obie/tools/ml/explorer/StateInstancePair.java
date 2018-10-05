@@ -2,8 +2,8 @@ package de.hterhors.obie.tools.ml.explorer;
 
 import java.util.Objects;
 
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 /**
  * Pair of the new generated state and and easy access to the changed OBIE

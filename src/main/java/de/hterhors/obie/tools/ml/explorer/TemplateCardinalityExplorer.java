@@ -9,13 +9,13 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.tools.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
 import de.hterhors.obie.tools.ml.variables.TemplateAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 /**
  * Explores the cardinality of the main template classes.

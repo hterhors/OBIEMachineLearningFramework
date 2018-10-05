@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.tools.ml.evaluation.evaluator.NamedEntityLinkingEvaluator;
 import de.hterhors.obie.tools.ml.utils.ReflectionUtils;
 import de.hterhors.obie.tools.ml.variables.InstanceEntityAnnotations;
 import de.hterhors.obie.tools.ml.variables.OBIEState;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import learning.ObjectiveFunction;
 
 public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceEntityAnnotations>

@@ -8,6 +8,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.evaluation.PRF1Container;
+import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
+import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.tools.ml.corpus.BigramInternalCorpus;
 import de.hterhors.obie.tools.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.tools.ml.explorer.utils.ExplorationUtils;
@@ -19,11 +24,6 @@ import de.hterhors.obie.tools.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.tools.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
 import de.hterhors.obie.tools.ml.variables.OBIEInstance;
 import de.hterhors.obie.tools.ml.variables.TemplateAnnotation;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1Container;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 
 /**
  * 
