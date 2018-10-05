@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.ner.regex.BasicRegExPattern;
@@ -129,7 +128,8 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null, entity.getTemplateAnnotation());
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null,
+					entity.getTemplateAnnotation());
 		}
 
 		return factors;
@@ -154,7 +154,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 							.getClassAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
 
 					Set<NERLClassAnnotation> childNeras;
-					if (child.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+					if (ReflectionUtils.isAnnotationPresent(child.getClass(), DatatypeProperty.class)) {
 						childNeras = internalInstance.getNamedEntityLinkingAnnotations()
 								.getClassAnnotationsByTextMention(child.getClass(), child.getTextMention());
 					} else {
@@ -250,14 +250,13 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 				factors.add(new Scope(new Position(classType1.getSimpleName(), fromTokenIndex),
 						new Position(classType2.getSimpleName(), toTokenIndex), rootEntityType, internalInstance));
 
-				for (Class<? extends IOBIEThing> rootClassType1 : classType1.getAnnotation(SuperRootClasses.class)
-						.get()) {
-					if (!rootClassType1.isAnnotationPresent(DatatypeProperty.class))
+				for (Class<? extends IOBIEThing> rootClassType1 : ReflectionUtils.getSuperRootClasses(classType1)) {
+					if (!ReflectionUtils.isAnnotationPresent(rootClassType1, DatatypeProperty.class))
 
-						for (Class<? extends IOBIEThing> rootClassType2 : classType2
-								.getAnnotation(SuperRootClasses.class).get()) {
+						for (Class<? extends IOBIEThing> rootClassType2 : ReflectionUtils
+								.getSuperRootClasses(classType2)) {
 
-							if (!rootClassType2.isAnnotationPresent(DatatypeProperty.class))
+							if (!ReflectionUtils.isAnnotationPresent(rootClassType2, DatatypeProperty.class))
 
 								/*
 								 * Add features for root classes of annotations.

@@ -19,6 +19,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.DocumentClassificationTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -83,7 +84,7 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 		if (scioClass == null)
 			return Collections.emptyList();
 
-		if (scioClass.getClass().isAnnotationPresent(DatatypeProperty.class))
+		if (ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
 			return Collections.emptyList();
 
 		List<Scope> factors = new ArrayList<>();
@@ -101,7 +102,7 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
 								factors.addAll(addFactorRecursive(entityRootClassType, instance, element));
 							}

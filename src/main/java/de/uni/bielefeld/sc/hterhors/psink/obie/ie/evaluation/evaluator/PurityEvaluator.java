@@ -1,25 +1,16 @@
 package de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.instances.EmptyOBIEInstance;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.IOrListCondition;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.exceptions.NotSupportedException;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 
 /**
  * 

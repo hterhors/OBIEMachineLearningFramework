@@ -17,6 +17,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.HeterogeneousSlotTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -97,7 +98,7 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (TemplateAnnotation ann : list) {
 			countBy.putIfAbsent(ann.getTemplateAnnotation().getClass(), new HashMap<>());
-			if (ann.getTemplateAnnotation().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(ann.getTemplateAnnotation().getClass(), DatatypeProperty.class)) {
 				final String text = ((IDatatype) ann.getTemplateAnnotation()).getSemanticValue();
 				countBy.get(ann.getTemplateAnnotation().getClass()).put(text,
 						countBy.get(ann.getTemplateAnnotation().getClass()).getOrDefault(text, 0) + 1);

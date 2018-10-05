@@ -18,13 +18,13 @@ import org.apache.logging.log4j.Logger;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.OntologyAnalyzer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectInterface;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.OntologyModelContent;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.dtinterpreter.IDatatypeInterpretation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.ner.INamedEntitityLinker;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.INERLAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLIndividualAnnotation;
@@ -307,8 +307,8 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 		for (Class<? extends IOBIEThing> relatedRootClass : relatedRootClasses) {
 
-			final Class<? extends IOBIEThing> interfaceOfRelatedClasstype = relatedRootClass
-					.getAnnotation(DirectInterface.class).get();
+			final Class<? extends IOBIEThing> interfaceOfRelatedClasstype = ReflectionUtils
+					.getDirectInterfaces(relatedRootClass);
 
 			if (ExplorationUtils.isAuxiliaryProperty(interfaceOfRelatedClasstype)) {
 
@@ -368,9 +368,9 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 		/*
 		 * Add factors for object type properties.
 		 */
-		if (!scioClass.getClass().isAnnotationPresent(DatatypeProperty.class))
+		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class) )
 			Arrays.stream(scioClass.getClass().getDeclaredFields())
-					.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
+					.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class) ).forEach(field -> {
 						field.setAccessible(true);
 						try {
 							if (field.isAnnotationPresent(RelationTypeCollection.class)) {

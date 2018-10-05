@@ -201,8 +201,9 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			/*
 			 * If class is the same and they are both data type properties
 			 */
-			if (goldInstance.getClass().isAnnotationPresent(DatatypeProperty.class)
-					|| predictedInstance.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(goldInstance
+					.getClass(), DatatypeProperty.class)
+					|| ReflectionUtils.isAnnotationPresent(predictedInstance.getClass(), DatatypeProperty.class)) {
 				if (goldInstance.getClass().equals(predictedInstance.getClass())) {
 
 					final String predValue = ((IDatatype) predictedInstance).getSemanticValue();
@@ -472,8 +473,8 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			 * If the field belongs to an or-list, we need a different method to calculate
 			 * the similarity of those lists.
 			 */
-			if (predictionField != null && predictionField.isAnnotationPresent(DatatypeProperty.class)
-					|| goldField != null && goldField.isAnnotationPresent(DatatypeProperty.class)) {
+			if (predictionField != null && ReflectionUtils.isAnnotationPresent(predictionField, DatatypeProperty.class)
+					|| goldField != null && ReflectionUtils.isAnnotationPresent(goldField, DatatypeProperty.class)) {
 				// System.out.println("In HERE..");
 				adderScore = standardSimilarity(goldList, predictionList);
 				// adderScore = listOfDataTypesEvaluator.prf1(goldList,

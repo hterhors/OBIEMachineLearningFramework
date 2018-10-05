@@ -20,6 +20,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.CooccurrenceTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -187,67 +188,58 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		 * Child-Child relation. if the child property is of type OneToMany we create
 		 * pairwise co-occurrences between all elements.
 		 */
-		for (int i = 0; i < childClass.getClass().getDeclaredFields().length; i++) {
-			final Field f1 = childClass.getClass().getDeclaredFields()[i];
+		for (int i = 0; i < ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).size(); i++) {
+			final Field f1 = ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).get(i);
 
-			if ((f1.isAnnotationPresent(OntologyModelContent.class))) {
-				f1.setAccessible(true);
+			final List<IOBIEThing> child1Fillers = getFillers(childClass, f1);
 
-				final List<IOBIEThing> child1Fillers = getFillers(childClass, f1);
+			for (int k = 0; k < child1Fillers.size(); k++) {
+				final Set<String> child1SurfaceForms;
+				/*
+				 * The class type is either the type of the object in the field if any. Else the
+				 * type of the field.
+				 */
+				final Class<? extends IOBIEThing> child1ClassType;
 
-				for (int k = 0; k < child1Fillers.size(); k++) {
-					final Set<String> child1SurfaceForms;
-					/*
-					 * The class type is either the type of the object in the field if any. Else the
-					 * type of the field.
-					 */
-					final Class<? extends IOBIEThing> child1ClassType;
+				if (child1Fillers.get(k) == null) {
+					child1SurfaceForms = null;
+					child1ClassType = null;
+				} else {
+					child1SurfaceForms = getSurfaceForms(child1Fillers.get(k));
+					child1ClassType = (Class<IOBIEThing>) child1Fillers.get(k).getClass();
+				}
 
-					if (child1Fillers.get(k) == null) {
-						child1SurfaceForms = null;
-						child1ClassType = null;
-					} else {
-						child1SurfaceForms = getSurfaceForms(child1Fillers.get(k));
-						child1ClassType = (Class<IOBIEThing>) child1Fillers.get(k).getClass();
-					}
+				for (int j = i + 1; j < ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).size(); j++) {
+					final Field f2 = ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).get(j);
 
-					for (int j = i + 1; j < childClass.getClass().getDeclaredFields().length; j++) {
-						final Field f2 = childClass.getClass().getDeclaredFields()[j];
+					final List<IOBIEThing> child2Fillers = getFillers(childClass, f2);
 
-						if ((f2.isAnnotationPresent(OntologyModelContent.class))) {
-							f2.setAccessible(true);
+					for (int l = 0; l < child2Fillers.size(); l++) {
+						final Set<String> child2SurfaceForms;
 
-							final List<IOBIEThing> child2Fillers = getFillers(childClass, f2);
+						/*
+						 * The class type is either the type of the object in the field if any. Else the
+						 * type of the field.
+						 */
+						final Class<? extends IOBIEThing> child2ClassType;
 
-							for (int l = 0; l < child2Fillers.size(); l++) {
-								final Set<String> child2SurfaceForms;
-
-								/*
-								 * The class type is either the type of the object in the field if any. Else the
-								 * type of the field.
-								 */
-								final Class<? extends IOBIEThing> child2ClassType;
-
-								if (child2Fillers.get(k) == null) {
-									child2SurfaceForms = null;
-									child2ClassType = null;
-								} else {
-									child2SurfaceForms = getSurfaceForms(child2Fillers.get(l));
-									child2ClassType = (Class<IOBIEThing>) child2Fillers.get(l).getClass();
-								}
-
-								final Set<Class<? extends IOBIEThing>> iV = new HashSet<>();
-								// iV.add(child1ClassType);
-								// iV.add(child2ClassType);
-								/*
-								 * Add factor for parent-child relation.
-								 */
-								factors.add(new Scope(iV, child1ClassType, child2ClassType, child1SurfaceForms,
-										child2SurfaceForms,
-										propertyNameChain + "->" + "{" + f1.getName() + ", " + f2.getName() + "}"));
-
-							}
+						if (child2Fillers.get(k) == null) {
+							child2SurfaceForms = null;
+							child2ClassType = null;
+						} else {
+							child2SurfaceForms = getSurfaceForms(child2Fillers.get(l));
+							child2ClassType = (Class<IOBIEThing>) child2Fillers.get(l).getClass();
 						}
+
+						final Set<Class<? extends IOBIEThing>> iV = new HashSet<>();
+						// iV.add(child1ClassType);
+						// iV.add(child2ClassType);
+						/*
+						 * Add factor for parent-child relation.
+						 */
+						factors.add(
+								new Scope(iV, child1ClassType, child2ClassType, child1SurfaceForms, child2SurfaceForms,
+										propertyNameChain + "->" + "{" + f1.getName() + ", " + f2.getName() + "}"));
 
 					}
 				}
@@ -257,23 +249,21 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Parent-Child relation
 		 */
-		Arrays.stream(childClass.getClass().getDeclaredFields())
-				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
-					field.setAccessible(true);
-					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-							for (IOBIEThing listObject : (List<IOBIEThing>) field.get(childClass)) {
-								factors.addAll(addFactorRecursive(factors, childClass, listObject,
-										propertyNameChain + "->" + field.getName()));
-							}
-						} else {
-							factors.addAll(addFactorRecursive(factors, childClass, (IOBIEThing) field.get(childClass),
-									propertyNameChain + "->" + field.getName()));
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
+		ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).forEach(field -> {
+			try {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
+					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(childClass)) {
+						factors.addAll(addFactorRecursive(factors, childClass, listObject,
+								propertyNameChain + "->" + field.getName()));
 					}
-				});
+				} else {
+					factors.addAll(addFactorRecursive(factors, childClass, (IOBIEThing) field.get(childClass),
+							propertyNameChain + "->" + field.getName()));
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
 
 		return factors;
 	}
@@ -293,13 +283,15 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			return null;
 
 		final Set<String> surfaceForms;
-		if (enableDistantSupervision && !filler.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+		if (enableDistantSupervision
+				&& !ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
 			/*
 			 * If DV is enabled add all surface forms of that class.
 			 */
 			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(filler.getClass())) {
-				surfaceForms = internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(filler.getClass())
-						.stream().map(nera -> nera.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet());
+				surfaceForms = internalInstance.getNamedEntityLinkingAnnotations()
+						.getClassAnnotations(filler.getClass()).stream()
+						.map(nera -> nera.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet());
 			} else {
 				return null;
 			}
@@ -308,7 +300,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			 * If DV is not enabled add just the surface form of that individual annotation.
 			 */
 			surfaceForms = new HashSet<>();
-			if (filler.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
 				surfaceForms.add(((IDatatype) filler).getSemanticValue());
 			} else {
 				surfaceForms.add(filler.getTextMention());

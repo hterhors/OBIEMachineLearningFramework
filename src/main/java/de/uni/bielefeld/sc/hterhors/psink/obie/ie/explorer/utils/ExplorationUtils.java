@@ -2,11 +2,9 @@ package de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,16 +20,13 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndivid
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyFieldNames;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubClasses;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubInterfaces;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectSiblings;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.NamedIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.visualization.graphml.templates.NamedIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.INERLAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
@@ -66,7 +61,7 @@ public class ExplorationUtils {
 	 * @return true if the class is just a auxiliary construct class, else false.
 	 */
 	@SuppressWarnings("unchecked")
-	public static boolean isAuxiliaryProperty(Class<?> propertyInterface) {
+	public static boolean isAuxiliaryProperty(Class<? extends IOBIEThing> propertyInterface) {
 
 		/**
 		 * TODO: Check this in PSINK project!
@@ -81,12 +76,12 @@ public class ExplorationUtils {
 		if (!propertyInterface.isAnnotationPresent(ImplementationClass.class))
 			return false;
 
-		final Class<? extends IOBIEThing> implClass = propertyInterface.getAnnotation(ImplementationClass.class).get();
+		final Class<? extends IOBIEThing> implClass = ReflectionUtils.getImplementationClass(propertyInterface);
 
 		/*
 		 * No NamedIndividual
 		 */
-		if (implClass.isAnnotationPresent(DatatypeProperty.class))
+		if (ReflectionUtils.isAnnotationPresent(implClass, DatatypeProperty.class))
 			return false;
 		/*
 		 * No DataType
@@ -109,7 +104,7 @@ public class ExplorationUtils {
 		 * class if subclass of multiple classes then we need to iterate over all super
 		 * classes.
 		 */
-		final Class<?> rootImplClasses[] = implClass.getAnnotation(SuperRootClasses.class).get();
+		final Set<Class<? extends IOBIEThing>> rootImplClasses = ReflectionUtils.getSuperRootClasses(implClass);
 		/*
 		 * No siblings, grand siblings...
 		 */
@@ -117,9 +112,9 @@ public class ExplorationUtils {
 		/**
 		 * TODO: Test multiple root types.
 		 */
-		for (Class<?> rootImplClass : rootImplClasses) {
+		for (Class<? extends IOBIEThing> rootImplClass : rootImplClasses) {
 
-			if (rootImplClass.getAnnotation(AssignableSubClasses.class).get().length != 0)
+			if (!ReflectionUtils.getAssignableSubClasses(rootImplClass).isEmpty())
 				return false;
 		}
 		return true;
@@ -209,12 +204,12 @@ public class ExplorationUtils {
 
 					if (typeCandidates) {
 						addSlotTypeIndividualCandidates(instance,
-								slotSuperType_interface.getAnnotation(ImplementationClass.class).get(), candidates,
-								individual, exploreClassesWithoutTextualEvidence);
+								ReflectionUtils.getImplementationClass(slotSuperType_interface),
+								candidates, individual, exploreClassesWithoutTextualEvidence);
 					} else {
 						addFillerIndividualCandidates(instance,
-								slotSuperType_interface.getAnnotation(ImplementationClass.class).get(), candidates,
-								individual, exploreClassesWithoutTextualEvidence);
+								ReflectionUtils.getImplementationClass(slotSuperType_interface),
+								candidates, individual, exploreClassesWithoutTextualEvidence);
 					}
 
 				}
@@ -229,26 +224,26 @@ public class ExplorationUtils {
 		 */
 		if (typeCandidates) {
 			addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
-					slotSuperType_interface.getAnnotation(ImplementationClass.class).get(),
+					ReflectionUtils.getImplementationClass(slotSuperType_interface),
 					exploreClassesWithoutTextualEvidence);
 		} else {
 			addFillerCandidates(instance, slotSuperType_interface, candidates,
-					slotSuperType_interface.getAnnotation(ImplementationClass.class).get(),
+					ReflectionUtils.getImplementationClass(slotSuperType_interface),
 					exploreClassesWithoutTextualEvidence);
 		}
 
 		/*
 		 * Get all possible candidates and filter by mentions in the text.
 		 */
-		for (Class<? extends IOBIEThing> slotFillerType : slotSuperType_interface
-				.getAnnotation(AssignableSubInterfaces.class).get()) {
+		for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+				.getAssignableSubInterfaces(slotSuperType_interface)) {
 			if (typeCandidates) {
 				addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
-						slotFillerType.getAnnotation(ImplementationClass.class).get(),
+						ReflectionUtils.getImplementationClass(slotFillerType),
 						exploreClassesWithoutTextualEvidence);
 			} else {
 				addFillerCandidates(instance, slotSuperType_interface, candidates,
-						slotFillerType.getAnnotation(ImplementationClass.class).get(),
+						ReflectionUtils.getImplementationClass(slotFillerType),
 						exploreClassesWithoutTextualEvidence);
 			}
 		}
@@ -265,8 +260,7 @@ public class ExplorationUtils {
 	 */
 	private static Collection<AbstractOBIEIndividual> getCollectionOfindividuals(
 			Class<? extends IOBIEThing> slotSuperType_interface) throws IllegalAccessException {
-		final Class<? extends IOBIEThing> clazz = slotSuperType_interface.getAnnotation(ImplementationClass.class)
-				.get();
+		final Class<? extends IOBIEThing> clazz = ReflectionUtils.getImplementationClass(slotSuperType_interface);
 
 		@SuppressWarnings("unchecked")
 		final IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
@@ -348,7 +342,7 @@ public class ExplorationUtils {
 			 * If the type is data type property then create an annotation instance for each
 			 * mention in the text.
 			 */
-			if (slotFillerType.isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(slotFillerType, DatatypeProperty.class)) {
 				/**
 				 * 
 				 */
@@ -559,7 +553,7 @@ public class ExplorationUtils {
 
 	private static void fillSemanticInterpretationField(IOBIEThing newInstance, String dtOrTextValue)
 			throws IllegalArgumentException, IllegalAccessException {
-		if (newInstance.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+		if (ReflectionUtils.isAnnotationPresent(newInstance.getClass(), DatatypeProperty.class)) {
 
 			Field scioValueField = ReflectionUtils.getDeclaredFieldByName(newInstance.getClass(),
 					OntologyFieldNames.SEMANTIC_VALUE_FIELD_NAME);
@@ -589,8 +583,9 @@ public class ExplorationUtils {
 			/*
 			 * NOTE: Pre fill auxiliary fields as default.
 			 */
-			if (isAuxiliaryProperty(field.getType())) {
-				field.set(newInstance, field.getType().getAnnotation(ImplementationClass.class).get().newInstance());
+			if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
+				field.set(newInstance,
+						ReflectionUtils.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
 			}
 		}
 		return newInstance;
@@ -618,8 +613,9 @@ public class ExplorationUtils {
 			/*
 			 * NOTE: Pre fill auxiliary fields as default.
 			 */
-			if (isAuxiliaryProperty(field.getType())) {
-				field.set(newInstance, field.getType().getAnnotation(ImplementationClass.class).get().newInstance());
+			if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
+				field.set(newInstance,
+						ReflectionUtils.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
 			}
 		}
 		return newInstance;
@@ -671,10 +667,10 @@ public class ExplorationUtils {
 	public static boolean isDifferentiableToAllSiblingClasses(Class<? extends IOBIEThing> classType,
 			final Class<? extends IOBIEThing> baseClassType_interface) {
 
-		if (classType.isAnnotationPresent(NamedIndividual.class))
-			return false;
+//		if (classType.isAnnotationPresent(NamedIndividual.class))
+//			return false;
 
-		if (classType.isAnnotationPresent(DatatypeProperty.class))
+		if (ReflectionUtils.isAnnotationPresent(classType, DatatypeProperty.class))
 			return false;
 
 		if (isAuxiliaryProperty(baseClassType_interface))
@@ -691,11 +687,10 @@ public class ExplorationUtils {
 		isDifferentiableToAllSiblingsCache.putIfAbsent(classType, new HashMap<>());
 
 		final List<Class<? extends IOBIEThing>> siblings = new ArrayList<>(
-				Arrays.asList(classType.getAnnotation(DirectSiblings.class).get()));
+				ReflectionUtils.getDirectSiblings(classType));
 
-		siblings.addAll(Arrays.stream(classType.getAnnotation(SuperRootClasses.class).get())
-
-				.flatMap(c -> Arrays.stream(c.getAnnotation(AssignableSubClasses.class).get()))
+		siblings.addAll(ReflectionUtils.getSuperRootClasses(classType).stream()
+				.flatMap(c -> ReflectionUtils.getAssignableSubClasses(c).stream())
 				.collect(Collectors.toList()));
 
 		/*

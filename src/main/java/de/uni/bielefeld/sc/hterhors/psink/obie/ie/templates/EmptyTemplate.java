@@ -16,6 +16,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.EmptyTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -36,9 +37,8 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 
 	class Scope extends OBIEFactorScope {
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template) {
-			super(influencedVariables, entityRootClassType, template, entityRootClassType);
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template) {
+			super(template, entityRootClassType);
 		}
 
 		@Override
@@ -70,10 +70,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (surfaceForm != null) {
 
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-			influencedVariables.add(scioClass.getClass());
-
-			factors.add(new Scope(influencedVariables, entityRootClassType, this));
+			factors.add(new Scope(entityRootClassType, this));
 		}
 		/*
 		 * Add factors for object type properties.
@@ -85,7 +82,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 
 						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
-								if (field.isAnnotationPresent(DatatypeProperty.class)) {
+								if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 
 								} else {
 
@@ -93,7 +90,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 
 							}
 						} else {
-							if (field.isAnnotationPresent(DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 
 							} else {
 

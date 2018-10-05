@@ -16,9 +16,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOntologyEnvironment;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubClasses;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubInterfaces;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectInterface;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.projects.AbstractProjectEnvironment;
@@ -30,6 +27,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.IExplorationCondition
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.AbstractOBIETemplate;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import learning.optimizer.Optimizer;
 import learning.optimizer.SGD;
@@ -426,9 +424,10 @@ public class OBIERunParameter implements Serializable {
 		Set<Class<? extends IOBIEThing>> build = new HashSet<>();
 
 		for (Class<? extends IOBIEThing> class1 : classes) {
-			for (Class<? extends IOBIEThing> c : class1.getAnnotation(AssignableSubClasses.class).get()) {
+
+			for (Class<? extends IOBIEThing> c : ReflectionUtils.getAssignableSubClasses(class1)) {
 				build.add(c);
-				build.add(c.getAnnotation(DirectInterface.class).get());
+				build.add(ReflectionUtils.getDirectInterfaces(c));
 			}
 		}
 		return build;
@@ -438,11 +437,11 @@ public class OBIERunParameter implements Serializable {
 	private Set<Class<? extends IOBIEThing>> autoExpand(AbstractProjectEnvironment scioEnvironment,
 			Set<Class<? extends IOBIEThing>> set) {
 
-		for (Class<? extends IOBIEThing> c : scioEnvironment.getOntologyThingInterface()
-				.getAnnotation(AssignableSubInterfaces.class).get()) {
+		for (Class<? extends IOBIEThing> c : ReflectionUtils.getAssignableSubInterfaces(
+				scioEnvironment.getOntologyThingInterface())) {
 			if (ExplorationUtils.isAuxiliaryProperty(c)) {
 				if (c.isAnnotationPresent(ImplementationClass.class)) {
-					set.add(c.getAnnotation(ImplementationClass.class).get());
+					set.add(ReflectionUtils.getImplementationClass(c));
 				} else {
 					log.warn("Can not find implementation class for: " + c.getSimpleName());
 				}

@@ -17,6 +17,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.NERTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -93,7 +94,7 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		if (!scioClass.getClass().isAnnotationPresent(DatatypeProperty.class))
+		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
 			Arrays.stream(scioClass.getClass().getDeclaredFields())
 					.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
 						field.setAccessible(true);

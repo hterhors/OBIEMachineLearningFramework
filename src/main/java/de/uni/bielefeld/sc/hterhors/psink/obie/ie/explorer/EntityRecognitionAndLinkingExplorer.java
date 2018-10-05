@@ -15,10 +15,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -36,7 +36,8 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 	public EntityRecognitionAndLinkingExplorer(OBIERunParameter param) {
 
 		this.possibleRootClassTypes = Collections.unmodifiableSet(param.rootSearchTypes.stream()
-				.map(i -> i.getAnnotation(ImplementationClass.class).get()).collect(Collectors.toSet()));
+				.map(i -> ReflectionUtils.getImplementationClass(i))
+				.collect(Collectors.toSet()));
 		log.info("Intialize MultiTokenBoundaryExplorer with: " + possibleRootClassTypes);
 		this.maxNumberOfSampleElements = param.maxNumberOfEntityElements;
 		this.rnd = param.rndForSampling;
@@ -110,7 +111,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 							 * We need at least to add the original value for data type property as it is
 							 * used for comparison.
 							 */
-							if (classToAnnotate.isAnnotationPresent(DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(classToAnnotate, DatatypeProperty.class)) {
 								final Set<NERLClassAnnotation> ner = previousState.getInstance()
 										.getNamedEntityLinkingAnnotations()
 										.getClassAnnotationsByTextMention(classToAnnotate, originalText);

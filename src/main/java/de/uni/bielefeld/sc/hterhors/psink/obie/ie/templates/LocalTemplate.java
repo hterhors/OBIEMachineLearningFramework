@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalTemplate.Scope;
@@ -104,7 +103,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 							.getClassAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
 
 					Set<NERLClassAnnotation> childNeras;
-					if (child.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+					if (ReflectionUtils.isAnnotationPresent(child.getClass(), DatatypeProperty.class)) {
 						childNeras = internalInstance.getNamedEntityLinkingAnnotations()
 								.getClassAnnotationsByTextMention(child.getClass(), child.getTextMention());
 					} else {
@@ -199,13 +198,12 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 			factors.add(new Scope(classType1.getSimpleName(), classType2.getSimpleName(), distance, internalInstance,
 					rootClassType));
 
-			for (Class<? extends IOBIEThing> rootClassType1 : classType1.getAnnotation(SuperRootClasses.class).get()) {
-				if (!rootClassType1.isAnnotationPresent(DatatypeProperty.class))
+			for (Class<? extends IOBIEThing> rootClassType1 : ReflectionUtils.getSuperRootClasses(classType1)) {
+				if (!ReflectionUtils.isAnnotationPresent(rootClassType1, DatatypeProperty.class))
 
-					for (Class<? extends IOBIEThing> rootClassType2 : classType2.getAnnotation(SuperRootClasses.class)
-							.get()) {
+					for (Class<? extends IOBIEThing> rootClassType2 : ReflectionUtils.getSuperRootClasses(classType2)) {
 
-						if (!rootClassType2.isAnnotationPresent(DatatypeProperty.class))
+						if (!ReflectionUtils.isAnnotationPresent(rootClassType2, DatatypeProperty.class))
 
 							/*
 							 * Add features for root classes of annotations.

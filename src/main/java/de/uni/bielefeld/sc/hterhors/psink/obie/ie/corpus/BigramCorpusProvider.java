@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -17,15 +18,18 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections.set.SynchronizedSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import corpus.SampledInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.CorpusFileTools;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.OBIECorpus;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.corpus.OBIECorpus.Instance;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.activelearning.IActiveLearningDocumentRanker;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.AbstractCorpusDistributor;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.ActiveLearningDistributor;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.distributor.FoldCrossCorpusDistributor;
@@ -36,6 +40,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 
 /**
@@ -198,8 +203,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	private void checkForTextualAnnotations(IOBIEThing annotation, final String instanceName, final String content) {
 		if (annotation == null)
 			return;
-
-		if (annotation.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+		
+		if (ReflectionUtils.isAnnotationPresent(annotation.getClass(), DatatypeProperty.class)) {
 
 			String surfaceForm = annotation.getTextMention();
 			if (surfaceForm == null)
@@ -260,8 +265,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
 
-				if (!testLimitToAnnnotationElementsRecursively(annotation.getTemplateAnnotation(), parameter.maxNumberOfEntityElements,
-						parameter.maxNumberOfDataTypeElements)) {
+				if (!testLimitToAnnnotationElementsRecursively(annotation.getTemplateAnnotation(),
+						parameter.maxNumberOfEntityElements, parameter.maxNumberOfDataTypeElements)) {
 					log.debug("Number of elements in annotation exceeds limit of: "
 							+ parameter.maxNumberOfEntityElements + " for object property OR "
 							+ parameter.maxNumberOfDataTypeElements + " for datatype property" + "!Remove annotation "
@@ -494,7 +499,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public boolean updateActiveLearning(AbstractOBIERunner model) {
+	public boolean updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker selector) {
 
 		if (!(distributer instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException("Configuration does not support active learning validation: "
@@ -502,44 +507,32 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		this.currentActiveLearningItertion++;
 
-		List<OBIEInstance> remainingInstances = new ArrayList<>(
-				model.corpusProvider.getDevelopCorpus().getInternalInstances());
+		final int remaining = getDevelopCorpus().getInternalInstances().size();
 
-		Collections.shuffle(remainingInstances, ((ActiveLearningDistributor) distributer).random);
+		final List<OBIEInstance> newTrainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
 
-		// List<SampledInstance<InternalInstance, InstanceAnnotations,
-		// OBIEState>> remainingInstances = model
-		// .predictOnDev();
-		//
-		// Collections.sort(remainingInstances,
-		// new Comparator<SampledInstance<InternalInstance, InstanceAnnotations,
-		// OBIEState>>() {
-		//
-		// @Override
-		// public int compare(SampledInstance<InternalInstance,
-		// InstanceAnnotations, OBIEState> o1,
-		// SampledInstance<InternalInstance, InstanceAnnotations, OBIEState> o2)
-		// {
-		// return Double.compare(o1.getState().getModelScore(),
-		// o2.getState().getModelScore());
-		// }
-		// });
-		List<OBIEInstance> newTrainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
+		if (remaining <= ((ActiveLearningDistributor) distributer).b) {
+			newTrainingInstances.addAll(getDevelopCorpus().getInternalInstances());
 
-		for (int i = 0; i < ((ActiveLearningDistributor) distributer).b; i++) {
-			newTrainingInstances.add(remainingInstances.get(i).getInstance());
+			this.developmentCorpus = new BigramInternalCorpus(Collections.emptyList());
+
+			this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
+
+			return false;
+		} else {
+
+			List<OBIEInstance> remainingInstances = selector.rank((ActiveLearningDistributor) distributer, runner,
+					getDevelopCorpus().getInternalInstances());
+
+			newTrainingInstances.addAll(remainingInstances.subList(0, ((ActiveLearningDistributor) distributer).b));
+
+			this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
+
+			this.developmentCorpus = new BigramInternalCorpus(new ArrayList<>(remainingInstances
+					.subList(((ActiveLearningDistributor) distributer).b, remainingInstances.size())));
+
+			return true;
 		}
-		List<OBIEInstance> newDevelopmentInstances = new ArrayList<>();
-
-		for (int i = ((ActiveLearningDistributor) distributer).b; i < this.developmentCorpus.getInternalInstances()
-				.size(); i++) {
-			newDevelopmentInstances.add(remainingInstances.get(i).getInstance());
-		}
-
-		this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
-		this.developmentCorpus = new BigramInternalCorpus(newDevelopmentInstances);
-
-		return newDevelopmentInstances.isEmpty();
 	}
 
 	public int getCurrentActiveLearningIteration() {

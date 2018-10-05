@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.evaluation.evaluator.NamedEntityLinkingEvaluator;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import learning.ObjectiveFunction;
@@ -27,7 +28,7 @@ public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceE
 	public double computeScore(OBIEState state, InstanceEntityAnnotations goldResult) {
 
 		Set<String> gold = goldResult.getTemplateAnnotations().stream().map(s -> {
-			if (s.getTemplateAnnotation().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(s.getTemplateAnnotation().getClass(), DatatypeProperty.class) ) {
 				return ((IDatatype) s.getTemplateAnnotation()).getSemanticValue();
 			} else {
 				return s.getTemplateAnnotation().getTextMention();
@@ -35,7 +36,7 @@ public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceE
 		}).collect(Collectors.toSet());
 
 		Set<String> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream().map(s -> {
-			if (s.getTemplateAnnotation().getClass().isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(s.getTemplateAnnotation().getClass(), DatatypeProperty.class) ) {
 				return ((IDatatype) s.getTemplateAnnotation()).getSemanticValue();
 			} else {
 				return s.getTemplateAnnotation().getTextMention();

@@ -18,6 +18,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramInternalCorpus;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.OBIEClassFormatter;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NamedEntityLinkingAnnotations;
@@ -155,7 +156,7 @@ public class UpperBound {
 				IOBIEThing goldModel = (IOBIEThing) goldAnnotation.getTemplateAnnotation();
 				IOBIEThing predictionModel = null;
 
-				if (goldModel.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+				if (ReflectionUtils.isAnnotationPresent(goldModel.getClass(), DatatypeProperty.class)) {
 					predictionModel = projectDataTypeClass(goldInstance, goldModel, predictionModel);
 				} else {
 					predictionModel = goldModel.getClass().newInstance();
@@ -208,7 +209,8 @@ public class UpperBound {
 		 * Add factors for object type properties.
 		 */
 		List<Field> fields = Arrays.stream(goldModel.getClass().getDeclaredFields())
-				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).collect(Collectors.toList());
+				.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class))
+				.collect(Collectors.toList());
 
 		for (Field field : fields) {
 			try {
@@ -243,7 +245,7 @@ public class UpperBound {
 								/*
 								 * If class is DataTypeProperty we need the exact value.
 								 */
-								if (thing.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+								if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class)) {
 									/*
 									 * Search for exact match... break on find.
 									 */
@@ -277,7 +279,7 @@ public class UpperBound {
 								}
 
 							} else {
-								if (thing.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+								if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class)) {
 									System.out.println("WARN: Can not fill class: " + thing.getClass().getSimpleName()
 											+ ":" + ((IDatatype) thing).getSemanticValue());
 								} else {
@@ -327,7 +329,7 @@ public class UpperBound {
 							/*
 							 * If field is DataTypeProeprty we need an exact match.
 							 */
-							if (field.getType().isAnnotationPresent(DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 								NERLClassAnnotation value = null;
 								/*
 								 * Search for exact match. Break on find.
@@ -370,7 +372,7 @@ public class UpperBound {
 								addClassesRecursivly((IOBIEThing) field.get(goldModel), property, ner);
 							}
 						} else {
-							if (field.getType().isAnnotationPresent(DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 								System.out.println("WARN: Can not fill field: " + scioFieldType.getSimpleName() + ":"
 										+ ((IDatatype) field.get(goldModel)).getSemanticValue());
 							} else {

@@ -14,12 +14,12 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.OntologyModelContent;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.LocalLocalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.utils.ClassTypePositionPair;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -194,9 +194,9 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Get all annotation mentions for original class type 2.
 		 */
-		List<Integer> mentionsForClass2 = new ArrayList<>(
-				document.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().class1.classType))
-						.stream().map(m -> document.charPositionToTokenPosition(m.onset)).collect(Collectors.toList());
+		List<Integer> mentionsForClass2 = new ArrayList<>(document.getNamedEntityLinkingAnnotations()
+				.getClassAnnotations(factor.getFactorScope().class1.classType)).stream()
+						.map(m -> document.charPositionToTokenPosition(m.onset)).collect(Collectors.toList());
 
 		double closestClassDistance = Integer.MAX_VALUE;
 
@@ -213,11 +213,11 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		 */
 		addFeatures(featureVector, class1Type, class2Type, classDistance, isClosestDistance);
 
-		for (Class<? extends IOBIEThing> rootClassType1 : class1Type.getAnnotation(SuperRootClasses.class).get()) {
+		for (Class<? extends IOBIEThing> rootClassType1 : ReflectionUtils.getSuperRootClasses(class1Type)) {
 			if (!class1Type.isAnnotationPresent(DatatypeProperty.class))
 				class1Type = rootClassType1;
 
-			for (Class<? extends IOBIEThing> rootClassType2 : class2Type.getAnnotation(SuperRootClasses.class).get()) {
+			for (Class<? extends IOBIEThing> rootClassType2 : ReflectionUtils.getSuperRootClasses(class2Type)) {
 
 				if (!class2Type.isAnnotationPresent(DatatypeProperty.class))
 					class2Type = rootClassType2;

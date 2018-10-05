@@ -330,7 +330,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 			@SuppressWarnings("unchecked")
 			List<IOBIEThing> oldList = (ArrayList<IOBIEThing>) slot.get(listHoldingThing);
 
-			if (slot.isAnnotationPresent(DatatypeProperty.class)
+			if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)
 					&& oldList.size() >= maxNumberOfDataTypeElementsInList) {
 				return wasNOTModByPreFilledTemplate;
 			}

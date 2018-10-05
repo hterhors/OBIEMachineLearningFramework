@@ -13,6 +13,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Datatyp
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 
@@ -73,7 +74,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 
 			final int size = previousState.getCurrentPrediction().getTemplateAnnotations().size();
 
-			if (rootTemplateType.isAnnotationPresent(DatatypeProperty.class) && size >= maxNumberOfDataTypeElements) {
+			if (ReflectionUtils.isAnnotationPresent(rootTemplateType, DatatypeProperty.class) && size >= maxNumberOfDataTypeElements) {
 				continue;
 			}
 

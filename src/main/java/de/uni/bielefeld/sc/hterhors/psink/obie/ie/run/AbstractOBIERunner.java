@@ -203,7 +203,7 @@ public abstract class AbstractOBIERunner {
 //		return model;
 	}
 
-	private void saveModel(int epoch) {
+	void saveModel(int epoch) {
 		File modelFile = ModelFileNameUtils.getModelFile(parameter, corpusProvider, epoch);
 
 		try {
@@ -304,12 +304,12 @@ public abstract class AbstractOBIERunner {
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnTest() throws IOException,
 			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
-		return test(corpusProvider.getTestCorpus().getInternalInstances());
+		return applyModelTo(corpusProvider.getTestCorpus().getInternalInstances());
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnTrain() throws IOException,
 			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
-		return test(corpusProvider.getTrainingCorpus().getInternalInstances());
+		return applyModelTo(corpusProvider.getTrainingCorpus().getInternalInstances());
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testInstance(OBIEInstance instance)
@@ -317,17 +317,17 @@ public abstract class AbstractOBIERunner {
 			Exception {
 		final List<OBIEInstance> instances = new ArrayList<>();
 		instances.add(instance);
-		return test(instances);
+		return applyModelTo(instances);
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testInstances(
 			List<OBIEInstance> instances) throws IOException, FileNotFoundException, ClassNotFoundException,
 			UnkownTemplateRequestedException, Exception {
-		return test(instances);
+		return applyModelTo(instances);
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnDev() {
-		return test(corpusProvider.getDevelopCorpus().getInternalInstances());
+		return applyModelTo(corpusProvider.getDevelopCorpus().getInternalInstances());
 	}
 
 	public List<OBIEState> predictInstance(final OBIEInstance instance,
@@ -392,7 +392,7 @@ public abstract class AbstractOBIERunner {
 
 	}
 
-	private List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> test(
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> applyModelTo(
 			final List<OBIEInstance> instances) {
 
 		DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler = buildTestDefaultSampler(model);
@@ -577,4 +577,9 @@ public abstract class AbstractOBIERunner {
 
 		return modelFile.exists();
 	}
+
+	public void scoreWithModel(List<OBIEState> states) {
+		model.score(states, null);
+	}
+
 }

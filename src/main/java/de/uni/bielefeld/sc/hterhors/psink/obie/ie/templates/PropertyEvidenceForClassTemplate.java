@@ -17,6 +17,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.PropertyEvidenceForClassTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -80,7 +81,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 						field.setAccessible(true);
 						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 
-							if (field.isAnnotationPresent(DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 							} else {
 
 							}
@@ -109,7 +110,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 				});
 
 	}
-
+	
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
@@ -118,7 +119,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 				.getRelatedClassTypesUnderRoot(factor.getFactorScope().relatedClassType);
 
 		for (Class<? extends IOBIEThing> relatedClassType : relatedClasses) {
-			if (relatedClassType.isAnnotationPresent(DatatypeProperty.class))
+			if (ReflectionUtils.isAnnotationPresent(relatedClassType, DatatypeProperty.class))
 				continue;
 			boolean evidenceExists = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
 					.containsClassAnnotations(relatedClassType);

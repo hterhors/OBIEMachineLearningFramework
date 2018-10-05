@@ -6,10 +6,10 @@ import java.util.List;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.NamedIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
+import de.uni.bielefeld.sc.hterhors.psink.obie.core.tools.visualization.graphml.templates.NamedIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.InvestigationRestriction;
 
 public class OBIEClassFormatter {
@@ -63,7 +63,7 @@ public class OBIEClassFormatter {
 			sb.append("(" + c.getCharacterOnset() + "-" + c.getCharacterOffset() + ")");
 		}
 
-		if (c.getClass().isAnnotationPresent(DatatypeProperty.class))
+		if (ReflectionUtils.isAnnotationPresent(c.getClass(), DatatypeProperty.class) )
 			sb.append(getDepth(depth) + c.getClass().getSimpleName() + ": \"" + c.getTextMention() + "\" ("
 					+ ((IDatatype) c).getSemanticValue() + ")");
 		else {
@@ -104,13 +104,13 @@ public class OBIEClassFormatter {
 								sb.append("(" + l.getCharacterOnset() + "-" + l.getCharacterOffset() + ": \""
 										+ l.getTextMention() + "\")");
 							}
-							if (l.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(l.getClass(), DatatypeProperty.class) ) {
 								sb.append("\n");
 								sb.append(getDepth(depth + 1) + l.getClass().getSimpleName() + ": \""
 										+ l.getTextMention() + "\" (" + ((IDatatype) l).getSemanticValue() + ")");
-							} else if (l.getClass().isAnnotationPresent(NamedIndividual.class)) {
-								sb.append("\n");
-								sb.append(getDepth(depth + 1) + l.getClass().getSimpleName());
+//							} else if (l.getClass().isAnnotationPresent(NamedIndividual.class)) {
+//								sb.append("\n");
+//								sb.append(getDepth(depth + 1) + l.getClass().getSimpleName());
 							} else {
 								sb.append("\n");
 								sb.append(toStringUsingRelfections(l, depth + 1, printAll, investigationRestriction));
@@ -126,11 +126,11 @@ public class OBIEClassFormatter {
 								+ ((IOBIEThing) field.get(c)).getTextMention() + "\")");
 					}
 					IOBIEThing cn = (IOBIEThing) field.get(c);
-					if (cn.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+					if (ReflectionUtils.isAnnotationPresent(cn.getClass(), DatatypeProperty.class) ) {
 						sb.append(getDepth(depth + 1) + cn.getClass().getSimpleName() + ": \"" + cn.getTextMention()
 								+ "\" (" + ((IDatatype) cn).getSemanticValue() + ")\n");
-					} else if (cn.getClass().isAnnotationPresent(NamedIndividual.class)) {
-						sb.append(ONE_DEPTH + cn.getClass().getSimpleName() + "\n");
+//					} else if (cn.getClass().isAnnotationPresent(NamedIndividual.class)) {
+//						sb.append(ONE_DEPTH + cn.getClass().getSimpleName() + "\n");
 					} else {
 						sb.append("\n");
 						sb.append(toStringUsingRelfections(cn, depth + 1, printAll, investigationRestriction));

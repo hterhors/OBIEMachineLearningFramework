@@ -24,9 +24,10 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.Word2VecClusterTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import factors.Factor;
 import learning.Vector;
 
@@ -105,7 +106,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 
 		final String className = scioClass.getClass().getSimpleName();
 		final Integer position = scioClass.getCharacterOnset();
-		if (position != null && scioClass.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+		if (position != null && ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class)) {
 			try {
 
 				final String surfaceForm = scioClass.getTextMention();

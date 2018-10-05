@@ -93,7 +93,7 @@ public abstract class BasicRegExPattern {
 
 		for (Class<? extends IOBIEThing> obieClassType : relatedRootClasses) {
 
-			if (obieClassType.isAnnotationPresent(DatatypeProperty.class))
+			if (ReflectionUtils.isAnnotationPresent(obieClassType, DatatypeProperty.class) )
 				continue;
 
 			List<String> names = new ArrayList<>();
@@ -161,7 +161,7 @@ public abstract class BasicRegExPattern {
 
 		for (Class<? extends IOBIEThing> obieClassType : relatedRootClasses) {
 
-			if (obieClassType.isAnnotationPresent(DatatypeProperty.class))
+			if (ReflectionUtils.isAnnotationPresent(obieClassType, DatatypeProperty.class) )
 				continue;
 
 			try {

@@ -14,11 +14,11 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.OntologyModelContent;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.GlobalSentenceLocalityTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
@@ -134,8 +134,8 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 		return properties;
 	}
 
-	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance document,
-			IOBIEThing class1, IOBIEThing class2, List<Scope> factors) {
+	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance document, IOBIEThing class1,
+			IOBIEThing class2, List<Scope> factors) {
 
 		if (class1 == null)
 			return;
@@ -182,8 +182,8 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 		 * Get all annotation mentions for original class type 2.
 		 */
 		List<Integer> mentionsForClass2 = new ArrayList<>(
-				document.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().class2Type)).stream()
-						.map(m -> document.charPositionToToken(m.onset).getSentenceIndex())
+				document.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().class2Type))
+						.stream().map(m -> document.charPositionToToken(m.onset).getSentenceIndex())
 						.collect(Collectors.toList());
 
 		double classDistance = Integer.MAX_VALUE;
@@ -205,11 +205,11 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 		 */
 		addFeatures(featureVector, class1Type, class2Type, classDistance);
 
-		for (Class<? extends IOBIEThing> rootClassType1 : class1Type.getAnnotation(SuperRootClasses.class).get()) {
+		for (Class<? extends IOBIEThing> rootClassType1 : ReflectionUtils.getSuperRootClasses(class1Type)) {
 			if (!class1Type.isAnnotationPresent(DatatypeProperty.class))
 				class1Type = rootClassType1;
 
-			for (Class<? extends IOBIEThing> rootClassType2 : class2Type.getAnnotation(SuperRootClasses.class).get()) {
+			for (Class<? extends IOBIEThing> rootClassType2 : ReflectionUtils.getSuperRootClasses(class2Type)) {
 
 				if (!class2Type.isAnnotationPresent(DatatypeProperty.class))
 					class2Type = rootClassType2;

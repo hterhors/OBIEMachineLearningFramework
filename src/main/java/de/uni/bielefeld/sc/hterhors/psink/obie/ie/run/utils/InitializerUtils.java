@@ -19,6 +19,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.Relatio
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.utils.OBIEUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.explorer.utils.ExplorationUtils;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.InstanceEntityAnnotations;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
@@ -97,7 +98,7 @@ public class InitializerUtils {
 		 * Add factors for object type properties.
 		 */
 		Arrays.stream(object.getClass().getDeclaredFields())
-				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
+				.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class) ).forEach(field -> {
 					field.setAccessible(true);
 					try {
 						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
@@ -105,8 +106,8 @@ public class InitializerUtils {
 							Class<? extends IOBIEThing> slotSuperType = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
 									.getGenericType()).getActualTypeArguments()[0]);
 							if (slotSuperType.isAnnotationPresent(ImplementationClass.class)) {
-								if (field.isAnnotationPresent(DatatypeProperty.class)) {
-									slotSuperType = slotSuperType.getAnnotation(ImplementationClass.class).get();
+								if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class) ) {
+									slotSuperType = ReflectionUtils.getImplementationClass(slotSuperType);
 									final IOBIEThing value = getValueForDT(instance, random, slotSuperType);
 									((List<IOBIEThing>) field.get(object)).add(value);
 								} else {
@@ -122,8 +123,8 @@ public class InitializerUtils {
 						} else {
 							Class<? extends IOBIEThing> slotSuperType = (Class<? extends IOBIEThing>) field.getType();
 							if (slotSuperType.isAnnotationPresent(ImplementationClass.class)) {
-								if (field.isAnnotationPresent(DatatypeProperty.class)) {
-									slotSuperType = slotSuperType.getAnnotation(ImplementationClass.class).get();
+								if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class) ) {
+									slotSuperType = ReflectionUtils.getImplementationClass(slotSuperType);
 									final IOBIEThing value = getValueForDT(instance, random, slotSuperType);
 									field.set(object, value);
 								} else {

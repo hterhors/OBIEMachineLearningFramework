@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
@@ -76,8 +75,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 
 		if (parentClassType != null) {
-			for (Class<? extends IOBIEThing> parentClass : parentClassType.getAnnotation(SuperRootClasses.class)
-					.get()) {
+			for (Class<? extends IOBIEThing> parentClass : ReflectionUtils.getSuperRootClasses(parentClassType)) {
 				factors.add(new Scope(templateRootClassType, this, parentClass.getSimpleName(), numberOfSlotFiller,
 						propertyNameChain, numberOfDistinctSlotFiller));
 			}
@@ -96,7 +94,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));
 
 					final int num = data.size();
-					final int distinctNum = distinctSize(data, field.isAnnotationPresent(DatatypeProperty.class));
+					final int distinctNum = distinctSize(data, ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class));
 
 					for (IOBIEThing listObject : data) {
 						factors.addAll(addFactorRecursive(templateRootClassType, obieThing.getClass(), listObject,

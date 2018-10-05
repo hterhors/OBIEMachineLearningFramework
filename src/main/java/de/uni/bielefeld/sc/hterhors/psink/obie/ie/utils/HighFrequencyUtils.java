@@ -22,7 +22,6 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndivid
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.IndividualFactory;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.OntologyInitializer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLClassAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.NERLIndividualAnnotation;
@@ -90,7 +89,7 @@ public class HighFrequencyUtils {
 				String textMention, int frequency) {
 			this.individual = individual;
 			if (belongingClazz != null) {
-				this.belongingClazz = belongingClazz.getAnnotation(ImplementationClass.class).get();
+				this.belongingClazz = ReflectionUtils.getImplementationClass(belongingClazz);
 			} else {
 				this.belongingClazz = null;
 			}
@@ -165,12 +164,12 @@ public class HighFrequencyUtils {
 		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> evidences = new HashMap<>();
 		final List<Class<? extends IOBIEThing>> bestClassTypes = new ArrayList<>();
 
-		if (interfaceType.isAnnotationPresent(DatatypeProperty.class)) {
+		if (ReflectionUtils.isAnnotationPresent(interfaceType, DatatypeProperty.class) ) {
 			for (int i = 0; i < n; i++) {
-				bestClassTypes.add(interfaceType.getAnnotation(ImplementationClass.class).get());
+				bestClassTypes.add(ReflectionUtils.getImplementationClass(interfaceType));
 
-				final Class<? extends IOBIEThing> bestClassType = interfaceType.getAnnotation(ImplementationClass.class)
-						.get();
+				final Class<? extends IOBIEThing> bestClassType = ReflectionUtils.getImplementationClass(interfaceType);
+
 				if (ner.containsClassAnnotations(bestClassType)) {
 					final Map<String, Integer> maxMention = new HashMap<>();
 
@@ -230,7 +229,7 @@ public class HighFrequencyUtils {
 
 			final NERLClassAnnotation nerAnnotation = evidences.get(bestClassType).iterator().next();
 			log.debug(nerAnnotation);
-			if (interfaceType.isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(interfaceType, DatatypeProperty.class) ) {
 				bestClasses.add(new ClassFrequencyPair((Class<IOBIEThing>) bestClassType, nerAnnotation.text,
 						nerAnnotation.getDTValueIfAnyElseTextMention(), evidences.get(bestClassType).size()));
 			} else {
@@ -260,7 +259,7 @@ public class HighFrequencyUtils {
 			final NamedEntityLinkingAnnotations nerlas = instance.getNamedEntityLinkingAnnotations();
 
 			final Field factoryField = ReflectionUtils.getDeclaredFieldByName(
-					slotType.getAnnotation(ImplementationClass.class).get(),
+					ReflectionUtils.getImplementationClass(slotType),
 					OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME);
 
 			/*

@@ -11,14 +11,13 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.OntologyAnalyzer;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.OntologyModelContent;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.SuperRootClasses;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.HierarchyTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -42,18 +41,18 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 
 	class Scope extends OBIEFactorScope {
 
-		final Class<? extends IOBIEThing> scioClass;
+		final Class<? extends IOBIEThing> clazz;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
+		public Scope(
 				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				Class<? extends IOBIEThing> scioClass) {
-			super(influencedVariables, entityRootClassType, template, scioClass, entityRootClassType);
-			this.scioClass = scioClass;
+			super(template, scioClass, entityRootClassType);
+			this.clazz = scioClass;
 		}
 
 		@Override
 		public String toString() {
-			return "Scope [scioClass=" + scioClass + ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
+			return "Scope [scioClass=" + clazz + ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}
@@ -76,15 +75,15 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 		influencedVariables.add(scioClass.getClass());
 
-		if (!scioClass.getClass().isAnnotationPresent(DatatypeProperty.class)) {
-			factors.add(new Scope(influencedVariables, entityRootClassType, this, scioClass.getClass()));
+		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class)) {
+			factors.add(new Scope(entityRootClassType, this, scioClass.getClass()));
 		}
 
 		/*
 		 * Add factors for object type properties.
 		 */
 		Arrays.stream(scioClass.getClass().getDeclaredFields())
-				.filter(f -> (!f.isAnnotationPresent(DatatypeProperty.class)
+				.filter(f -> (!ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)
 						&& f.isAnnotationPresent(OntologyModelContent.class)))
 				.forEach(field -> {
 					field.setAccessible(true);
@@ -108,16 +107,16 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
-		final Class<? extends IOBIEThing>[] rootClassTypes = factor.getFactorScope().scioClass
-				.getAnnotation(SuperRootClasses.class).get();
+		final Set<Class<? extends IOBIEThing>> rootClassTypes = ReflectionUtils
+				.getSuperRootClasses(factor.getFactorScope().clazz);
 
 		final int hierarchy = OntologyAnalyzer.getHierarchy(parameter.projectEnvironment.getOntologyThingInterface(),
-				factor.getFactorScope().scioClass);
+				factor.getFactorScope().clazz);
 
 		for (Class<? extends IOBIEThing> rootClass : rootClassTypes) {
 
 			final String className = rootClass.isInterface()
-					? rootClass.getAnnotation(ImplementationClass.class).get().getSimpleName()
+					? ReflectionUtils.getImplementationClass(rootClass).getSimpleName()
 					: rootClass.getSimpleName();
 
 			for (int hLevel = 1; hLevel < hierarchy; hLevel++) {

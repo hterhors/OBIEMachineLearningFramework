@@ -10,10 +10,7 @@ import java.util.stream.Collectors;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.evaluation.PRF1Container;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.AssignableSubInterfaces;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectInterface;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.corpus.BigramInternalCorpus;
@@ -118,7 +115,7 @@ public class HighFrequencyBaseline {
 				predictionClass = goldClass.getClass().newInstance();
 
 				List<IndividualFrequencyPair> individualFreqList = HighFrequencyUtils.getMostFrequentIndividuals(
-						goldClass.getClass().getAnnotation(DirectInterface.class).get(), instance, 1);
+						ReflectionUtils.getDirectInterfaces(goldClass.getClass()), instance, 1);
 				/**
 				 * TODO: allow multiple main templates ???
 				 */
@@ -168,7 +165,7 @@ public class HighFrequencyBaseline {
 				final Class<? extends IOBIEThing> slotType = ((Class<? extends IOBIEThing>) ((ParameterizedType) slot
 						.getGenericType()).getActualTypeArguments()[0]);
 
-				if (slot.isAnnotationPresent(DatatypeProperty.class)) {
+				if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class) ) {
 
 					List<ClassFrequencyPair> cfps = HighFrequencyUtils.getMostFrequentClasses(slotType, instance,
 							MAX_PREDICTIONS_TO_ADD);
@@ -193,8 +190,8 @@ public class HighFrequencyBaseline {
 					/*
 					 * If the mention annotation data contains evidence for that requested class.
 					 */
-					final Class<? extends IOBIEThing> slotGenericClassType = slotType
-							.getAnnotation(ImplementationClass.class).get();
+					final Class<? extends IOBIEThing> slotGenericClassType = ReflectionUtils
+							.getImplementationClass(slotType);
 					for (int i = 0; i < MAX_PREDICTIONS_TO_ADD; i++) {
 						/*
 						 * Add n auxiliary classes.
@@ -215,8 +212,8 @@ public class HighFrequencyBaseline {
 					individualFreqList.addAll(
 							HighFrequencyUtils.getMostFrequentIndividuals(slotType, instance, MAX_PREDICTIONS_TO_ADD));
 
-					for (Class<? extends IOBIEThing> slotFillerType : slotType
-							.getAnnotation(AssignableSubInterfaces.class).get()) {
+					for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+							.getAssignableSubInterfaces(slotType)) {
 
 						individualFreqList.addAll(HighFrequencyUtils.getMostFrequentIndividuals(slotFillerType,
 								instance, MAX_PREDICTIONS_TO_ADD));
@@ -262,7 +259,7 @@ public class HighFrequencyBaseline {
 				 * Search for data in the mention annotation data.
 				 */
 				try {
-					if (slot.isAnnotationPresent(DatatypeProperty.class)) {
+					if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class) ) {
 
 						List<ClassFrequencyPair> cfps = HighFrequencyUtils.getMostFrequentClasses(slotType, instance,
 								1);
@@ -283,8 +280,8 @@ public class HighFrequencyBaseline {
 
 						}
 					} else if (ExplorationUtils.isAuxiliaryProperty(slotType)) {
-						final Class<? extends IOBIEThing> slotClassType = slotType
-								.getAnnotation(ImplementationClass.class).get();
+						final Class<? extends IOBIEThing> slotClassType = ReflectionUtils
+								.getImplementationClass(slotType);
 						/*
 						 * annotation data. We still check if the field should be filled anyway (without
 						 * textual evidence). This makes sense on fields that are not dependent on text.
@@ -299,8 +296,8 @@ public class HighFrequencyBaseline {
 						individualFreqList.addAll(HighFrequencyUtils.getMostFrequentIndividuals(slotType, instance,
 								MAX_PREDICTIONS_TO_ADD));
 
-						for (Class<? extends IOBIEThing> slotFillerType : slotType
-								.getAnnotation(AssignableSubInterfaces.class).get()) {
+						for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+								.getAssignableSubInterfaces(slotType)) {
 
 							individualFreqList.addAll(HighFrequencyUtils.getMostFrequentIndividuals(slotFillerType,
 									instance, MAX_PREDICTIONS_TO_ADD));

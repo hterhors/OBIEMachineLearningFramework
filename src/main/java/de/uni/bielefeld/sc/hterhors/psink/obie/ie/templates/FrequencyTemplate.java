@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.AbstractOBIEIndividual;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DirectInterface;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IDatatype;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
@@ -17,9 +16,9 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.FrequencyTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.HighFrequencyUtils.IndividualFrequencyPair;
-import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEInstance;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
@@ -118,17 +117,18 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		if (obieThing == null)
 			return factors;
 
-		if (obieThing.getClass().isAnnotationPresent(DatatypeProperty.class)) {
-			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
-					((IDatatype) obieThing).getSemanticValue(), propertyClassType.isInterface() ? propertyClassType
-							: propertyClassType.getAnnotation(DirectInterface.class).get(),
-					null));
-		} else {
+		if (ReflectionUtils.isAnnotationPresent(obieThing.getClass(), DatatypeProperty.class)) {
 			factors.add(
-					new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(), null,
+					new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
+							((IDatatype) obieThing).getSemanticValue(),
 							propertyClassType.isInterface() ? propertyClassType
-									: propertyClassType.getAnnotation(DirectInterface.class).get(),
-							obieThing.getIndividual()));
+									: ReflectionUtils.getDirectInterfaces(propertyClassType),
+							null));
+		} else {
+			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(), null,
+					propertyClassType.isInterface() ? propertyClassType
+							: ReflectionUtils.getDirectInterfaces(propertyClassType),
+					obieThing.getIndividual()));
 		}
 
 		/*
@@ -208,7 +208,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 				realMax = true;
 			}
 
-			if (factor.getFactorScope().slotValueType.isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(factor.getFactorScope().slotValueType, DatatypeProperty.class)) {
 				if (factor.getFactorScope().datatypeValue == null) {
 				} else {
 

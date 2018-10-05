@@ -15,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.DatatypeProperty;
-import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.ImplementationClass;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.annotations.RelationTypeCollection;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThing;
 import de.uni.bielefeld.sc.hterhors.psink.obie.core.tokenizer.Token;
@@ -222,7 +221,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		Set<IOBIEThing> set = new HashSet<>();
 
 		if (searchType.isInterface()) {
-			searchType = searchType.getAnnotation(ImplementationClass.class).get();
+			searchType = ReflectionUtils.getImplementationClass(searchType);
 		} else {
 			log.warn("Initialization type is supposed to be an interface, but its not: " + searchType);
 		}
@@ -232,7 +231,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		 */
 		switch (initializer) {
 		case EMPTY:
-			if (searchType.isAnnotationPresent(DatatypeProperty.class))
+			if (ReflectionUtils.isAnnotationPresent(searchType, DatatypeProperty.class) )
 				break;
 
 			set.add(InitializerUtils.getEmptyInstance(searchType));
@@ -263,8 +262,8 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		boolean containsAnnotation = false;
 		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
 
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.getTemplateAnnotation(), (int) token.getFromCharPosition(),
-					(int) token.getToCharPosition());
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.getTemplateAnnotation(),
+					(int) token.getFromCharPosition(), (int) token.getToCharPosition());
 
 			if (containsAnnotation)
 				return true;

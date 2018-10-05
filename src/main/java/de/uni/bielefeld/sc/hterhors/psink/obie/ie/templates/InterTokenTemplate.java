@@ -103,6 +103,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 		if (surfaceForms != null) {
 			factors.add(new Scope(scioClass.getClass().getSimpleName(), surfaceForms, rootClassType));
+		if(scioClass.getIndividual()!=null)
 			factors.add(new Scope(scioClass.getIndividual().name, surfaceForms, rootClassType));
 		}
 		// }
@@ -149,7 +150,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 			 * If DV is enabled add all surface forms of that class.
 			 */
 			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(filler.getClass())) {
-				if (filler.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+				if (ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
 					surfaceForms = new HashSet<>();
 					surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
 				} else {
@@ -169,7 +170,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 			 * If DV is not enabled add just the surface form of that individual annotation.
 			 */
 			surfaceForms = new HashSet<>();
-			if (filler.getClass().isAnnotationPresent(DatatypeProperty.class)) {
+			if (ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
 				// surfaceForms.add(((IDataType) filler).getValue());
 				surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
 			} else {

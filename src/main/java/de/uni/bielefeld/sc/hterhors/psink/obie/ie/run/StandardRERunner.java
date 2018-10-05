@@ -30,6 +30,17 @@ public class StandardRERunner extends AbstractOBIERunner {
 		return Arrays.asList(
 				//
 				new EpochCallback() {
+
+					@Override
+					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+
+						if (numberOfEpochs == epoch)
+							saveModel(epoch);
+					}
+
+				},
+				//
+				new EpochCallback() {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {

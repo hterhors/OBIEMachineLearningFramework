@@ -22,6 +22,7 @@ import de.uni.bielefeld.sc.hterhors.psink.obie.core.ontology.interfaces.IOBIEThi
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.run.param.OBIERunParameter;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.MainSlotVarietyTemplate.Scope;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.templates.scope.OBIEFactorScope;
+import de.uni.bielefeld.sc.hterhors.psink.obie.ie.utils.ReflectionUtils;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.TemplateAnnotation;
 import de.uni.bielefeld.sc.hterhors.psink.obie.ie.variables.OBIEState;
 import factors.Factor;
@@ -168,7 +169,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 						try {
 							if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 								for (IOBIEThing element : (List<IOBIEThing>) field.get(entityScioClass)) {
-									if (field.isAnnotationPresent(DatatypeProperty.class)) {
+									if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 										childrenOfEntities.get(entityScioClass.getClass())[index]
 												.add(new Child(element.getClass().getSimpleName(),
 														((IDatatype) element).getSemanticValue(), true));
@@ -183,7 +184,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 								final IOBIEThing childClass = (IOBIEThing) field.get(entityScioClass);
 
 								if (childClass != null) {
-									if (childClass.getClass().isAnnotationPresent(DatatypeProperty.class))
+									if (ReflectionUtils.isAnnotationPresent(childClass.getClass(), DatatypeProperty.class))
 										childrenOfEntities.get(entityScioClass.getClass())[index]
 												.add(new Child(childClass.getClass().getSimpleName(),
 														((IDatatype) childClass).getSemanticValue(), true));
