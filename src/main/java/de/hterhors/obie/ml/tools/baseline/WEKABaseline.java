@@ -29,9 +29,8 @@ import de.hterhors.obie.ml.run.eval.EvaluatePrediction;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.scorer.IExternalScorer;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
-import de.hterhors.obie.ml.scorer.LibSVMRegressionScorer;
 import de.hterhors.obie.ml.scorer.InstanceCollection.FeatureDataPoint;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
+import de.hterhors.obie.ml.scorer.LibSVMRegressionScorer;
 import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -121,7 +120,7 @@ public class WEKABaseline {
 	/**
 	 * The list of templates, which where specified in the parameter.
 	 */
-	private List<AbstractTemplate<OBIEInstance, OBIEState, ? extends OBIEFactorScope>> templates = new ArrayList<>();
+	private List<AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope>> templates = new ArrayList<>();
 
 	/**
 	 * The provider of the corpus. That includes training, development (if any) and
@@ -370,11 +369,11 @@ public class WEKABaseline {
 	 * @throws SecurityException
 	 */
 	@SuppressWarnings("unchecked")
-	private AbstractTemplate<OBIEInstance, OBIEState, ? extends OBIEFactorScope> instantiateTemplate(
+	private AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope> instantiateTemplate(
 			Class<? extends AbstractTemplate<?, ?, ?>> abstractTemplate)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException {
-		AbstractTemplate<OBIEInstance, OBIEState, ? extends OBIEFactorScope> t;
+		AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope> t;
 
 		/**
 		 * // * TOOD: how to instantiate special templates ? //
@@ -387,7 +386,7 @@ public class WEKABaseline {
 //		
 //		} else {
 
-		t = (AbstractTemplate<OBIEInstance, OBIEState, ? extends OBIEFactorScope>) Class
+		t = (AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope>) Class
 				.forName(abstractTemplate.getName()).getConstructor(OBIERunParameter.class).newInstance(parameter);
 //		}
 
@@ -654,7 +653,7 @@ public class WEKABaseline {
 	 * @param template
 	 */
 	private void generateFeatures(List<OBIEState> selectedStates) {
-		for (AbstractTemplate<OBIEInstance, OBIEState, ? extends OBIEFactorScope> template : templates) {
+		for (AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope> template : templates) {
 			forGenericTemplate(selectedStates, template);
 		}
 	}
@@ -665,7 +664,7 @@ public class WEKABaseline {
 	 * @param newState
 	 * @param template
 	 */
-	private <T extends OBIEFactorScope> void forGenericTemplate(List<OBIEState> selectedStates,
+	private <T extends FactorScope> void forGenericTemplate(List<OBIEState> selectedStates,
 			AbstractTemplate<OBIEInstance, OBIEState, T> template) {
 
 		Set<T> allGeneratedScopesForTemplate = generateScopesAndAddToStates(template, selectedStates);

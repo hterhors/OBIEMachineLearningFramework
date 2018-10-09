@@ -14,7 +14,6 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.TokenContextTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.NERLIndividualAnnotation;
@@ -22,6 +21,7 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
@@ -94,7 +94,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final OBIEInstance instance;
 		final Set<Position> positions;
@@ -184,7 +184,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getDeclaredOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {

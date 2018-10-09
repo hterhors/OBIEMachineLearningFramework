@@ -488,7 +488,7 @@ public class OBIERunParameter implements Serializable {
 				+ ", ignoreEmptyInstancesonEvaluation=" + ignoreEmptyInstancesonEvaluation + "]";
 	}
 
-	public static class OBIEParameterBuilder {
+	public static class Builder {
 		/**
 		 * Even more specified exploration conditions. This does not affect the
 		 * evaluation! Use this interface to specify if specific fields should be
@@ -568,14 +568,14 @@ public class OBIERunParameter implements Serializable {
 
 		private AbstractCorpusDistributor corpusConfiguration = null;
 
-		public OBIEParameterBuilder() {
+		public Builder() {
 		}
 
 		public AbstractCorpusDistributor getCorpusConfiguration() {
 			return corpusConfiguration;
 		}
 
-		public OBIEParameterBuilder setCorpusDistributor(AbstractCorpusDistributor corpusConfiguration) {
+		public Builder setCorpusDistributor(AbstractCorpusDistributor corpusConfiguration) {
 			this.corpusConfiguration = corpusConfiguration;
 			return this;
 		}
@@ -584,7 +584,7 @@ public class OBIERunParameter implements Serializable {
 			return corpusNamePrefix;
 		}
 
-		public OBIEParameterBuilder setCorpusNamePrefix(String corpusNamePrefix) {
+		public Builder setCorpusNamePrefix(String corpusNamePrefix) {
 			this.corpusNamePrefix = corpusNamePrefix;
 			return this;
 		}
@@ -593,7 +593,7 @@ public class OBIERunParameter implements Serializable {
 			return excludeEmptyInstancesFromCorpus;
 		}
 
-		public OBIEParameterBuilder setExcludeEmptyInstancesFromCorpus(boolean excludeEmptyInstancesFromCorpus) {
+		public Builder setExcludeEmptyInstancesFromCorpus(boolean excludeEmptyInstancesFromCorpus) {
 			this.excludeEmptyInstancesFromCorpus = excludeEmptyInstancesFromCorpus;
 			return this;
 		}
@@ -602,7 +602,7 @@ public class OBIERunParameter implements Serializable {
 			return evaluator;
 		}
 
-		public OBIEParameterBuilder setEvaluator(IOBIEEvaluator evaluator) {
+		public Builder setEvaluator(IOBIEEvaluator evaluator) {
 			this.evaluator = evaluator;
 			return this;
 		}
@@ -611,7 +611,7 @@ public class OBIERunParameter implements Serializable {
 			return manualExploreClassesWithoutEvidence;
 		}
 
-		public OBIEParameterBuilder setManualExploreClassesWithoutEvidence(
+		public Builder setManualExploreClassesWithoutEvidence(
 				Class<? extends IOBIEThing>[] exploreClassesWithoutEvidence) {
 			this.manualExploreClassesWithoutEvidence = exploreClassesWithoutEvidence;
 			return this;
@@ -621,7 +621,7 @@ public class OBIERunParameter implements Serializable {
 			return multiThreading;
 		}
 
-		public OBIEParameterBuilder setMultiThreading(boolean multiThreading) {
+		public Builder setMultiThreading(boolean multiThreading) {
 			this.multiThreading = multiThreading;
 			return this;
 		}
@@ -630,7 +630,7 @@ public class OBIERunParameter implements Serializable {
 			return maxNumberOfSamplingSteps;
 		}
 
-		public OBIEParameterBuilder setNumberOfMaxSamplingSteps(int numberOfMaxSamplingSteps) {
+		public Builder setNumberOfMaxSamplingSteps(int numberOfMaxSamplingSteps) {
 			this.maxNumberOfSamplingSteps = numberOfMaxSamplingSteps;
 			return this;
 		}
@@ -639,7 +639,7 @@ public class OBIERunParameter implements Serializable {
 			return regularizer;
 		}
 
-		public OBIEParameterBuilder setRegularizer(Regularizer regularizer) {
+		public Builder setRegularizer(Regularizer regularizer) {
 			this.regularizer = regularizer;
 			return this;
 		}
@@ -648,12 +648,12 @@ public class OBIERunParameter implements Serializable {
 			return templates;
 		}
 
-		public OBIEParameterBuilder setTemplates(Set<Class<? extends AbstractOBIETemplate<?>>> templates) {
+		public Builder setTemplates(Set<Class<? extends AbstractOBIETemplate<?>>> templates) {
 			this.templates = templates;
 			return this;
 		}
 
-		public OBIEParameterBuilder addTemplate(Class<? extends AbstractOBIETemplate<?>> template) {
+		public Builder addTemplate(Class<? extends AbstractOBIETemplate<?>> template) {
 			this.templates.add(template);
 			return this;
 		}
@@ -662,7 +662,7 @@ public class OBIERunParameter implements Serializable {
 			return runID;
 		}
 
-		public OBIEParameterBuilder setRunID(String runID) {
+		public Builder setRunID(String runID) {
 			this.runID = runID;
 			return this;
 		}
@@ -671,7 +671,7 @@ public class OBIERunParameter implements Serializable {
 			return rootDirectory;
 		}
 
-		public OBIEParameterBuilder setRootDirectory(File rootDirectory) {
+		public Builder setRootDirectory(File rootDirectory) {
 			this.rootDirectory = rootDirectory;
 			return this;
 		}
@@ -680,7 +680,7 @@ public class OBIERunParameter implements Serializable {
 			return epochs;
 		}
 
-		public OBIEParameterBuilder setEpochs(int epochs) {
+		public Builder setEpochs(int epochs) {
 			this.epochs = epochs;
 			return this;
 		}
@@ -689,7 +689,7 @@ public class OBIERunParameter implements Serializable {
 			return optimizer;
 		}
 
-		public OBIEParameterBuilder setOptimizer(Optimizer optimizer) {
+		public Builder setOptimizer(Optimizer optimizer) {
 			this.optimizer = optimizer;
 			return this;
 		}
@@ -698,7 +698,7 @@ public class OBIERunParameter implements Serializable {
 			return scorerType;
 		}
 
-		public OBIEParameterBuilder setScorerType(EScorerType scorerType) {
+		public Builder setScorerType(EScorerType scorerType) {
 			this.scorerType = scorerType;
 			return this;
 		}
@@ -707,7 +707,7 @@ public class OBIERunParameter implements Serializable {
 			return personalNotes;
 		}
 
-		public OBIEParameterBuilder setPersonalNotes(String personalNotes) {
+		public Builder setPersonalNotes(String personalNotes) {
 			this.personalNotes = personalNotes;
 			return this;
 		}
@@ -716,12 +716,12 @@ public class OBIERunParameter implements Serializable {
 			return rootSearchTypes;
 		}
 
-		public OBIEParameterBuilder setRootSearchTypes(Set<Class<? extends IOBIEThing>> rootSearchTypes) {
+		public Builder setRootSearchTypes(Set<Class<? extends IOBIEThing>> rootSearchTypes) {
 			this.rootSearchTypes = rootSearchTypes;
 			return this;
 		}
 
-		public OBIEParameterBuilder addRootSearchType(Class<? extends IOBIEThing> rootSearchType) {
+		public Builder addRootSearchType(Class<? extends IOBIEThing> rootSearchType) {
 			this.rootSearchTypes.add(rootSearchType);
 			return this;
 		}
@@ -730,7 +730,7 @@ public class OBIERunParameter implements Serializable {
 			return initializer;
 		}
 
-		public OBIEParameterBuilder setInstantiationType(EInstantiationType initializer) {
+		public Builder setInstantiationType(EInstantiationType initializer) {
 			this.initializer = initializer;
 			return this;
 		}
@@ -743,12 +743,12 @@ public class OBIERunParameter implements Serializable {
 			return ontologyEnvironment;
 		}
 
-		public OBIEParameterBuilder setOntologyEnvironment(AbstractOntologyEnvironment ontologyEnvironment) {
+		public Builder setOntologyEnvironment(AbstractOntologyEnvironment ontologyEnvironment) {
 			this.ontologyEnvironment = ontologyEnvironment;
 			return this;
 		}
 
-		public OBIEParameterBuilder setProjectEnvironment(AbstractProjectEnvironment projectEnvironment) {
+		public Builder setProjectEnvironment(AbstractProjectEnvironment projectEnvironment) {
 			this.projectEnvironment = projectEnvironment;
 			return this;
 		}
@@ -766,7 +766,7 @@ public class OBIERunParameter implements Serializable {
 		 * Set this to always return true if no further exploration conditions should be
 		 * defined.
 		 */
-		public OBIEParameterBuilder setExplorationCondition(IExplorationCondition explorationCondition) {
+		public Builder setExplorationCondition(IExplorationCondition explorationCondition) {
 			this.explorationCondition = explorationCondition;
 			return this;
 		}
@@ -775,7 +775,7 @@ public class OBIERunParameter implements Serializable {
 			return explorers;
 		}
 
-		public OBIEParameterBuilder setExplorers(Set<Class<? extends AbstractOBIEExplorer>> explorers) {
+		public Builder setExplorers(Set<Class<? extends AbstractOBIEExplorer>> explorers) {
 			this.explorers = explorers;
 			return this;
 		}
@@ -784,7 +784,7 @@ public class OBIERunParameter implements Serializable {
 			return investigationRestriction;
 		}
 
-		public OBIEParameterBuilder setInvestigationRestriction(InvestigationRestriction investigationRestriction) {
+		public Builder setInvestigationRestriction(InvestigationRestriction investigationRestriction) {
 			this.investigationRestriction = investigationRestriction;
 			return this;
 		}
@@ -793,7 +793,7 @@ public class OBIERunParameter implements Serializable {
 			return initializationObjects;
 		}
 
-		public OBIEParameterBuilder setInitializationObjects(
+		public Builder setInitializationObjects(
 				Map<Class<? extends IOBIEThing>, List<IOBIEThing>> initializationObjects) {
 			this.initializationObjects = initializationObjects;
 			return this;
@@ -803,7 +803,7 @@ public class OBIERunParameter implements Serializable {
 			return svmParam;
 		}
 
-		public OBIEParameterBuilder setSvmParam(svm_parameter svmParam) {
+		public Builder setSvmParam(svm_parameter svmParam) {
 			this.svmParam = svmParam;
 			return this;
 		}
@@ -812,7 +812,7 @@ public class OBIERunParameter implements Serializable {
 			return restrictExplorationToFoundConcepts;
 		}
 
-		public OBIEParameterBuilder setRestrictExplorationToFoundConcepts(boolean restrictExplorationToFoundConcepts) {
+		public Builder setRestrictExplorationToFoundConcepts(boolean restrictExplorationToFoundConcepts) {
 			this.restrictExplorationToFoundConcepts = restrictExplorationToFoundConcepts;
 			return this;
 		}
@@ -821,7 +821,7 @@ public class OBIERunParameter implements Serializable {
 			return exploreExistingTemplates;
 		}
 
-		public OBIEParameterBuilder setExploreExistingTemplates(boolean exploreExistingTemplates) {
+		public Builder setExploreExistingTemplates(boolean exploreExistingTemplates) {
 			this.exploreExistingTemplates = exploreExistingTemplates;
 			return this;
 		}
@@ -830,7 +830,7 @@ public class OBIERunParameter implements Serializable {
 			return enableDiscourseProgression;
 		}
 
-		public OBIEParameterBuilder setEnableDiscourseProgression(boolean enableDiscourseProgression) {
+		public Builder setEnableDiscourseProgression(boolean enableDiscourseProgression) {
 			this.enableDiscourseProgression = enableDiscourseProgression;
 			return this;
 		}
@@ -839,7 +839,7 @@ public class OBIERunParameter implements Serializable {
 			return ignoreEmptyInstancesonEvaluation;
 		}
 
-		public OBIEParameterBuilder setIgnoreEmptyInstancesonEvaluation(boolean ignoreEmptyInstancesonEvaluation) {
+		public Builder setIgnoreEmptyInstancesonEvaluation(boolean ignoreEmptyInstancesonEvaluation) {
 			this.ignoreEmptyInstancesonEvaluation = ignoreEmptyInstancesonEvaluation;
 			return this;
 		}
@@ -848,7 +848,7 @@ public class OBIERunParameter implements Serializable {
 			return exploreOnOntologyLevel;
 		}
 
-		public OBIEParameterBuilder setExploreOnOntologyLevel(boolean exploreOnOntologyLevel) {
+		public Builder setExploreOnOntologyLevel(boolean exploreOnOntologyLevel) {
 			this.exploreOnOntologyLevel = exploreOnOntologyLevel;
 			return this;
 		}
@@ -857,7 +857,7 @@ public class OBIERunParameter implements Serializable {
 			return numberOfInitializedObjects;
 		}
 
-		public OBIEParameterBuilder setNumberOfInitializedObjects(
+		public Builder setNumberOfInitializedObjects(
 				IInitializeNumberOfObjects numberOfInitializedObjects) {
 			this.numberOfInitializedObjects = numberOfInitializedObjects;
 			return this;
@@ -867,7 +867,7 @@ public class OBIERunParameter implements Serializable {
 			return maxNumberOfEntityElements;
 		}
 
-		public OBIEParameterBuilder setMaxNumberOfEntityElements(int maxNumberOfEntityElements) {
+		public Builder setMaxNumberOfEntityElements(int maxNumberOfEntityElements) {
 			this.maxNumberOfEntityElements = maxNumberOfEntityElements;
 			return this;
 		}
@@ -880,12 +880,12 @@ public class OBIERunParameter implements Serializable {
 			return rndForSampling;
 		}
 
-		public OBIEParameterBuilder setRandomForSampling(Random rndForSampling) {
+		public Builder setRandomForSampling(Random rndForSampling) {
 			this.rndForSampling = rndForSampling;
 			return this;
 		}
 
-		public OBIEParameterBuilder setMaxNumberOfDataTypeElements(int maxNumberOfDataTypeElements) {
+		public Builder setMaxNumberOfDataTypeElements(int maxNumberOfDataTypeElements) {
 			this.maxNumberOfDataTypeElements = maxNumberOfDataTypeElements;
 			return this;
 		}

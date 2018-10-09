@@ -21,11 +21,11 @@ import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.MainSlotVarietyTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -96,24 +96,16 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		private final Class<? extends IOBIEThing> parentClass;
 		private final Set<Child>[] childrenOfEntities;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				Class<? extends IOBIEThing> parentClass, Set<Child>[] childrenDatatypesOfEntities) {
-			super(influencedVariables, entityRootClassType, template, childrenDatatypesOfEntities, parentClass,
-					entityRootClassType);
+			super(template, childrenDatatypesOfEntities, parentClass, entityRootClassType);
 			this.childrenOfEntities = childrenDatatypesOfEntities;
 			this.parentClass = parentClass;
-		}
-
-		@Override
-		public String toString() {
-			return "Scope [parentClass=" + parentClass + ", childrenOfEntities=" + Arrays.toString(childrenOfEntities)
-					+ ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}
@@ -121,8 +113,6 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-
-		final Map<Class<? extends IOBIEThing>, Set<Class<? extends IOBIEThing>>> influencedVariables = new HashMap<>();
 
 		final Map<Class<? extends IOBIEThing>, Integer> countRootClasses = new HashMap<>();
 		final Map<Class<? extends IOBIEThing>, Class<? extends IOBIEThing>> entityRootClassTypeMapper = new HashMap<>();
@@ -147,7 +137,6 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		 */
 		for (Entry<Class<? extends IOBIEThing>, Integer> ec : countRootClasses.entrySet()) {
 			childrenOfEntities.put(ec.getKey(), new HashSet[ec.getValue()]);
-			influencedVariables.put(ec.getKey(), new HashSet<>());
 		}
 
 		for (TemplateAnnotation annotation : state.getCurrentPrediction().getTemplateAnnotations()) {
@@ -184,7 +173,8 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 								final IOBIEThing childClass = (IOBIEThing) field.get(entityScioClass);
 
 								if (childClass != null) {
-									if (ReflectionUtils.isAnnotationPresent(childClass.getClass(), DatatypeProperty.class))
+									if (ReflectionUtils.isAnnotationPresent(childClass.getClass(),
+											DatatypeProperty.class))
 										childrenOfEntities.get(entityScioClass.getClass())[index]
 												.add(new Child(childClass.getClass().getSimpleName(),
 														((IDatatype) childClass).getSemanticValue(), true));
@@ -201,8 +191,8 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		}
 
 		for (Entry<Class<? extends IOBIEThing>, Integer> ec : countRootClasses.entrySet()) {
-			Scope scope = new Scope(influencedVariables.get(ec.getKey()), entityRootClassTypeMapper.get(ec.getKey()),
-					this, ec.getKey(), childrenOfEntities.get(ec.getKey()));
+			Scope scope = new Scope(entityRootClassTypeMapper.get(ec.getKey()), this, ec.getKey(),
+					childrenOfEntities.get(ec.getKey()));
 //			System.out.println(ec.getValue() + " - " + scope.childrenOfEntities.length + "-" + scope);
 			if (ec.getValue() > 1) {
 				factors.add(scope);

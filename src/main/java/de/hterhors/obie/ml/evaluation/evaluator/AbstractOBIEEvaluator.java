@@ -354,13 +354,13 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			if (!investigationRestrictions.investigateField(fieldName))
 				continue;
 
-			Field goldField = ReflectionUtils.getDeclaredFieldByName(goldInstance.getClass(), fieldName);
+			Field goldField = ReflectionUtils.getAccessibleFieldByName(goldInstance.getClass(), fieldName);
 			Field predictionField;
 
 			if (predictedInstance == EmptyOBIEInstance.emptyInstance || predictedInstance == null) {
 				predictionField = null;
 			} else {
-				predictionField = ReflectionUtils.getDeclaredFieldByName(predictedInstance.getClass(), fieldName);
+				predictionField = ReflectionUtils.getAccessibleFieldByName(predictedInstance.getClass(), fieldName);
 			}
 
 			score.add(loopOverFields(goldInstance, predictedInstance, goldField, predictionField, depth));
@@ -378,9 +378,9 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			if (goldInstance == EmptyOBIEInstance.emptyInstance || goldInstance == null) {
 				goldField = null;
 			} else {
-				goldField = ReflectionUtils.getDeclaredFieldByName(goldInstance.getClass(), fieldName);
+				goldField = ReflectionUtils.getAccessibleFieldByName(goldInstance.getClass(), fieldName);
 			}
-			final Field predictionField = ReflectionUtils.getDeclaredFieldByName(predictedInstance.getClass(),
+			final Field predictionField = ReflectionUtils.getAccessibleFieldByName(predictedInstance.getClass(),
 					fieldName);
 
 			score.add(loopOverFields(goldInstance, predictedInstance, goldField, predictionField, depth));

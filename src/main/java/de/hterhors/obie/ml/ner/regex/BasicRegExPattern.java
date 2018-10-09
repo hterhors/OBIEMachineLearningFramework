@@ -166,7 +166,7 @@ public abstract class BasicRegExPattern {
 
 			try {
 				Collection<AbstractOBIEIndividual> individuals = ((IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
-						.getDeclaredFieldByName(obieClassType, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME)
+						.getAccessibleFieldByName(obieClassType, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME)
 						.get(null)).getIndividuals();
 
 				for (AbstractOBIEIndividual individual : individuals) {

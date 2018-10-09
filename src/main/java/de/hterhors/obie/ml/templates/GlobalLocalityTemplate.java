@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,12 +15,12 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.GlobalLocalityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 @Deprecated
@@ -42,25 +40,18 @@ public class GlobalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	private static final List<Integer> localityDistances = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50,
 			60, 70, 80, 90, 100, 150, 200, 300);
 
-	static class Scope extends OBIEFactorScope {
+	static class Scope extends FactorScope {
 
 		private final OBIEInstance document;
 		private final Class<? extends IOBIEThing> class1Type;
 		private final Class<? extends IOBIEThing> class2Type;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance document, Class<? extends IOBIEThing> class1, Class<? extends IOBIEThing> class2) {
-			super(influencedVariable, entityRootClassType, template, document, class1, class2, entityRootClassType);
+			super(template, document, class1, class2, entityRootClassType);
 			this.class1Type = class1;
 			this.class2Type = class2;
 			this.document = document;
-		}
-
-		@Override
-		public String toString() {
-			return "FactorVariables [document=" + document + ", class1Type=" + class1Type + ", class2Type=" + class2Type
-					+ ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}
@@ -156,13 +147,7 @@ public class GlobalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		if (class2.getCharacterOnset() == null)
 			return;
 
-		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-
-		influencedVariables.add(class1.getClass());
-		influencedVariables.add(class2.getClass());
-
-		factors.add(new Scope(influencedVariables, entityRootClassType, this, document, class1.getClass(),
-				class2.getClass()));
+		factors.add(new Scope(entityRootClassType, this, document, class1.getClass(), class2.getClass()));
 
 	}
 

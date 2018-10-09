@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,13 +15,13 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.LocalLocalityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.templates.utils.ClassTypePositionPair;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 @Deprecated
@@ -43,25 +41,18 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	private static final List<Integer> localityDistances = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50,
 			60, 70, 80, 90, 100, 150, 200, 300);
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		private final ClassTypePositionPair class1;
 		private final ClassTypePositionPair class2;
 		private final OBIEInstance document;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance document, ClassTypePositionPair class1, ClassTypePositionPair class2) {
-			super(influencedVariable, entityRootClassType, template, class1, class2, entityRootClassType);
+			super(template, class1, class2, entityRootClassType);
 			this.class1 = class1;
 			this.class2 = class2;
 			this.document = document;
-		}
-
-		@Override
-		public String toString() {
-			return "Scope [class1=" + class1 + ", class2=" + class2 + ", document=" + document
-					+ ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}
@@ -157,11 +148,6 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 		if (class2.getCharacterOnset() == null)
 			return;
 
-		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-
-		influencedVariables.add(class1.getClass());
-		influencedVariables.add(class2.getClass());
-
 		final long class1Onset = document.charPositionToTokenPosition(class1.getCharacterOnset());
 		final long class2Onset = document.charPositionToTokenPosition(class2.getCharacterOnset());
 
@@ -169,7 +155,7 @@ public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
 		final ClassTypePositionPair class2Pair = new ClassTypePositionPair(class2.getClass(), class2Onset);
 
-		factors.add(new Scope(influencedVariables, entityRootClassType, this, document, class1Pair, class2Pair));
+		factors.add(new Scope(entityRootClassType, this, document, class1Pair, class2Pair));
 
 	}
 

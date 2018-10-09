@@ -16,11 +16,11 @@ import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.HeterogeneousSlotTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -44,7 +44,7 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LogManager.getFormatterLogger(HeterogeneousSlotTemplate.class.getName());
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		/**
 		 * The number of slots that have the same text assigned.
@@ -61,11 +61,9 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 		 */
 		final public String text;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				Class<? extends IOBIEThing> classType, String text, int numberOfSlot) {
-			super(influencedVariables, entityRootClassType, template, entityRootClassType, classType, text,
-					numberOfSlot);
+			super(template, entityRootClassType, classType, text, numberOfSlot);
 			this.classType = classType;
 			this.text = text;
 			this.numberOfSlot = numberOfSlot;
@@ -111,8 +109,8 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 			influencedVariables.add(countsByClass.getKey());
 			for (Entry<String, Integer> countsByText : countsByClass.getValue().entrySet()) {
-				factors.add(new Scope(influencedVariables, entityRootClassType, this, countsByClass.getKey(),
-						countsByText.getKey(), countsByText.getValue()));
+				factors.add(new Scope(entityRootClassType, this, countsByClass.getKey(), countsByText.getKey(),
+						countsByText.getValue()));
 			}
 		}
 

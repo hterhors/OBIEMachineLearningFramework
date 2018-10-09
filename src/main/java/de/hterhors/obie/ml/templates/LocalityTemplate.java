@@ -17,12 +17,12 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.LocalityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.templates.utils.ClassTypePositionPair;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 @Deprecated
@@ -42,26 +42,18 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 	private static final List<Integer> localityDistances = Arrays.asList(1, 2, 3, 4, 5, 7, 10, 12, 15, 18, 20, 30, 40,
 			50, 65, 80, 90, 100, 150, 200, 300, 400, 500, 700, 1000, 1500, 2000);
 
-	static class Scope extends OBIEFactorScope {
+	static class Scope extends FactorScope {
 
 		private final ClassTypePositionPair context;
 		private final ClassTypePositionPair class1;
 		private final ClassTypePositionPair class2;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				ClassTypePositionPair parentContext, ClassTypePositionPair class1, ClassTypePositionPair class2) {
-			super(influencedVariable, entityRootClassType, template, parentContext, class1, class2,
-					entityRootClassType);
+			super(template, parentContext, class1, class2, entityRootClassType);
 			this.context = parentContext;
 			this.class1 = class1;
 			this.class2 = class2;
-		}
-
-		@Override
-		public String toString() {
-			return "FactorVariables [context=" + context + ", class1=" + class1 + ", class2=" + class2
-					+ ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}
@@ -180,7 +172,7 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 		influencedVariables.add(class2.getClass());
 
-		factors.add(new Scope(influencedVariables, entityRootClassType, this, contextPair, class1Pair, class2Pair));
+		factors.add(new Scope(entityRootClassType, this, contextPair, class1Pair, class2Pair));
 	}
 
 	@Override

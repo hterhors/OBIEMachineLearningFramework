@@ -68,7 +68,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		return preFilledObjectMap.get(baseClassType_interface);
 	}
 
-	public void addUsedPreFilledObject(IOBIEThing thing) {
+	public void addUsedPreFilledTemplate(IOBIEThing thing) {
 		preFilledUsedObjects.add(thing);
 	}
 
@@ -86,7 +86,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		return leftOvers;
 	}
 
-	public void removeRecUsedPreFilledObject(IOBIEThing thing) {
+	public void removeRecUsedPreFilledTemplate(IOBIEThing thing) {
 
 		if (thing == null)
 			return;
@@ -96,14 +96,14 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		/*
 		 * remove recursive
 		 */
-		ReflectionUtils.getDeclaredOntologyFields(thing.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(thing.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(thing)) {
-						removeRecUsedPreFilledObject(element);
+						removeRecUsedPreFilledTemplate(element);
 					}
 				} else {
-					removeRecUsedPreFilledObject((IOBIEThing) field.get(thing));
+					removeRecUsedPreFilledTemplate((IOBIEThing) field.get(thing));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -289,7 +289,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 		AtomicBoolean containsAnnotation = new AtomicBoolean(false);
 
-		ReflectionUtils.getDeclaredOntologyFields(scioClass.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(scioClass.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(scioClass)) {

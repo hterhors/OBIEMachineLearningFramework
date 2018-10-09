@@ -223,7 +223,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 					+ Math.round(corpusSizeFraction * (numberForTraining + numberForTest)) + " to "
 					+ Math.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size()) + "!");
 
-		final int trainIndex = (int) Math.round(initialTrainingSelectionFraction * numberForTraining);
+		final int trainIndex = Math.max(1, (int) Math.round(initialTrainingSelectionFraction * numberForTraining));
 
 		return new Distributor() {
 

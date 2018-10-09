@@ -16,12 +16,12 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.PropertyEvidenceForClassTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -48,15 +48,14 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 	 */
 	final private static String TEMPLATE_0 = "Textual_evidence_for_%s_in_%s exists";
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 		final OBIEInstance instance;
 		final Class<? extends IOBIEThing> rootClass;
 		final Class<? extends IOBIEThing> relatedClassType;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables, Class<? extends IOBIEThing> rootClass,
-				AbstractOBIETemplate<?> template, OBIEInstance instance,
+		public Scope(Class<? extends IOBIEThing> rootClass, AbstractOBIETemplate<?> template, OBIEInstance instance,
 				Class<? extends IOBIEThing> relatedClassType) {
-			super(influencedVariables, rootClass, template, instance, relatedClassType, rootClass);
+			super(template, instance, relatedClassType, rootClass);
 			this.instance = instance;
 			this.rootClass = rootClass;
 			this.relatedClassType = relatedClassType;
@@ -98,8 +97,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 								/*
 								 * Add feature class type of the field.
 								 */
-								factors.add(new Scope(influencedVariables, entityRootClassType, this, psinkDocument,
-										rootClass.getClass()));
+								factors.add(new Scope(entityRootClassType, this, psinkDocument, rootClass.getClass()));
 								addFactors(factors, entityRootClassType, psinkDocument, property);
 							}
 						}
@@ -110,7 +108,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 				});
 
 	}
-	
+
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();

@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,13 +13,13 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.LocalTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -54,7 +53,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final OBIEInstance instance;
 		final String fromClassName;
@@ -162,7 +161,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 				}
 			}
 		}
-		ReflectionUtils.getDeclaredOntologyFields(child.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(child.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(child)) {

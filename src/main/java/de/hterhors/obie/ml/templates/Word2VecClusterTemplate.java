@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,12 +21,12 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.Word2VecClusterTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
@@ -62,7 +60,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final OBIEInstance instance;
 		final String className;
@@ -70,12 +68,10 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 		final int beginTokenIndex;
 		final int endTokenIndex;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance instance, final String className, final String surfaceForm, final int beginTokenIndex,
 				final int endTokenIndex) {
-			super(influencedVariable, entityRootClassType, template, instance, className, surfaceForm, beginTokenIndex,
-					endTokenIndex, entityRootClassType);
+			super(template, instance, className, surfaceForm, beginTokenIndex, endTokenIndex, entityRootClassType);
 			this.instance = instance;
 			this.className = className;
 			this.beginTokenIndex = beginTokenIndex;
@@ -114,11 +110,8 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 				int beginTokenIndex = instance.charPositionToTokenPosition(scioClass.getCharacterOnset());
 				int endTokenIndex = instance.charPositionToTokenPosition(scioClass.getCharacterOffset());
 
-				final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-				influencedVariables.add(scioClass.getClass());
-
-				factors.add(new Scope(influencedVariables, entityRootClassType, this, instance, className, surfaceForm,
-						beginTokenIndex, endTokenIndex));
+				factors.add(new Scope(entityRootClassType, this, instance, className, surfaceForm, beginTokenIndex,
+						endTokenIndex));
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.warn(scioClass.getTextMention());

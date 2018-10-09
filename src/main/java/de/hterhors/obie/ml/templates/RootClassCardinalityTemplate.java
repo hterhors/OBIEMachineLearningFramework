@@ -2,7 +2,6 @@ package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,13 +14,13 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.RootClassCardinalityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -56,29 +55,20 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	final private static String TEMPLATE_2 = "Unused_%s in %s = %d";
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 		final OBIEInstance document;
 		final int rootCardinality;
 		final String rootClass;
 		final Class<? extends IOBIEThing> propertyClass;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance document, String rootClass, Class<? extends IOBIEThing> propertyClass,
 				int rootCardinality) {
-			super(influencedVariables, entityRootClassType, template, document, rootClass, propertyClass,
-					rootCardinality, entityRootClassType);
+			super(template, document, rootClass, propertyClass, rootCardinality, entityRootClassType);
 			this.document = document;
 			this.rootClass = rootClass;
 			this.propertyClass = propertyClass;
 			this.rootCardinality = rootCardinality;
-		}
-
-		@Override
-		public String toString() {
-			return "Scope [document=" + document + ", rootCardinality=" + rootCardinality + ", rootClass=" + rootClass
-					+ ", propertyClass=" + propertyClass + ", getInfluencedVariables()=" + getInfluencedVariables()
-					+ "]";
 		}
 
 	}
@@ -109,15 +99,13 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 			Map<Class<? extends IOBIEThing>, Integer> countRootClasses, final IOBIEThing rootClass) {
 		List<Scope> factors = new ArrayList<>();
 
-		ReflectionUtils.getDeclaredOntologyFields(rootClass.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(rootClass.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					final int rootCardinality = countRootClasses.get(rootClass.getClass());
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(rootClass)) {
 
-						final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-						influencedVariables.add(element.getClass());
-						factors.add(new Scope(influencedVariables, entityRootClassType, this, psinkDocument,
+						factors.add(new Scope(entityRootClassType, this, psinkDocument,
 								rootClass.getClass().getSimpleName(), element.getClass(), rootCardinality));
 					}
 				} else {
@@ -128,15 +116,12 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 
 						Class<? extends IOBIEThing> propertyClassType = property.getClass();
 
-						final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-						influencedVariables.add(propertyClassType);
-
 						final int rootCardinality = countRootClasses.get(rootClass.getClass());
 
 						/*
 						 * Add feature class type of the field.
 						 */
-						factors.add(new Scope(influencedVariables, entityRootClassType, this, psinkDocument,
+						factors.add(new Scope(entityRootClassType, this, psinkDocument,
 								rootClass.getClass().getSimpleName(), propertyClassType, rootCardinality));
 
 					}
@@ -182,12 +167,12 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 					factor.getFactorScope().rootCardinality), true);
 
 			if (ReflectionUtils.getAssignableSubClasses(propertyRootClassType) == null
-					|| ReflectionUtils.getAssignableSubClasses(propertyRootClassType)
-							.isEmpty())
+					|| ReflectionUtils.getAssignableSubClasses(propertyRootClassType).isEmpty())
 				return;
 
 			int countDifferentSubclassEvidences = 0;
-			for (Class<? extends IOBIEThing> subClass : ReflectionUtils.getAssignableSubClasses(propertyRootClassType)) {
+			for (Class<? extends IOBIEThing> subClass : ReflectionUtils
+					.getAssignableSubClasses(propertyRootClassType)) {
 				final Set<NERLClassAnnotation> evidenceList = factor.getFactorScope().document
 						.getNamedEntityLinkingAnnotations().getClassAnnotations(subClass);
 				countDifferentSubclassEvidences += evidenceList == null || evidenceList.isEmpty() ? 0 : 1;

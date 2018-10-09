@@ -16,12 +16,12 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.InterTokenTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -63,7 +63,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		public String classOrIndividualName;
 		public Set<String> surfaceForms;
@@ -103,15 +103,15 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 		if (surfaceForms != null) {
 			factors.add(new Scope(scioClass.getClass().getSimpleName(), surfaceForms, rootClassType));
-		if(scioClass.getIndividual()!=null)
-			factors.add(new Scope(scioClass.getIndividual().name, surfaceForms, rootClassType));
+			if (scioClass.getIndividual() != null)
+				factors.add(new Scope(scioClass.getIndividual().name, surfaceForms, rootClassType));
 		}
 		// }
 
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getDeclaredOntologyFields(scioClass.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(scioClass.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {

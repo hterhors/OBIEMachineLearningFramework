@@ -32,6 +32,7 @@ import de.hterhors.obie.ml.variables.INERLAnnotation;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.NERLIndividualAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
+import weka.gui.SysErrLog;
 
 /**
  * 
@@ -87,12 +88,9 @@ public class ExplorationUtils {
 		 * No DataType
 		 */
 		try {
-//			if (!((IndividualFactory<?>) implClass.getField(OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME)
-//					.get(null)).getIndividuals().isEmpty())
 			if (!((IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
-					.getDeclaredFieldByName(implClass, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null))
+					.getAccessibleFieldByName(implClass, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null))
 							.getIndividuals().isEmpty())
-//			if (implClass.isAnnotationPresent(NamedIndividual.class))
 				return false;
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -139,13 +137,13 @@ public class ExplorationUtils {
 	 */
 	public static <B extends IOBIEThing> IOBIEThing copyOntologyModelFields(IOBIEThing copyToClass, B copyFromClass) {
 
-		List<Field> copyToFields = ReflectionUtils.getDeclaredOntologyFields(copyToClass.getClass()).stream()
+		List<Field> copyToFields = ReflectionUtils.getAccessibleOntologyFields(copyToClass.getClass()).stream()
 				.filter(f -> !Modifier.isStatic(f.getModifiers())).collect(Collectors.toList());
 		for (Field toField : copyToFields) {
 			try {
 
 				if (copyFromClass != null) {
-					Field copyFromField = ReflectionUtils.getDeclaredFieldByName(copyFromClass.getClass(),
+					Field copyFromField = ReflectionUtils.getAccessibleFieldByName(copyFromClass.getClass(),
 							toField.getName());
 					if (copyFromField != null)
 						toField.set(copyToClass, copyFromField.get(copyFromClass));
@@ -176,7 +174,7 @@ public class ExplorationUtils {
 	 * @param exploreClassesWithoutTextualEvidence a set of classes that should be
 	 *                                             explored without textual evidence
 	 * @param typeCandidates                       if the candidate generation
-	 *                                             should be only on ontological
+	 *                                             should be guided on ontological
 	 *                                             level and not on mention level
 	 * @return
 	 */
@@ -191,62 +189,92 @@ public class ExplorationUtils {
 			return candidates;
 		}
 
-		if (!IDatatype.class.isAssignableFrom(slotSuperType_interface)) {
-			try {
+		/*
+		 * If class is of datatype than we do not have any individuals.
+		 */
+		if (!ReflectionUtils.isAnnotationPresent(slotSuperType_interface, DatatypeProperty.class)) {
 
-				final Collection<AbstractOBIEIndividual> individuals = getCollectionOfindividuals(
-						slotSuperType_interface);
+			/*
+			 * Add candidates for individuals of root class type
+			 */
+			final Collection<AbstractOBIEIndividual> rootTypeIndividuals = getPossibleIndividuals(
+					slotSuperType_interface);
+
+			/*
+			 * Get all possible individual candidates.
+			 */
+			for (AbstractOBIEIndividual individual : rootTypeIndividuals) {
+
+				if (typeCandidates) {
+					addSlotTypeIndividualCandidates(instance,
+							ReflectionUtils.getImplementationClass(slotSuperType_interface), candidates, individual,
+							exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
+				} else {
+					addFillerIndividualCandidates(instance,
+							ReflectionUtils.getImplementationClass(slotSuperType_interface), candidates, individual,
+							exploreClassesWithoutTextualEvidence);
+				}
+
+			}
+
+			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+					.getAssignableSubInterfaces(slotSuperType_interface)) {
+
+				final Collection<AbstractOBIEIndividual> subTypeIndividuals = getPossibleIndividuals(slotFillerType);
 
 				/*
-				 * Get all possible candidates for individuals and filter by mentions in the
-				 * text.
+				 * Get all possible individual candidates.
 				 */
-				for (AbstractOBIEIndividual individual : individuals) {
+				for (AbstractOBIEIndividual individual : subTypeIndividuals) {
 
 					if (typeCandidates) {
 						addSlotTypeIndividualCandidates(instance,
-								ReflectionUtils.getImplementationClass(slotSuperType_interface), candidates, individual,
+								ReflectionUtils.getImplementationClass(slotFillerType), candidates, individual,
 								exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
 					} else {
-						addFillerIndividualCandidates(instance,
-								ReflectionUtils.getImplementationClass(slotSuperType_interface), candidates, individual,
-								exploreClassesWithoutTextualEvidence);
+						addFillerIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotFillerType),
+								candidates, individual, exploreClassesWithoutTextualEvidence);
 					}
 
 				}
-
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
+
 		}
+//			else {
 
 		/*
 		 * Add candidate for root super class
 		 */
 		if (typeCandidates) {
-			addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
+			addClassCandidatesForSlotType(instance, slotSuperType_interface, candidates,
 					ReflectionUtils.getImplementationClass(slotSuperType_interface),
 					exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
 		} else {
-			addFillerCandidates(instance, slotSuperType_interface, candidates,
+			addClassCandidatesForAnnotations(instance, slotSuperType_interface, candidates,
 					ReflectionUtils.getImplementationClass(slotSuperType_interface),
 					exploreClassesWithoutTextualEvidence);
 		}
 
 		/*
-		 * Get all possible candidates and filter by mentions in the text.
+		 * Commented out because: Do not add classes without individuals.
 		 */
-		for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
-				.getAssignableSubInterfaces(slotSuperType_interface)) {
-			if (typeCandidates) {
-				addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
-						ReflectionUtils.getImplementationClass(slotFillerType), exploreClassesWithoutTextualEvidence,
-						restrictExplorationOnConceptsInInstance);
-			} else {
-				addFillerCandidates(instance, slotSuperType_interface, candidates,
-						ReflectionUtils.getImplementationClass(slotFillerType), exploreClassesWithoutTextualEvidence);
-			}
-		}
+//			/*
+//			 * Get all possible class candidates.
+//			 */
+//			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+//					.getAssignableSubInterfaces(slotSuperType_interface)) {
+//
+//				if (typeCandidates) {
+//					addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
+//							ReflectionUtils.getImplementationClass(slotFillerType),
+//							exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
+//				} else {
+//					addFillerClassCandidates(instance, slotSuperType_interface, candidates,
+//							ReflectionUtils.getImplementationClass(slotFillerType),
+//							exploreClassesWithoutTextualEvidence);
+//				}
+//			}
+//		}
 		return candidates;
 	}
 
@@ -258,22 +286,30 @@ public class ExplorationUtils {
 	 * @return
 	 * @throws IllegalAccessException
 	 */
-	private static Collection<AbstractOBIEIndividual> getCollectionOfindividuals(
-			Class<? extends IOBIEThing> slotSuperType_interface) throws IllegalAccessException {
-		final Class<? extends IOBIEThing> clazz = ReflectionUtils.getImplementationClass(slotSuperType_interface);
+	@SuppressWarnings("unchecked")
+	private static Collection<AbstractOBIEIndividual> getPossibleIndividuals(
+			Class<? extends IOBIEThing> slotSuperType_interface) {
+		try {
+			final Class<? extends IOBIEThing> clazz = ReflectionUtils.getImplementationClass(slotSuperType_interface);
 
-		@SuppressWarnings("unchecked")
-		final IndividualFactory<AbstractOBIEIndividual> individualFactory = (IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
-				.getDeclaredFieldByName(clazz, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null);
+			IndividualFactory<AbstractOBIEIndividual> individualFactory;
+			individualFactory = (IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
+					.getAccessibleFieldByName(clazz, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null);
 
-		final Collection<AbstractOBIEIndividual> individuals = individualFactory.getIndividuals();
-		return individuals;
+			return individualFactory.getIndividuals();
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
-	private static void addSlotTypeClassCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
+	private static void addClassCandidatesForSlotType(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
 			Set<IOBIEThing> candidates, Class<? extends IOBIEThing> slotFillerType,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence,
 			boolean restrictExplorationOnConceptsInInstance) {
+
+		if (slotFillerType == null)
+			return;
 
 		boolean keepClass = includeClassForSampling(slotFillerType);
 
@@ -295,31 +331,19 @@ public class ExplorationUtils {
 		 * This happens if the direct interface is not an aux class but has subclasses
 		 * that are.
 		 */
-		if (slotFillerType != null && exploreClassesWithoutTextualEvidence.contains(slotFillerType)
-				|| (isDifferentiableToAllSiblingClasses(slotFillerType, slotSuperType)
-						|| isAuxiliaryProperty(slotSuperType))) {
+		if (exploreClassesWithoutTextualEvidence.contains(slotFillerType)
+				|| isDifferentiableToAllSiblingClasses(slotFillerType, slotSuperType)
+				|| isAuxiliaryProperty(slotSuperType)) {
 			/**
 			 * TESTME: Is it sufficient to create just a single state with this class.
 			 * Otherwise create a state for each mention in the text. (This should be only
 			 * necessary if the position or text of this "auxiliary" class is important.
 			 */
-			try {
 
-				Field annotationIDField = ReflectionUtils.getDeclaredFieldByName(slotFillerType,
-						OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
-
-				if (annotationIDField != null) {
-
-					IOBIEThing newInstance = createNewInstance(slotFillerType);
-
-					annotationIDField.set(newInstance, UUID.randomUUID().toString());
-
-					candidates.add(newInstance);
-				}
-			} catch (InstantiationException | IllegalAccessException | SecurityException e) {
-				e.printStackTrace();
-			}
+			IOBIEThing newInstance = newClassInstance(slotFillerType, UUID.randomUUID().toString());
+			candidates.add(newInstance);
 		} else {
+
 			/**
 			 * If not we need explicit text mentions to create this class.
 			 */
@@ -344,36 +368,29 @@ public class ExplorationUtils {
 				 */
 				for (NERLClassAnnotation nera : instance.getNamedEntityLinkingAnnotations()
 						.getClassAnnotationsBySemanticValues(slotFillerType)) {
-					try {
-						IOBIEThing newInstance = createNewInstance(slotFillerType);
-						fillBasicFields(newInstance, nera);
-						fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
-						fillIDField(newInstance, nera.annotationID);
-						candidates.add(newInstance);
-					} catch (InstantiationException | IllegalAccessException | SecurityException
-							| NoSuchFieldException e) {
-						e.printStackTrace();
-					}
+
+					IOBIEThing newInstance = newClassInstance(slotFillerType, nera.annotationID);
+					fillBasicFields(newInstance, nera);
+					fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
+					candidates.add(newInstance);
 				}
 
 			} else {
+
 				/*
+				 * NOT: This should never happen!
+				 * 
 				 * Else create exactly one instance without textual reference.
 				 */
-				try {
-					IOBIEThing newInstance = createNewInstance(slotFillerType);
-					fillIDField(newInstance, UUID.randomUUID().toString());
-					candidates.add(newInstance);
-				} catch (InstantiationException | IllegalAccessException | SecurityException | NoSuchFieldException
-						| IllegalArgumentException e) {
-					e.printStackTrace();
-				}
+//				IOBIEThing newInstance = newClassInstance(slotFillerType, UUID.randomUUID().toString());
+//				candidates.add(newInstance);
+				throw new IllegalStateException("This code should not be reached.");
 			}
 
 		}
 	}
 
-	private static void addFillerCandidates(OBIEInstance psinkDocument,
+	private static void addClassCandidatesForAnnotations(OBIEInstance psinkDocument,
 			Class<? extends IOBIEThing> baseClassType_interface, Set<IOBIEThing> candidates,
 			Class<? extends IOBIEThing> candidateType_class,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
@@ -404,22 +421,12 @@ public class ExplorationUtils {
 			/**
 			 * TESTME: Is it sufficient to create just a single state with this class.
 			 * Otherwise create a state for each mention in the text. (This should be only
-			 * necessary if the position or text of this "auxiliary" class is important.
+			 * necessary if the position or surface form of this "auxiliary" class is
+			 * important.
 			 */
-			try {
-				Field annotationIDField = ReflectionUtils.getDeclaredFieldByName(candidateType_class,
-						OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
 
-				if (annotationIDField != null) {
-
-					IOBIEThing newInstance = createNewInstance(candidateType_class);
-					annotationIDField.set(newInstance, UUID.randomUUID().toString());
-
-					candidates.add(newInstance);
-				}
-			} catch (InstantiationException | IllegalAccessException | SecurityException e) {
-				e.printStackTrace();
-			}
+			IOBIEThing newInstance = newClassInstance(candidateType_class, UUID.randomUUID().toString());
+			candidates.add(newInstance);
 		} else {
 
 			/**
@@ -442,17 +449,12 @@ public class ExplorationUtils {
 			}
 
 			for (NERLClassAnnotation nera : possibleNERAnnotations) {
-				try {
 
-					IOBIEThing newInstance = createNewInstance(candidateType_class);
+				IOBIEThing newInstance = newClassInstance(candidateType_class, nera.annotationID);
 
-					fillBasicFields(newInstance, nera);
-					fillIDField(newInstance, nera.annotationID);
-					fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
-					candidates.add(newInstance);
-				} catch (InstantiationException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-					e.printStackTrace();
-				}
+				fillBasicFields(newInstance, nera);
+				fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
+				candidates.add(newInstance);
 			}
 		}
 	}
@@ -487,28 +489,11 @@ public class ExplorationUtils {
 		/*
 		 * Else create exactly one instance without textual reference.
 		 */
-		try {
 
-			IOBIEThing newInstance = newIndividual(slotSuperType, individualCandidate);
-			fillIDField(newInstance, UUID.randomUUID().toString());
-			candidates.add(newInstance);
+		IOBIEThing newInstance = newClassForIndividual(slotSuperType, individualCandidate,
+				UUID.randomUUID().toString());
+		candidates.add(newInstance);
 
-		} catch (InstantiationException | IllegalAccessException | SecurityException | NoSuchFieldException
-				| IllegalArgumentException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	private static void fillIDField(IOBIEThing newInstance, String annotationID)
-			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		// Field annotationIDField =
-		// newInstance.getClass().getDeclaredField(AbstractOntologyEnvironment.ANNOTATION_ID_FIELD);
-		// annotationIDField.setAccessible(true);
-
-		Field annotationIDField = ReflectionUtils.getDeclaredFieldByName(newInstance.getClass(),
-				OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
-		annotationIDField.set(newInstance, annotationID);
 	}
 
 	private static void addFillerIndividualCandidates(OBIEInstance instance,
@@ -536,24 +521,21 @@ public class ExplorationUtils {
 		}
 
 		for (NERLIndividualAnnotation nera : possibleNERAnnotations) {
-			try {
-				IOBIEThing newThing = newIndividual(baseClassType_class, individual);
-				fillBasicFields(newThing, nera);
-				fillIDField(newThing, nera.annotationID);
-				candidates.add(newThing);
-			} catch (InstantiationException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-				e.printStackTrace();
-			}
+			IOBIEThing newThing = newClassForIndividual(baseClassType_class, individual, nera.annotationID);
+			fillBasicFields(newThing, nera);
+			candidates.add(newThing);
 		}
 	}
 
-	private static void fillSemanticInterpretationField(IOBIEThing newInstance, String dtOrTextValue)
-			throws IllegalArgumentException, IllegalAccessException {
-		if (ReflectionUtils.isAnnotationPresent(newInstance.getClass(), DatatypeProperty.class)) {
-
-			Field scioValueField = ReflectionUtils.getDeclaredFieldByName(newInstance.getClass(),
-					OntologyFieldNames.SEMANTIC_VALUE_FIELD_NAME);
-			scioValueField.set(newInstance, dtOrTextValue);
+	private static void fillSemanticInterpretationField(IOBIEThing newInstance, String dtOrTextValue) {
+		try {
+			if (ReflectionUtils.isAnnotationPresent(newInstance.getClass(), DatatypeProperty.class)) {
+				Field scioValueField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
+						OntologyFieldNames.SEMANTIC_VALUE_FIELD_NAME);
+				scioValueField.set(newInstance, dtOrTextValue);
+			}
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -566,25 +548,30 @@ public class ExplorationUtils {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	private static IOBIEThing createNewInstance(Class<? extends IOBIEThing> ipsinkThing)
-			throws InstantiationException, IllegalAccessException {
-		IOBIEThing newInstance = (IOBIEThing) ipsinkThing.newInstance();
+	@SuppressWarnings("unchecked")
+	private static IOBIEThing newClassInstance(Class<? extends IOBIEThing> ipsinkThing, final String annotationID) {
+		try {
+			IOBIEThing newInstance = (IOBIEThing) ipsinkThing.newInstance();
 
-		for (Field field : ReflectionUtils.getDeclaredOntologyFields(newInstance.getClass())) {
-
-			// if (!field.isAnnotationPresent(OntologyModelContent.class))
-			// continue;
-			//
-			// field.setAccessible(true);
-			/*
-			 * NOTE: Pre fill auxiliary fields as default.
-			 */
-			if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
-				field.set(newInstance, ReflectionUtils
-						.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
+			for (Field field : ReflectionUtils.getAccessibleOntologyFields(newInstance.getClass())) {
+				/*
+				 * NOTE: Pre fill auxiliary fields as default.
+				 */
+				if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
+					field.set(newInstance, ReflectionUtils
+							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
+				}
 			}
+
+			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
+					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
+			annotationIDField.set(newInstance, annotationID);
+
+			return newInstance;
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
 		}
-		return newInstance;
+		return null;
 	}
 
 	/**
@@ -596,55 +583,69 @@ public class ExplorationUtils {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	private static IOBIEThing newIndividual(Class<? extends IOBIEThing> baseClassType_class,
-			AbstractOBIEIndividual individual) throws InstantiationException, IllegalAccessException {
+	@SuppressWarnings("unchecked")
+	private static IOBIEThing newClassForIndividual(Class<? extends IOBIEThing> baseClassType_class,
+			AbstractOBIEIndividual individual, final String annotationID) {
 
-		IOBIEThing newInstance = (IOBIEThing) baseClassType_class.newInstance();
+		try {
+			IOBIEThing newInstance = (IOBIEThing) baseClassType_class.newInstance();
 
-		Field individualField = ReflectionUtils.getDeclaredFieldByName(baseClassType_class,
-				OntologyInitializer.INDIVIDUAL_FIELD_NAME);
-		individualField.set(newInstance, individual);
+			Field individualField = ReflectionUtils.getAccessibleFieldByName(baseClassType_class,
+					OntologyInitializer.INDIVIDUAL_FIELD_NAME);
+			individualField.set(newInstance, individual);
 
-		for (Field field : ReflectionUtils.getDeclaredOntologyFields(newInstance.getClass())) {
-			/*
-			 * NOTE: Pre fill auxiliary fields as default.
-			 */
-			if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
-				field.set(newInstance, ReflectionUtils
-						.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
+			for (Field field : ReflectionUtils.getAccessibleOntologyFields(newInstance.getClass())) {
+				/*
+				 * TODO: Remove that !? This could be in a second iteration? Features? NOTE: Pre
+				 * fill auxiliary fields as default.
+				 */
+				if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
+					field.set(newInstance, ReflectionUtils
+							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
+				}
 			}
+
+			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
+					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
+			annotationIDField.set(newInstance, annotationID);
+
+			return newInstance;
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
 		}
-		return newInstance;
+
 	}
 
-	private static void fillBasicFields(IOBIEThing genClass, INERLAnnotation nera)
-			throws NoSuchFieldException, IllegalAccessException
+	private static void fillBasicFields(IOBIEThing genClass, INERLAnnotation nera) {
+		try {
 
-	{
+			// Field textMentionField =
+			// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.SCIO_TEXT_MENTION);
+			// textMentionField.setAccessible(true);
 
-		// Field textMentionField =
-		// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.SCIO_TEXT_MENTION);
-		// textMentionField.setAccessible(true);
+			Field textMentionField = ReflectionUtils.getAccessibleFieldByName(genClass.getClass(),
+					OntologyFieldNames.TEXT_MENTION_FIELD_NAME);
+			textMentionField.set(genClass, nera.getText());
 
-		Field textMentionField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
-				OntologyFieldNames.TEXT_MENTION_FIELD_NAME);
-		textMentionField.set(genClass, nera.getText());
+			// Field offsetField =
+			// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.CHARACTER_OFFSET_FIELD);
+			// offsetField.setAccessible(true);
 
-		// Field offsetField =
-		// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.CHARACTER_OFFSET_FIELD);
-		// offsetField.setAccessible(true);
+			Field offsetField = ReflectionUtils.getAccessibleFieldByName(genClass.getClass(),
+					OntologyFieldNames.CHARACTER_OFFSET_FIELD_NAME);
+			offsetField.set(genClass, Integer.valueOf(nera.getOnset() + nera.getText().length()));
 
-		Field offsetField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
-				OntologyFieldNames.CHARACTER_OFFSET_FIELD_NAME);
-		offsetField.set(genClass, Integer.valueOf(nera.getOnset() + nera.getText().length()));
+			// Field onsetField =
+			// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.CHARACTER_ONSET_FIELD);
+			// onsetField.setAccessible(true);
 
-		// Field onsetField =
-		// genClass.getClass().getDeclaredField(AbstractOntologyEnvironment.CHARACTER_ONSET_FIELD);
-		// onsetField.setAccessible(true);
-
-		Field onsetField = ReflectionUtils.getDeclaredFieldByName(genClass.getClass(),
-				OntologyFieldNames.CHARACTER_ONSET_FIELD_NAME);
-		onsetField.set(genClass, Integer.valueOf(nera.getOnset()));
+			Field onsetField = ReflectionUtils.getAccessibleFieldByName(genClass.getClass(),
+					OntologyFieldNames.CHARACTER_ONSET_FIELD_NAME);
+			onsetField.set(genClass, Integer.valueOf(nera.getOnset()));
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -660,17 +661,18 @@ public class ExplorationUtils {
 	 * @param baseClassType_interface
 	 * @return
 	 */
-	public static boolean isDifferentiableToAllSiblingClasses(Class<? extends IOBIEThing> classType,
+	private static boolean isDifferentiableToAllSiblingClasses(Class<? extends IOBIEThing> classType,
 			final Class<? extends IOBIEThing> baseClassType_interface) {
-
-//		if (classType.isAnnotationPresent(NamedIndividual.class))
-//			return false;
 
 		if (ReflectionUtils.isAnnotationPresent(classType, DatatypeProperty.class))
 			return false;
 
 		if (isAuxiliaryProperty(baseClassType_interface))
 			return false;
+
+		if (ReflectionUtils.getDirectSiblings(classType).isEmpty()) {
+			return false;
+		}
 
 		if (!classType.isAnnotationPresent(DirectSiblings.class)) {
 			return true;
@@ -689,8 +691,8 @@ public class ExplorationUtils {
 				.flatMap(c -> ReflectionUtils.getAssignableSubClasses(c).stream()).collect(Collectors.toList()));
 
 		/*
-		 * CHECKME: If there are no siblings it is basically distinguishable to all
-		 * others.
+		 * TODO: CHECKME: If there are no siblings it is basically distinguishable to
+		 * all others.
 		 */
 		boolean isDifferentiableToAllSiblings = true;
 
@@ -702,25 +704,11 @@ public class ExplorationUtils {
 			if (!includeClassForSampling(sibClass))
 				continue;
 
-			final Set<String> sibPropertyNames = ReflectionUtils.getDeclaredOntologyFields(sibClass).stream()
+			final Set<String> sibPropertyNames = ReflectionUtils.getAccessibleOntologyFields(sibClass).stream()
 					.map(f -> f.getName()).collect(Collectors.toSet());
 
-			final Set<String> diffPropertyNames = ReflectionUtils.getDeclaredOntologyFields(classType).stream()
+			final Set<String> diffPropertyNames = ReflectionUtils.getAccessibleOntologyFields(classType).stream()
 					.map(f -> f.getName()).filter(n -> !sibPropertyNames.contains(n)).collect(Collectors.toSet());
-			// final Set<String> sibPropertyNames =
-			// Arrays.stream(sibClass.getDeclaredFields())
-			// .filter(f ->
-			// f.isAnnotationPresent(OntologyModelContent.class)).map(f ->
-			// f.getName())
-			// .collect(Collectors.toSet());
-			//
-			// final Set<String> diffPropertyNames =
-			// Arrays.stream(classType.getDeclaredFields())
-			// .filter(f ->
-			// f.isAnnotationPresent(OntologyModelContent.class)).map(f ->
-			// f.getName())
-			// .filter(n ->
-			// !sibPropertyNames.contains(n)).collect(Collectors.toSet());
 
 			isDifferentiableToAllSiblings &= !diffPropertyNames.isEmpty();
 

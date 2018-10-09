@@ -1,6 +1,7 @@
 package de.hterhors.obie.ml.utils;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +43,8 @@ public class ReflectionUtils {
 
 	private static final Map<Class<? extends IOBIEThing>, Map<Class<? extends Annotation>, Boolean>> isAnnotationPresent = new HashMap<>();
 	private static final Map<Field, Map<Class<? extends Annotation>, Boolean>> isAnnotationPresentField = new HashMap<>();
+
+	private static final Map<Class<? extends IOBIEThing>, Constructor<? extends IOBIEThing>> cloneConstructor = new HashMap<>();
 
 	public static boolean isAnnotationPresent(Field field, Class<? extends Annotation> annotation) {
 
@@ -99,18 +102,18 @@ public class ReflectionUtils {
 
 	public static Class<? extends IOBIEThing> getImplementationClass(Class<? extends IOBIEThing> ontologyClazz) {
 
-		Class<? extends IOBIEThing> values;
+		Class<? extends IOBIEThing> value;
 
-		if ((values = implementationClass.get(ImplementationClass.class)) == null) {
+		if ((value = implementationClass.get(ImplementationClass.class)) == null) {
 			if (ontologyClazz.isAnnotationPresent(ImplementationClass.class))
-				values = ontologyClazz.getAnnotation(ImplementationClass.class).get();
+				value = ontologyClazz.getAnnotation(ImplementationClass.class).get();
 			else
-				values = null;
+				value = null;
 
-			implementationClass.put(ontologyClazz, values);
+			implementationClass.put(ontologyClazz, value);
 		}
 
-		return values;
+		return value;
 
 	}
 
@@ -183,7 +186,7 @@ public class ReflectionUtils {
 
 	}
 
-	public static List<Field> getDeclaredOntologyFields(Class<? extends IOBIEThing> clazz) {
+	public static List<Field> getAccessibleOntologyFields(Class<? extends IOBIEThing> clazz) {
 
 		Objects.requireNonNull(clazz);
 
@@ -276,34 +279,8 @@ public class ReflectionUtils {
 		return declaredFieldNames;
 	}
 
-	// public static Set<String> getDeclaredOntologyFieldNames(Class<? extends
-	// IOBIEThing> clazz,
-	// InvestigationRestriction investigationRestrictionRestrictions) {
-	//
-	// Objects.requireNonNull(clazz);
-	//
-	// if (clazz.isAnnotationPresent(DataTypeProperty.class))
-	// return Collections.emptySet();
-	//
-	// Set<String> declaredFieldNames;
-	//
-	// if ((declaredFieldNames = chachedFieldNames.get(clazz)) == null) {
-	// declaredFieldNames = new HashSet<>();
-	// for (Field f : clazz.getDeclaredFields()) {
-	// if (!f.isAnnotationPresent(OntologyModelContent.class))
-	// continue;
-	// declaredFieldNames.add(f.getName());
-	// }
-	// chachedFieldNames.put(clazz, declaredFieldNames);
-	//
-	// }
-	//
-	// return declaredFieldNames;
-	// }
-
-	public static Field getDeclaredFieldByName(Class<? extends IOBIEThing> clazz, final String fieldName) {
-
-		Objects.requireNonNull(clazz);
+	public static Field getAccessibleFieldByName(Class<? extends IOBIEThing> obieClazz, final String fieldName) {
+		Objects.requireNonNull(obieClazz);
 
 		Objects.requireNonNull(fieldName);
 
@@ -311,14 +288,14 @@ public class ReflectionUtils {
 
 		Map<String, Field> pntr;
 
-		if ((pntr = chachedSingleFieldNames.get(clazz)) == null) {
+		if ((pntr = chachedSingleFieldNames.get(obieClazz)) == null) {
 			pntr = new HashMap<>();
-			chachedSingleFieldNames.put(clazz, pntr);
+			chachedSingleFieldNames.put(obieClazz, pntr);
 		}
 
 		if ((declaredField = pntr.get(fieldName)) == null) {
 			try {
-				declaredField = clazz.getDeclaredField(fieldName);
+				declaredField = obieClazz.getDeclaredField(fieldName);
 			} catch (NoSuchFieldException | SecurityException e) {
 				pntr.put(fieldName, null);
 				return null;
@@ -329,6 +306,25 @@ public class ReflectionUtils {
 
 		Objects.requireNonNull(declaredField);
 		return declaredField;
+	}
+
+	public static Constructor<? extends IOBIEThing> getCloneConstructor(Class<? extends IOBIEThing> obieClazz) {
+		try {
+
+			Constructor<? extends IOBIEThing> values;
+
+			if ((values = cloneConstructor.get(obieClazz)) == null) {
+				values = obieClazz.getDeclaredConstructor(obieClazz);
+				cloneConstructor.put(obieClazz, values);
+			}
+
+			return values;
+		} catch (Exception e) {
+			System.err.println(obieClazz);
+			e.printStackTrace();
+			System.exit(1);
+			throw new IllegalArgumentException(e.getMessage());
+		}
 	}
 
 }

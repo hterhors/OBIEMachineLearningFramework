@@ -17,10 +17,10 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.core.utils.OBIEUtils;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -157,7 +157,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 		if (classToModify == null)
 			return;
 
-		List<Field> fields = ReflectionUtils.getDeclaredOntologyFields(classToModify.getClass());
+		List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(classToModify.getClass());
 
 		/*
 		 * For all fields:
@@ -251,7 +251,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				 * class.
 				 */
 
-				Field genClassField = ReflectionUtils.getDeclaredFieldByName(clonedListHoldingClass.getClass(),
+				Field genClassField = ReflectionUtils.getAccessibleFieldByName(clonedListHoldingClass.getClass(),
 						field.getName());
 
 				genClassField.set(clonedListHoldingClass, modifiedList);
@@ -268,7 +268,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				TemplateAnnotation entity = generatedState.getCurrentPrediction().getEntity(this.currentAnnotationID);
 				entity.setTemplateAnnotation(clonedBaseClass);
 
-				generatedState.removeRecUsedPreFilledObject(listOfClassesForField.get(i));
+				generatedState.removeRecUsedPreFilledTemplate(listOfClassesForField.get(i));
 				// System.out.println("Candidate: " +
 				// generatedState.preFilledUsedObjects);
 
@@ -378,7 +378,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					 * Add new list to the list holding class which is a property of the cloned base
 					 * class.
 					 */
-					Field genClassField = ReflectionUtils.getDeclaredFieldByName(clonedListHoldingClass.getClass(),
+					Field genClassField = ReflectionUtils.getAccessibleFieldByName(clonedListHoldingClass.getClass(),
 							slot.getName());
 					genClassField.set(clonedListHoldingClass, newList);
 
@@ -393,7 +393,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 							.getEntity(this.currentAnnotationID);
 					entity.setTemplateAnnotation(clonedBaseClass);
 
-					generatedState.addUsedPreFilledObject(candidateClass);
+					generatedState.addUsedPreFilledTemplate(candidateClass);
 
 					// System.out.println("Candidate: " +
 					// generatedState.preFilledUsedObjects);

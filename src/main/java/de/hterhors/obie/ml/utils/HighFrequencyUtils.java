@@ -258,7 +258,7 @@ public class HighFrequencyUtils {
 			 */
 			final NamedEntityLinkingAnnotations nerlas = instance.getNamedEntityLinkingAnnotations();
 
-			final Field factoryField = ReflectionUtils.getDeclaredFieldByName(
+			final Field factoryField = ReflectionUtils.getAccessibleFieldByName(
 					ReflectionUtils.getImplementationClass(slotType),
 					OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME);
 

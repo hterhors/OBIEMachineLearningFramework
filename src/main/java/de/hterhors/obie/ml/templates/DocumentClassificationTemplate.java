@@ -4,9 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,12 +16,12 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.DocumentClassificationTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -49,15 +47,14 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 
 	private static Logger log = LogManager.getFormatterLogger(DocumentClassificationTemplate.class.getName());
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final OBIEInstance instance;
 		final String className;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance instance, final String className) {
-			super(influencedVariable, entityRootClassType, template, instance, className, entityRootClassType);
+			super(template, instance, className, entityRootClassType);
 			this.instance = instance;
 			this.className = className;
 		}
@@ -91,10 +88,7 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 
 		final String className = scioClass.getClass().getSimpleName();
 
-		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-		// influencedVariables.add(scioClass.getClass());
-
-		factors.add(new Scope(influencedVariables, entityRootClassType, this, instance, className));
+		factors.add(new Scope(entityRootClassType, this, instance, className));
 		/*
 		 * Add factors for object type properties.
 		 */

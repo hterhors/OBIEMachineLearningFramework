@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,13 +15,13 @@ import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.InBetweenContextTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -108,7 +107,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final OBIEInstance internalInstance;
 		final Position fromPosition;
@@ -216,7 +215,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 				}
 			}
 		}
-		ReflectionUtils.getDeclaredOntologyFields(child.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(child.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(child)) {

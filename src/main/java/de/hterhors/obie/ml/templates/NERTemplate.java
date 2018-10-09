@@ -2,9 +2,7 @@ package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,12 +14,12 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.NERTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -46,20 +44,20 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(NERTemplate.class.getName());
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		public Class<? extends IOBIEThing> classType;
 		public String surfaceForm;
 		public OBIEInstance instance;
+		public Class<? extends IOBIEThing> entityRootClassType;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
-				Class<? extends IOBIEThing> annotationRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> annotationRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance instance, Class<? extends IOBIEThing> classType, String surfaceForm) {
-			super(influencedVariables, annotationRootClassType, template, annotationRootClassType, instance, classType,
-					surfaceForm);
+			super(template, annotationRootClassType, instance, classType, surfaceForm);
 			this.instance = instance;
 			this.classType = classType;
 			this.surfaceForm = surfaceForm;
+			this.entityRootClassType = annotationRootClassType;
 		}
 
 	}
@@ -85,10 +83,7 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		// System.out.println("--> in template: " + surfaceForm);
 
 		if (surfaceForm != null) {
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-//			influencedVariables.add(scioClass.getClass());
-			factors.add(new Scope(influencedVariables, entityRootClassType, this, internalInstance,
-					scioClass.getClass(), surfaceForm));
+			factors.add(new Scope(entityRootClassType, this, internalInstance, scioClass.getClass(), surfaceForm));
 		}
 
 		/*
@@ -124,12 +119,12 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 				.containsClassAnnotations(factor.getFactorScope().classType))
 			return;
 		boolean foundByNER = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
-				.getClassAnnotations(factor.getFactorScope().classType).stream().map(e -> e.getDTValueIfAnyElseTextMention())
-				.collect(Collectors.toSet()).contains(factor.getFactorScope().surfaceForm);
+				.getClassAnnotations(factor.getFactorScope().classType).stream()
+				.map(e -> e.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet())
+				.contains(factor.getFactorScope().surfaceForm);
 
-		featureVector.set(factor.getFactorScope().getEntityRootClassType().getSimpleName() + " - FoundByNER",
-				foundByNER);
-		featureVector.set(factor.getFactorScope().getEntityRootClassType().getSimpleName() + " - NotFoundByNER",
+		featureVector.set(factor.getFactorScope().entityRootClassType.getSimpleName() + " - FoundByNER", foundByNER);
+		featureVector.set(factor.getFactorScope().entityRootClassType.getSimpleName() + " - NotFoundByNER",
 				!foundByNER);
 	}
 

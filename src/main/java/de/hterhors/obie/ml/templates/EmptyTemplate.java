@@ -2,9 +2,7 @@ package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,11 +13,11 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.EmptyTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
@@ -35,15 +33,10 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(EmptyTemplate.class.getName());
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template) {
 			super(template, entityRootClassType);
-		}
-
-		@Override
-		public String toString() {
-			return "FactorVariables [getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}

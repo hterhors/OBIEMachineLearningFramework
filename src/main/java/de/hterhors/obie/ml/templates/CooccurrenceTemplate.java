@@ -3,7 +3,6 @@ package de.hterhors.obie.ml.templates;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,18 +12,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.CooccurrenceTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -77,7 +75,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private OBIEInstance internalInstance;
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		/**
 		 * The parent class type of the obie-template in a parent-child relation.
@@ -114,11 +112,10 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		 */
 		final String propertyNameChain;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable, Class<? extends IOBIEThing> classType1,
-				Class<? extends IOBIEThing> classType2, Set<String> surfaceFormsType1, Set<String> surfaceFormsType2,
-				String propertyNameChain) {
-			super(influencedVariable, entityRootClassType, CooccurrenceTemplate.this, classType1, classType2,
-					surfaceFormsType1, surfaceFormsType2, propertyNameChain, entityRootClassType);
+		public Scope(Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
+				Set<String> surfaceFormsType1, Set<String> surfaceFormsType2, String propertyNameChain) {
+			super(CooccurrenceTemplate.this, classType1, classType2, surfaceFormsType1, surfaceFormsType2,
+					propertyNameChain, entityRootClassType);
 			this.classType1 = classType1;
 			this.classType2 = classType2;
 			this.type1SurfaceForms = surfaceFormsType1;
@@ -165,18 +162,17 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		Set<String> childSurfaceForms = getSurfaceForms(childClass);
 
 		final Class<? extends IOBIEThing> childClassType = childClass == null ? null : childClass.getClass();
-		final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 		/*
 		 * Add factor for parent-child relation.
 		 */
 		if (parentClass == null) {
 			// influencedVariables.add(childClassType);
-			factors.add(new Scope(influencedVariables, null, childClassType, null, childSurfaceForms, null));
+			factors.add(new Scope(null, childClassType, null, childSurfaceForms, null));
 		} else {
 			// influencedVariables.add(parentClass.getClass());
 			// influencedVariables.add(childClassType);
-			factors.add(new Scope(influencedVariables, parentClass.getClass(), childClassType, parentSurfaceForms,
-					childSurfaceForms, propertyNameChain));
+			factors.add(new Scope(parentClass.getClass(), childClassType, parentSurfaceForms, childSurfaceForms,
+					propertyNameChain));
 		}
 
 		if (childClass == null)
@@ -188,8 +184,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		 * Child-Child relation. if the child property is of type OneToMany we create
 		 * pairwise co-occurrences between all elements.
 		 */
-		for (int i = 0; i < ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).size(); i++) {
-			final Field f1 = ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).get(i);
+		for (int i = 0; i < ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).size(); i++) {
+			final Field f1 = ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).get(i);
 
 			final List<IOBIEThing> child1Fillers = getFillers(childClass, f1);
 
@@ -209,8 +205,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 					child1ClassType = (Class<IOBIEThing>) child1Fillers.get(k).getClass();
 				}
 
-				for (int j = i + 1; j < ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).size(); j++) {
-					final Field f2 = ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).get(j);
+				for (int j = i + 1; j < ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).size(); j++) {
+					final Field f2 = ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).get(j);
 
 					final List<IOBIEThing> child2Fillers = getFillers(childClass, f2);
 
@@ -231,15 +227,11 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 							child2ClassType = (Class<IOBIEThing>) child2Fillers.get(l).getClass();
 						}
 
-						final Set<Class<? extends IOBIEThing>> iV = new HashSet<>();
-						// iV.add(child1ClassType);
-						// iV.add(child2ClassType);
 						/*
 						 * Add factor for parent-child relation.
 						 */
-						factors.add(
-								new Scope(iV, child1ClassType, child2ClassType, child1SurfaceForms, child2SurfaceForms,
-										propertyNameChain + "->" + "{" + f1.getName() + ", " + f2.getName() + "}"));
+						factors.add(new Scope(child1ClassType, child2ClassType, child1SurfaceForms, child2SurfaceForms,
+								propertyNameChain + "->" + "{" + f1.getName() + ", " + f2.getName() + "}"));
 
 					}
 				}
@@ -249,7 +241,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Parent-Child relation
 		 */
-		ReflectionUtils.getDeclaredOntologyFields(childClass.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(childClass)) {

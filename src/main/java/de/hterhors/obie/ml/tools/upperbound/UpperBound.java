@@ -1,17 +1,21 @@
 package de.hterhors.obie.ml.tools.upperbound;
 
-import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.google.common.reflect.Reflection;
+
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -25,38 +29,17 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
 /**
- * Calculates the maximum recall for a specific dataset. The recall is
- * calculated by taking the gold annotations for a document and project all
- * property values to the findings of the candidate retrieval.
+ * Calculates the maximum recall for a specific corpus. The recall is calculated
+ * by taking the gold annotations for an instance and project all property
+ * values to the findings of the candidate retrieval.
  * 
  * If all properties in gold annotation can be found in the set of annotations
  * that are possible by the candidate retrieval we assume, that the state can be
  * reached.
  * 
- * e.g.
- * 
- * @formatter:off Gold:
- * 
- *                OrganismModel -> Ratmodel Gender -> Male AgeCategory -> Adult
- *                Weight -> 200g
- * 
- *                Set of annotations given by candidate retrieval component:
- * 
- *                RatModel: [Evidence in text] Female: [Evidence in text] Male:
- *                [No Evidence] AgeCategory: [Evidence in text] Weight [200g,
- *                1g, 100-200g]
- * 
- * @formatter:on
- * 
- * 				In this example, annotations are found in the text for all
- *               annotations in gold except for Male.
- * 
- * 
- * 
  * @author hterhors
  *
  *         Apr 12, 2017
- * @param <T>
  */
 public class UpperBound {
 
@@ -64,7 +47,9 @@ public class UpperBound {
 
 	final private OBIERunParameter parameter;
 
-	public UpperBound(OBIERunParameter parameter, BigramInternalCorpus corpus) throws FileNotFoundException {
+	public static Logger log = LogManager.getLogger(UpperBound.class);
+
+	public UpperBound(OBIERunParameter parameter, BigramInternalCorpus corpus) {
 
 		/**
 		 * Read test data
@@ -75,23 +60,27 @@ public class UpperBound {
 		PRF1 upperBound = new PRF1();
 		for (OBIEInstance doc : documents) {
 
-			System.out.println(doc.getName());
+			log.info(doc.getName());
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
 					.map(e -> (IOBIEThing) e.getTemplateAnnotation()).collect(Collectors.toList());
 
-			List<IOBIEThing> maxRecallPredictions = getRecallPredictionsForType(doc);
+			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
 
 			final PRF1 s = parameter.evaluator.prf1(gold, maxRecallPredictions);
-			System.out.println("score = " + s);
+			log.info("score = " + s);
 
 			for (Class<? extends IOBIEThing> clazz : doc.getNamedEntityLinkingAnnotations().getAvailableClassTypes()) {
-				System.out.println(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
+				log.debug(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
+			}
+			for (AbstractOBIEIndividual individual : doc.getNamedEntityLinkingAnnotations()
+					.getAvailableIndividualTypes()) {
+				log.debug(doc.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual));
 			}
 
 			upperBound.add(s);
 		}
-		System.out.println("UpperBound = " + upperBound);
+		log.info("UpperBound = " + upperBound);
 
 	}
 
@@ -109,18 +98,18 @@ public class UpperBound {
 	 * @throws SecurityException
 	 * @throws NoSuchFieldException
 	 */
-	private List<IOBIEThing> getRecallPredictionsForType(OBIEInstance doc) {
+	private List<IOBIEThing> getUpperBoundPredictions(OBIEInstance doc) {
 
-		List<IOBIEThing> maxRecallPredictions = null;
-		maxRecallPredictions = projectGoldToPredictions(doc);
-		System.out.println("GoldAnnotations:");
+		final List<IOBIEThing> upperBoundPredictions = projectGoldToPredictions(doc);
+
+		log.info("______GoldAnnotations:______");
 		doc.getGoldAnnotation().getTemplateAnnotations()
-				.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getTemplateAnnotation(), false)));
-		System.out.println("____________________________");
-		System.out.println("Predicted:");
-		maxRecallPredictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
+				.forEach(s -> log.info(OBIEClassFormatter.format(s.getTemplateAnnotation(), false)));
+		log.info("____________________________");
+		log.info("_________Predicted:_________");
+		upperBoundPredictions.forEach(f -> log.info(OBIEClassFormatter.format(f, false)));
 
-		return maxRecallPredictions;
+		return upperBoundPredictions;
 	}
 
 	/**
@@ -156,15 +145,20 @@ public class UpperBound {
 				IOBIEThing goldModel = (IOBIEThing) goldAnnotation.getTemplateAnnotation();
 				IOBIEThing predictionModel = null;
 
+				/*
+				 * If the root class is of datatype.
+				 */
 				if (ReflectionUtils.isAnnotationPresent(goldModel.getClass(), DatatypeProperty.class)) {
 					predictionModel = projectDataTypeClass(goldInstance, goldModel, predictionModel);
 				} else {
-					predictionModel = goldModel.getClass().newInstance();
+					predictionModel = newClassWithIndividual(goldModel.getClass(), goldModel.getIndividual());
+
 					addClassesRecursivly(goldModel, predictionModel, goldInstance.getNamedEntityLinkingAnnotations());
 				}
 
 				if (predictionModel != null)
 					predictions.add(predictionModel);
+
 			} catch (InstantiationException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
@@ -208,50 +202,55 @@ public class UpperBound {
 		/*
 		 * Add factors for object type properties.
 		 */
-		List<Field> fields = Arrays.stream(goldModel.getClass().getDeclaredFields())
-				.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class))
-				.collect(Collectors.toList());
 
-		for (Field field : fields) {
+		List<Field> slots = ReflectionUtils.getAccessibleOntologyFields(goldModel.getClass());
+
+		for (Field slot : slots) {
 			try {
-				field.setAccessible(true);
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-					if (field.get(goldModel) != null) {
+				if (slot.get(goldModel) != null) {
+					if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
 						List<IOBIEThing> values = new ArrayList<>();
-						Field f = predictionModel.getClass().getDeclaredField(field.getName());
-						f.setAccessible(true);
+
+						Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(), slot.getName());
 
 						/*
 						 * Get values for that list.
 						 */
-						for (IOBIEThing thing : (List<IOBIEThing>) field.get(goldModel)) {
+						for (IOBIEThing thing : (List<IOBIEThing>) slot.get(goldModel)) {
+
+							Class<? extends IOBIEThing> clazz = thing.getClass();
+
+							AbstractOBIEIndividual individual = thing.getIndividual();
+
 							/*
 							 * If the mention annotation data contains evidence for that requested class.
 							 */
-							if (parameter.exploreClassesWithoutTextualEvidence.contains(thing.getClass())) {
+							if (parameter.exploreClassesWithoutTextualEvidence.contains(clazz)) {
 
 								/*
 								 * If there was no evidence in the text but the class is can be explored without
 								 * evidence create n new one. HWere n is the number of objects in the gold list.
 								 */
-								IOBIEThing property = thing.getClass().newInstance();
+
+								IOBIEThing property = newClassWithIndividual(clazz, individual);
+
 								values.add(property);
 								/*
 								 * We call this method with the new added class recursively.
 								 */
 								addClassesRecursivly(thing, property, ner);
 
-							} else if (ner.containsClassAnnotations(thing.getClass())) {
+							} else if (ner.containsClassAnnotations(clazz)
+									|| ner.containsIndividualAnnotations(individual)) {
 								/*
-								 * If class is DataTypeProperty we need the exact value.
+								 * If class is DatatypeProperty we need the exact value.
 								 */
-								if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class)) {
+								if (ReflectionUtils.isAnnotationPresent(clazz, DatatypeProperty.class)) {
 									/*
 									 * Search for exact match... break on find.
 									 */
 									boolean found = false;
-									for (NERLClassAnnotation mentionAnnotation : ner
-											.getClassAnnotations(thing.getClass())) {
+									for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(clazz)) {
 										if (mentionAnnotation.getDTValueIfAnyElseTextMention()
 												.equals(((IDatatype) thing).getSemanticValue())) {
 											found = true;
@@ -263,14 +262,17 @@ public class UpperBound {
 										}
 									}
 									if (!found) {
-										System.out.println("WARN: Can not fill dt-class: " + field.getName() + ":"
+										log.info("WARN: Can not fill dt-class: " + slot.getName() + ":"
 												+ ((IDatatype) thing).getSemanticValue());
 									}
-								} else {
+								} else if (ner.containsIndividualAnnotations(individual)) {
+
 									/*
 									 * Else we need only the class mentioned anywhere.
 									 */
-									IOBIEThing property = thing.getClass().newInstance();
+
+									IOBIEThing property = newClassWithIndividual(clazz, individual);
+
 									values.add(property);
 									/*
 									 * We call this method with the new added class recursively.
@@ -279,11 +281,12 @@ public class UpperBound {
 								}
 
 							} else {
-								if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class)) {
-									System.out.println("WARN: Can not fill class: " + thing.getClass().getSimpleName()
-											+ ":" + ((IDatatype) thing).getSemanticValue());
+								if (ReflectionUtils.isAnnotationPresent(clazz, DatatypeProperty.class)) {
+									log.info("WARN: Can not fill field: " + clazz.getSimpleName() + ":"
+											+ ((IDatatype) thing).getSemanticValue());
 								} else {
-									System.out.println("WARN: Can not fill class: " + thing.getClass().getSimpleName());
+									log.info("WARN: Can not fill field: " + clazz.getSimpleName() + " for indiviual: "
+											+ individual);
 								}
 
 							}
@@ -294,22 +297,21 @@ public class UpperBound {
 						if (!values.isEmpty()) {
 							f.set(predictionModel, values);
 						}
+
 					} else {
+
+						IOBIEThing goldSlotValue = (IOBIEThing) slot.get(goldModel);
+
 						/*
-						 * Empty list.
+						 * If slot is not of type list, find only one entry.
 						 */
-					}
-				} else {
-					/*
-					 * If field is not a list we need to find only one entry.
-					 */
-					if (field.get(goldModel) != null) {
-						final Class<? extends IOBIEThing> scioFieldType = (Class<? extends IOBIEThing>) field
-								.get(goldModel).getClass();
+						final Class<? extends IOBIEThing> slotType = goldSlotValue.getClass();
+
+						AbstractOBIEIndividual individual = goldSlotValue.getIndividual();
 						/*
 						 * Search for data in the mention annotation data.
 						 */
-						if (parameter.exploreClassesWithoutTextualEvidence.contains(scioFieldType)) {
+						if (parameter.exploreClassesWithoutTextualEvidence.contains(slotType)) {
 
 							/*
 							 * If we do not find any evidence in the mention annotation data. We still check
@@ -317,26 +319,29 @@ public class UpperBound {
 							 * sense on fields that are not dependent on text. For instance helper classes
 							 * or grouping classes.
 							 */
-							Field f = predictionModel.getClass().getDeclaredField(field.getName());
-							f.setAccessible(true);
-							IOBIEThing property = (IOBIEThing) field.get(goldModel).getClass().newInstance();
+
+							Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(),
+									slot.getName());
+
+							IOBIEThing property = (IOBIEThing) slotType.newInstance();
 							f.set(predictionModel, property);
 							/*
 							 * We call this method with the new added class recursively.
 							 */
-							addClassesRecursivly((IOBIEThing) field.get(goldModel), property, ner);
-						} else if (ner.containsClassAnnotations(scioFieldType)) {
+							addClassesRecursivly(goldSlotValue, property, ner);
+						} else if (ner.containsClassAnnotations(slotType)
+								|| ner.containsIndividualAnnotations(individual)) {
 							/*
 							 * If field is DataTypeProeprty we need an exact match.
 							 */
-							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
+							if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
 								NERLClassAnnotation value = null;
 								/*
 								 * Search for exact match. Break on find.
 								 */
-								for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(scioFieldType)) {
+								for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(slotType)) {
 									if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-											.equals(((IDatatype) field.get(goldModel)).getSemanticValue())) {
+											.equals(((IDatatype) goldSlotValue).getSemanticValue())) {
 										value = mentionAnnotation;
 										break;
 									}
@@ -345,49 +350,80 @@ public class UpperBound {
 								 * If the value is not null we set it to the object on the specific field.
 								 */
 								if (value != null) {
-									Field f = predictionModel.getClass().getDeclaredField(field.getName());
-									f.setAccessible(true);
+
+									Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(),
+											slot.getName());
+
 									f.set(predictionModel, (value.classType
 											.getDeclaredConstructor(String.class, String.class, String.class)
 											.newInstance(null, value.getDTValueIfAnyElseTextMention(), value.text)));
 								} else {
 
-									System.out.println("WARN: Can not fill dt-field: " + field.getName() + ":"
-											+ ((IDatatype) field.get(goldModel)).getSemanticValue());
+									log.info("WARN: Can not fill dt-field: " + slot.getName() + ":"
+											+ ((IDatatype) goldSlotValue).getSemanticValue());
 
 								}
 
-							} else {
+							} else if (ner.containsIndividualAnnotations(individual)) {
+
+								/*
+								 * Else we need only the class mentioned anywhere.
+								 */
+
 								/*
 								 * If the field is not a DataTypeProperty we need only any evidence without
 								 * textual equivalence.
 								 */
-								Field f = predictionModel.getClass().getDeclaredField(field.getName());
-								f.setAccessible(true);
-								IOBIEThing property = (IOBIEThing) field.get(goldModel).getClass().newInstance();
+								Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(),
+										slot.getName());
+
+								IOBIEThing property = newClassWithIndividual(slotType, individual);
+
 								f.set(predictionModel, property);
 								/*
 								 * We call this method with the new added class recursively.
 								 */
-								addClassesRecursivly((IOBIEThing) field.get(goldModel), property, ner);
+								addClassesRecursivly(goldSlotValue, property, ner);
 							}
 						} else {
-							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
-								System.out.println("WARN: Can not fill field: " + scioFieldType.getSimpleName() + ":"
-										+ ((IDatatype) field.get(goldModel)).getSemanticValue());
+							if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
+								log.info("WARN: Can not fill field: " + slotType.getSimpleName() + ":"
+										+ ((IDatatype) slot.get(goldModel)).getSemanticValue());
 							} else {
-								System.out.println("WARN: Can not fill field: " + scioFieldType.getSimpleName());
+								log.info("WARN: Can not fill field: " + slotType.getSimpleName() + " for individual: "
+										+ individual);
 							}
 
 						}
 					}
+				} else {
+					/*
+					 * Empty field.
+					 */
 				}
 
-			} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException
-					| InstantiationException | InvocationTargetException | NoSuchMethodException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private IOBIEThing newClassWithIndividual(final Class<? extends IOBIEThing> slotType,
+			AbstractOBIEIndividual individual) {
+		try {
+			IOBIEThing property = (IOBIEThing) slotType.newInstance();
+			if (individual != null) {
+
+				Field individualField = ReflectionUtils.getAccessibleFieldByName(property.getClass(),
+						OntologyInitializer.INDIVIDUAL_FIELD_NAME);
+
+				individualField.set(property, individual);
+			}
+			return property;
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }

@@ -219,7 +219,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getDeclaredOntologyFields(annotation.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(annotation.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					for (IOBIEThing t : (List<IOBIEThing>) field.get(annotation)) {
@@ -554,7 +554,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		if (annotation == null)
 			return true;
 
-		final List<Field> fields = ReflectionUtils.getDeclaredOntologyFields(annotation.getClass());
+		final List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(annotation.getClass());
 
 		for (Field field : fields) {
 			try {

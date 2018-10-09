@@ -16,11 +16,11 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.HierarchyTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
@@ -39,20 +39,14 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 		super(parameter);
 	}
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final Class<? extends IOBIEThing> clazz;
 
-		public Scope(
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				Class<? extends IOBIEThing> scioClass) {
 			super(template, scioClass, entityRootClassType);
 			this.clazz = scioClass;
-		}
-
-		@Override
-		public String toString() {
-			return "Scope [scioClass=" + clazz + ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}

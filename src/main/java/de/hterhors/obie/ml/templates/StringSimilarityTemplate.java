@@ -18,12 +18,12 @@ import de.hterhors.obie.core.tokenizer.ContentCleaner;
 import de.hterhors.obie.core.tools.metric.LevenShteinSimilarity;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.StringSimilarityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.templates.utils.BinningUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -64,23 +64,16 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 	 *
 	 * @date May 9, 2017
 	 */
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		final String surfaceForm;
 		final String ontologyURI;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariable,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template, String className,
-				String surfaceForm) {
-			super(influencedVariable, entityRootClassType, template, className, surfaceForm, entityRootClassType);
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+				String className, String surfaceForm) {
+			super(template, className, surfaceForm, entityRootClassType);
 			this.ontologyURI = className;
 			this.surfaceForm = surfaceForm;
-		}
-
-		@Override
-		public String toString() {
-			return "FactorVariables [surfaceForm=" + surfaceForm + ", className=" + ontologyURI
-					+ ", getInfluencedVariables()=" + getInfluencedVariables() + "]";
 		}
 
 	}
@@ -121,7 +114,7 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 				final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
 				influencedVariables.add(scioClass.getClass());
 
-				factors.add(new Scope(influencedVariables, entityRootClassType, this, ontologyURI, surfaceForm));
+				factors.add(new Scope(entityRootClassType, this, ontologyURI, surfaceForm));
 			}
 		/*
 		 * Add factors for object type properties.

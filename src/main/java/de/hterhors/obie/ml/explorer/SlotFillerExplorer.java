@@ -16,10 +16,10 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.core.utils.OBIEUtils;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -119,9 +119,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					generatedStates.add(state.state);
 				}
 
-			} catch (InstantiationException | IllegalAccessException e) {
-				e.printStackTrace();
-			} catch (NoSuchFieldException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
@@ -199,7 +197,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			List<StateInstancePair> generatedInstances, Class<? extends IOBIEThing> rootEntityClassType,
 			int rootEntitySentenceIndex) throws IllegalAccessException, InstantiationException, NoSuchFieldException {
 
-		List<Field> fields = ReflectionUtils.getDeclaredOntologyFields(baseInstance.getClass());
+		List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(baseInstance.getClass());
 
 		// List<Field> fields =
 		// Arrays.stream(baseInstance.getClass().getDeclaredFields())
@@ -303,41 +301,6 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				candidateInstances.add(emptyCandidateInstance);
 
 			}
-//			if (exploreOnOntologyLevel) {
-//				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(internalInstance,
-//						slotSuperType, exploreClassesWithoutTextualEvidence,exploreOnOntologyLevel)) {
-//					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
-//							baseInstance);
-//					candidateInstances.add(emptyCandidateInstance);
-//					
-//				}
-//			} else {
-//				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(internalInstance,
-//						slotSuperType, exploreClassesWithoutTextualEvidence,exploreOnOntologyLevel)) {
-//
-//					if (enableDiscourseProgression) {
-//						/**
-//						 * If the discourse progression is enabled we do not want to sample for slot
-//						 * candidates which are mentioned before their parent class. This holds only
-//						 * true for the rootClass.
-//						 */
-//						if (emptyCandidateInstance.getCharacterOnset() != null) {
-//							final int slotEntitySentenceIndex = internalInstance
-//									.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
-//							if (rootEntitySentenceIndex > slotEntitySentenceIndex) {
-//								continue;
-//							}
-//						}
-//
-//					}
-//
-//					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
-//							baseInstance);
-//
-//					candidateInstances.add(emptyCandidateInstance);
-//				}
-//
-//			}
 		}
 		/*
 		 * Basic fields are already set. Only OntologyModelContent fields are missing.
@@ -361,7 +324,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					.getEntity(this.currentInstanceAnnotationID);
 
 			if (!wasNOTModByPreFilledTemplate) {
-				generatedState.addUsedPreFilledObject(filledCandidateInstance);
+				generatedState.addUsedPreFilledTemplate(filledCandidateInstance);
 
 			}
 			entity.setTemplateAnnotation(clonedClass);
@@ -466,12 +429,12 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 			OBIEState generatedState = new OBIEState(this.currentState);
 			// System.out.println("Add: " + possibleElementValue.newInstance);
-			generatedState.addUsedPreFilledObject(possibleElementValue.instance);
+			generatedState.addUsedPreFilledTemplate(possibleElementValue.instance);
 			TemplateAnnotation entity = generatedState.getCurrentPrediction()
 					.getEntity(this.currentInstanceAnnotationID);
 
 			// System.out.println("Remove: " + childBaseClass);
-			generatedState.removeRecUsedPreFilledObject(
+			generatedState.removeRecUsedPreFilledTemplate(
 
 					childBaseClass
 
@@ -499,19 +462,17 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			/**
 			 * TODO: Allow setting fields to null again?
 			 */
-			// if (modAtFieldClass == null) {
-			// continue;
-			// }
+			if (modAtFieldClass.instance == null) {
+				continue;
+			}
 
 			if (!explorationCondition.matchesExplorationContitions(baseInstance, fieldName, modAtFieldClass.instance))
 				continue;
 
 			IOBIEThing genClass = OBIEUtils.deepConstructorClone(baseInstance);
 
-			Field genClassField;
-
 			try {
-				genClassField = genClass.getClass().getDeclaredField(fieldName);
+				Field genClassField = genClass.getClass().getDeclaredField(fieldName);
 
 				genClassField.setAccessible(true);
 				genClassField.set(genClass, modAtFieldClass.instance);
@@ -519,12 +480,12 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				// generatedInstances.add(genClass);
 
 				OBIEState generatedState = new OBIEState(this.currentState);
-				generatedState.addUsedPreFilledObject(modAtFieldClass.instance);
+				generatedState.addUsedPreFilledTemplate(modAtFieldClass.instance);
 
 				TemplateAnnotation entity = generatedState.getCurrentPrediction()
 						.getEntity(this.currentInstanceAnnotationID);
 
-				generatedState.removeRecUsedPreFilledObject(childInstance);
+				generatedState.removeRecUsedPreFilledTemplate(childInstance);
 
 				entity.setTemplateAnnotation(genClass);
 

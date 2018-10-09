@@ -18,11 +18,11 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.SentenceLocalityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -79,7 +79,7 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	// private static final List<Integer> sentenceDistances = Arrays.asList(1,
 	// 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
-	static class Scope extends OBIEFactorScope {
+	static class Scope extends FactorScope {
 
 		private final Class<? extends IOBIEThing> class1;
 		private final Class<? extends IOBIEThing> class2;
@@ -89,17 +89,10 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance document, Class<? extends IOBIEThing> class1, Class<? extends IOBIEThing> class2,
 				final int sentenceDistance) {
-			super(influencedVariable, entityRootClassType, template, class1, class2, sentenceDistance,
-					entityRootClassType);
+			super(template, class1, class2, sentenceDistance, entityRootClassType);
 			this.class1 = class1;
 			this.class2 = class2;
 			this.sentenceDistance = sentenceDistance;
-		}
-
-		@Override
-		public String toString() {
-			return "FactorVariables [class1=" + class1 + ", class2=" + class2 + ", getInfluencedVariables()="
-					+ getInfluencedVariables() + "]";
 		}
 
 	}
@@ -196,8 +189,8 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	 * @param class2
 	 * @param factors
 	 */
-	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance instance,
-			IOBIEThing class1, IOBIEThing class2, List<Scope> factors) {
+	private void addFactor(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance instance, IOBIEThing class1,
+			IOBIEThing class2, List<Scope> factors) {
 
 		if (class1.getCharacterOnset() == null)
 			return;

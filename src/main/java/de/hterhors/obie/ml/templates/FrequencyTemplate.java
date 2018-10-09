@@ -14,15 +14,15 @@ import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.FrequencyTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
+import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 /**
@@ -57,7 +57,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 	 *
 	 * @date May 9, 2017
 	 */
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		/**
 		 * The document.
@@ -118,24 +118,23 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 			return factors;
 
 		if (ReflectionUtils.isAnnotationPresent(obieThing.getClass(), DatatypeProperty.class)) {
+			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
+					((IDatatype) obieThing).getSemanticValue(), propertyClassType.isInterface() ? propertyClassType
+							: ReflectionUtils.getDirectInterfaces(propertyClassType),
+					null));
+		} else {
 			factors.add(
-					new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
-							((IDatatype) obieThing).getSemanticValue(),
+					new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(), null,
 							propertyClassType.isInterface() ? propertyClassType
 									: ReflectionUtils.getDirectInterfaces(propertyClassType),
-							null));
-		} else {
-			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(), null,
-					propertyClassType.isInterface() ? propertyClassType
-							: ReflectionUtils.getDirectInterfaces(propertyClassType),
-					obieThing.getIndividual()));
+							obieThing.getIndividual()));
 		}
 
 		/*
 		 * Add factors for object type properties.
 		 */
 
-		ReflectionUtils.getDeclaredOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
 				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field

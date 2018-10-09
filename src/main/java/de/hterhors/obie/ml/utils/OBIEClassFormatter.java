@@ -76,7 +76,7 @@ public class OBIEClassFormatter {
 		sb.append("\n");
 		depth++;
 
-		List<Field> fields = ReflectionUtils.getDeclaredOntologyFields(c.getClass());
+		List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(c.getClass());
 
 		for (Field field : fields) {
 

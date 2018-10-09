@@ -2,11 +2,9 @@ package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,10 +12,10 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.templates.EmptyRootClassCardinalityTemplate.Scope;
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 
 public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
@@ -33,16 +31,14 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 
 	private static Logger log = LogManager.getFormatterLogger(EmptyRootClassCardinalityTemplate.class);
 
-	class Scope extends OBIEFactorScope {
+	class Scope extends FactorScope {
 
 		public final int numberOfEmptyRootClasses;
 		public final Class<? extends IOBIEThing> rootClassType;
 
-		public Scope(Set<Class<? extends IOBIEThing>> influencedVariables,
-				Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				Class<? extends IOBIEThing> rootClassType, final int numberOfEmptyRootClasses) {
-			super(influencedVariables, entityRootClassType, template, entityRootClassType, rootClassType,
-					numberOfEmptyRootClasses);
+			super(template, entityRootClassType, rootClassType, numberOfEmptyRootClasses);
 			this.numberOfEmptyRootClasses = numberOfEmptyRootClasses;
 			this.rootClassType = rootClassType;
 		}
@@ -61,9 +57,7 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 			}
 		}
 		for (Entry<Class<? extends IOBIEThing>, Integer> count : countEmptyClasses.entrySet()) {
-			final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-			// influencedVariables.add(count.getKey());
-			factors.add(new Scope(influencedVariables, count.getKey(), this, count.getKey(), count.getValue()));
+			factors.add(new Scope(count.getKey(), this, count.getKey(), count.getValue()));
 		}
 
 		return factors;

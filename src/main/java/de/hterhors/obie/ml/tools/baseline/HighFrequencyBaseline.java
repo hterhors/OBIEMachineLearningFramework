@@ -14,14 +14,13 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramInternalCorpus;
-import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
-import de.hterhors.obie.ml.utils.OBIEClassFormatter;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
+import de.hterhors.obie.ml.utils.OBIEClassFormatter;
+import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
@@ -152,7 +151,7 @@ public class HighFrequencyBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getDeclaredOntologyFields(predictionModel.getClass());
+		final List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(predictionModel.getClass());
 
 		for (Field slot : fields) {
 

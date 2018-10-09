@@ -7,9 +7,9 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.ml.templates.scope.OBIEFactorScope;
 import exceptions.MissingFactorException;
 import factors.Factor;
+import factors.FactorScope;
 import learning.Vector;
 import learning.scorer.Scorer;
 import utility.Utils;
@@ -84,7 +84,7 @@ public class OBIEScorer implements Scorer {
 			double dotProduct = featureVector.dotProduct(weights);// /
 																	// counter.get(key);
 			double factorScore = Math.exp(dotProduct);
-			if (factor.getFactorScope() instanceof OBIEFactorScope) {
+			if (factor.getFactorScope() instanceof FactorScope) {
 				// ActiveLearningScope als = (ActiveLearningScope)
 				// factor.getFactorScope();
 				// for (Class<? extends IOBIEThing> variableKey :
