@@ -3,6 +3,7 @@ package de.hterhors.obie.ml.run;
 import java.util.Arrays;
 import java.util.List;
 
+import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
@@ -34,7 +35,8 @@ public class StandardRERunner extends AbstractOBIERunner {
 					@Override
 					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 
-						if (numberOfEpochs == epoch) {
+						if (!(parameter.corpusDistributor instanceof ActiveLearningDistributor)
+								|| numberOfEpochs == epoch) {
 
 							saveModel(epoch);
 							trainWithObjective = false;

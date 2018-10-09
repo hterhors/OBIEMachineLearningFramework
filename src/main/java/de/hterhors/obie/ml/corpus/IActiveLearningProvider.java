@@ -1,7 +1,10 @@
 package de.hterhors.obie.ml.corpus;
 
+import java.util.List;
+
 import de.hterhors.obie.ml.activelearning.IActiveLearningDocumentRanker;
 import de.hterhors.obie.ml.run.AbstractOBIERunner;
+import de.hterhors.obie.ml.variables.OBIEInstance;
 
 public interface IActiveLearningProvider {
 
@@ -10,9 +13,9 @@ public interface IActiveLearningProvider {
 	 * 
 	 * @param runner
 	 * @param selector
-	 * @return true if there are still training data to add left.
+	 * @return the list of new training data.
 	 */
-	public boolean updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker selector);
+	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker selector);
 
 	public int getCurrentActiveLearningIteration();
 

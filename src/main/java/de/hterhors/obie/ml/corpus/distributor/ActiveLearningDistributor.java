@@ -82,18 +82,18 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
 	}
 
-	private int totalAmount() {
+	private int totalProportion() {
 		return trainingProportion + testProportion;
 	}
 
 	public int numberOfTotalTrainingData(final int totalNumberOfDocuments) {
 		return Math.round(
-				corpusSizeFraction * ((float) trainingProportion / (float) totalAmount()) * totalNumberOfDocuments);
+				corpusSizeFraction * ((float) trainingProportion / (float) totalProportion()) * totalNumberOfDocuments);
 	}
 
 	public int numberOfTestData(final int totalNumberOfDocuments) {
-		return Math
-				.round(corpusSizeFraction * ((float) testProportion / (float) totalAmount()) * totalNumberOfDocuments);
+		return Math.round(
+				corpusSizeFraction * ((float) testProportion / (float) totalProportion()) * totalNumberOfDocuments);
 	}
 
 	public static class Builder extends AbstractConfigBuilder<Builder> {
@@ -211,8 +211,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		 */
 		Collections.shuffle(corpusProvider.allExistingInternalInstances, random);
 
-		final int totalNumberOfDocuments = Math
-				.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size());
+		final int totalNumberOfDocuments = Math.round(corpusProvider.allExistingInternalInstances.size());
 
 		final int numberForTraining = numberOfTotalTrainingData(totalNumberOfDocuments);
 		final int numberForTest = numberOfTestData(totalNumberOfDocuments);
@@ -243,7 +242,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
 				testDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(numberForTraining,
-						corpusProvider.allExistingInternalInstances.size()));
+						Math.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size())));
 				return this;
 			}
 		};

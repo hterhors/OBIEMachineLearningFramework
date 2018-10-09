@@ -303,7 +303,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		this.remainingFullCorpus = new BigramInternalCorpus(trainingCorpus, developmentCorpus, testCorpus);
 
-		log.info("Distributed instances: (" + this.remainingFullCorpus.getInternalInstances().size() + "/"
+		log.info("Distributed instances: ~"
+				+ (Math.round((float) this.remainingFullCorpus.getInternalInstances().size()
+						/ (float) this.allExistingInternalInstances.size() * 100))
+				+ "% (" + this.remainingFullCorpus.getInternalInstances().size() + "/"
 				+ this.allExistingInternalInstances.size() + ")");
 
 		if (distributer instanceof FoldCrossCorpusDistributor) {
@@ -314,7 +317,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 					}).reduce("", String::concat));
 		} else {
 			final AtomicInteger i = new AtomicInteger(0);
-			log.info("Training instances ~"
+			log.info("Training instances: ~"
 					+ (Math.round((float) trainingDocuments.size()
 							/ (float) this.remainingFullCorpus.getInternalInstances().size() * 100))
 					+ "% (" + trainingDocuments.size() + "/" + this.remainingFullCorpus.getInternalInstances().size()
@@ -326,7 +329,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 				}).reduce("", String::concat));
 				i.set(0);
 			}
-			log.info("Development instances ~"
+			log.info("Development instances: ~"
 					+ (Math.round((float) developmentDocuments.size()
 							/ (float) this.remainingFullCorpus.getInternalInstances().size() * 100))
 					+ "% (" + developmentDocuments.size() + "/" + this.remainingFullCorpus.getInternalInstances().size()
@@ -337,7 +340,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 				}).reduce("", String::concat));
 				i.set(0);
 			}
-			log.info("Test instances ~"
+			log.info("Test instances: ~"
 					+ (Math.round((float) testDocuments.size()
 							/ (float) this.remainingFullCorpus.getInternalInstances().size() * 100))
 					+ "% (" + testDocuments.size() + "/" + this.remainingFullCorpus.getInternalInstances().size()
@@ -499,7 +502,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public boolean updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker selector) {
+	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker selector) {
 
 		if (!(distributer instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException("Configuration does not support active learning validation: "
@@ -509,31 +512,34 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		final int remaining = getDevelopCorpus().getInternalInstances().size();
 
-		final List<OBIEInstance> newTrainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
+		final List<OBIEInstance> trainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
 
 		if (remaining <= ((ActiveLearningDistributor) distributer).b) {
-			newTrainingInstances.addAll(getDevelopCorpus().getInternalInstances());
+			trainingInstances.addAll(getDevelopCorpus().getInternalInstances());
 
 			this.developmentCorpus = new BigramInternalCorpus(Collections.emptyList());
 
-			this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
+			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
 
-			return false;
+			return Collections.emptyList();
 		} else {
 
 			log.info("Rank remaining training data...");
 			List<OBIEInstance> remainingInstances = selector.rank((ActiveLearningDistributor) distributer, runner,
 					getDevelopCorpus().getInternalInstances());
 			log.info("done!");
-			
-			newTrainingInstances.addAll(remainingInstances.subList(0, ((ActiveLearningDistributor) distributer).b));
 
-			this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
+			List<OBIEInstance> newInstances = remainingInstances.subList(0,
+					((ActiveLearningDistributor) distributer).b);
+
+			trainingInstances.addAll(newInstances);
+
+			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
 
 			this.developmentCorpus = new BigramInternalCorpus(new ArrayList<>(remainingInstances
 					.subList(((ActiveLearningDistributor) distributer).b, remainingInstances.size())));
 
-			return true;
+			return newInstances;
 		}
 	}
 

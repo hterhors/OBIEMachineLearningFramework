@@ -87,6 +87,10 @@ public abstract class AbstractOBIERunner {
 
 	protected Model<OBIEInstance, OBIEState> model;
 
+	private Learner<OBIEState> learner;
+	
+	private Trainer trainer;
+	
 	public DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler;
 
 	public AbstractOBIERunner(OBIERunParameter parameter) {
@@ -127,6 +131,19 @@ public abstract class AbstractOBIERunner {
 		}
 	}
 
+	/**
+	 * Continues training for a given set of documents using the previous loaded or
+	 * traind model.
+	 * 
+	 * @param trainingInstances
+	 * @throws Exception
+	 */
+	public void continueTraining(List<OBIEInstance> trainingInstances) throws Exception {
+
+		trainer.train(sampler, initializer, learner, trainingInstances, parameter.epochs);
+
+	}
+
 	public void train() throws Exception {
 		train(new ArrayList<>(corpusProvider.getTrainingCorpus().getInternalInstances()));
 	}
@@ -140,8 +157,26 @@ public abstract class AbstractOBIERunner {
 
 		buildTrainingDefaulSampler(model);
 
-		Trainer trainer = buildDefaultTrainer();
+		trainer = buildDefaultTrainer();
 
+		learner = getLearner();
+
+		List<EpochCallback> epochCallbacks = addEpochCallback(sampler);
+
+		for (EpochCallback epochCallback : epochCallbacks) {
+			trainer.addEpochCallback(epochCallback);
+		}
+
+		// trainer.train(sampler, initializer, learner,
+		// new ArrayList<>(
+		// Arrays.asList(corpusProvider.getTestCorpus().getInstanceByName("Waver
+		// et al 2005.txt"))),
+		// parameter.epochs);
+		trainer.train(sampler, initializer, learner, trainingInstances, parameter.epochs);
+//		return model;
+	}
+
+	private Learner<OBIEState> getLearner() {
 		final Learner<OBIEState> learner;
 
 		if (scorer instanceof IExternalScorer) {
@@ -179,20 +214,7 @@ public abstract class AbstractOBIERunner {
 		} else {
 			learner = new AdvancedLearner<>(model, parameter.optimizer, parameter.regularizer);
 		}
-
-		List<EpochCallback> epochCallbacks = addEpochCallback(sampler);
-
-		for (EpochCallback epochCallback : epochCallbacks) {
-			trainer.addEpochCallback(epochCallback);
-		}
-
-		// trainer.train(sampler, initializer, learner,
-		// new ArrayList<>(
-		// Arrays.asList(corpusProvider.getTestCorpus().getInstanceByName("Waver
-		// et al 2005.txt"))),
-		// parameter.epochs);
-		trainer.train(sampler, initializer, learner, trainingInstances, parameter.epochs);
-//		return model;
+		return learner;
 	}
 
 	void saveModel(int epoch) {
