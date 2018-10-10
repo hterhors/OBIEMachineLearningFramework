@@ -43,6 +43,7 @@ import de.hterhors.obie.ml.variables.OBIEState;
 import exceptions.UnkownTemplateRequestedException;
 import learning.AdvancedLearner;
 import learning.AdvancedLearner.TrainingTriple;
+import learning.DefaultLearner;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -88,9 +89,9 @@ public abstract class AbstractOBIERunner {
 	protected Model<OBIEInstance, OBIEState> model;
 
 	private Learner<OBIEState> learner;
-	
+
 	private Trainer trainer;
-	
+
 	public DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler;
 
 	public AbstractOBIERunner(OBIERunParameter parameter) {
@@ -155,7 +156,7 @@ public abstract class AbstractOBIERunner {
 		model = new Model<>(scorer, templates);
 		model.setMultiThreaded(parameter.multiThreading);
 
-		buildTrainingDefaulSampler(model);
+		sampler = buildTrainingDefaulSampler(model);
 
 		trainer = buildDefaultTrainer();
 
@@ -212,6 +213,7 @@ public abstract class AbstractOBIERunner {
 				}
 			};
 		} else {
+//			learner = new DefaultLearner<>(model, parameter.optimizer.getCurrentAlphaValue());
 			learner = new AdvancedLearner<>(model, parameter.optimizer, parameter.regularizer);
 		}
 		return learner;
@@ -234,7 +236,8 @@ public abstract class AbstractOBIERunner {
 	protected abstract List<EpochCallback> addEpochCallback(
 			DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler);
 
-	private void buildTrainingDefaulSampler(Model<OBIEInstance, OBIEState> model) {
+	private DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> buildTrainingDefaulSampler(
+			Model<OBIEInstance, OBIEState> model) {
 
 		sampler = new DefaultSampler<>(model, objectiveFunction, explorers, maxObjectiveScore);
 		sampler.setTrainSamplingStrategy(OBIERunParameter.trainSamplingStrategyModelScore);
@@ -273,6 +276,7 @@ public abstract class AbstractOBIERunner {
 				}
 			});
 		}
+		return sampler;
 	}
 
 	private List<AbstractTemplate<OBIEInstance, OBIEState, ?>> buildEmptyTemplates()
@@ -289,7 +293,6 @@ public abstract class AbstractOBIERunner {
 		return templates;
 	}
 
-	@SuppressWarnings("unchecked")
 	private AbstractTemplate<OBIEInstance, OBIEState, ?> instantiateTemplate(
 			Class<? extends AbstractTemplate<?, ?, ?>> abstractTemplate) {
 		AbstractOBIETemplate<?> t = null;
@@ -301,10 +304,6 @@ public abstract class AbstractOBIERunner {
 		 * maybe?
 		 * 
 		 */
-//		if (abstractTemplate == SemanticNumericDataTypeTemplate.class) {
-//			t = new SemanticNumericDataTypeTemplate(this.parameter,
-//					corpusProvider.getTrainingCorpus().getInternalInstances());
-//		} else {
 		try {
 			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName())
 					.getConstructor(OBIERunParameter.class).newInstance(this.parameter);
@@ -312,18 +311,17 @@ public abstract class AbstractOBIERunner {
 			e.printStackTrace();
 			System.exit(1);
 		}
-//		}
 		return t;
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnTest() throws IOException,
 			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
-		return applyModelTo(corpusProvider.getTestCorpus().getInternalInstances());
+		return test(corpusProvider.getTestCorpus().getInternalInstances());
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnTrain() throws IOException,
 			FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException, Exception {
-		return applyModelTo(corpusProvider.getTrainingCorpus().getInternalInstances());
+		return test(corpusProvider.getTrainingCorpus().getInternalInstances());
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testInstance(OBIEInstance instance)
@@ -331,17 +329,17 @@ public abstract class AbstractOBIERunner {
 			Exception {
 		final List<OBIEInstance> instances = new ArrayList<>();
 		instances.add(instance);
-		return applyModelTo(instances);
+		return test(instances);
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testInstances(
 			List<OBIEInstance> instances) throws IOException, FileNotFoundException, ClassNotFoundException,
 			UnkownTemplateRequestedException, Exception {
-		return applyModelTo(instances);
+		return test(instances);
 	}
 
 	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> testOnDev() {
-		return applyModelTo(corpusProvider.getDevelopCorpus().getInternalInstances());
+		return test(corpusProvider.getDevelopCorpus().getInternalInstances());
 	}
 
 	public List<OBIEState> predictInstance(final OBIEInstance instance,
@@ -406,12 +404,12 @@ public abstract class AbstractOBIERunner {
 
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> applyModelTo(
+	public List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> test(
 			final List<OBIEInstance> instances) {
 
-		DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler = buildTestDefaultSampler(model);
-
-		Trainer trainer = buildDefaultTrainer();
+//		DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler = buildTestDefaultSampler(model);
+//
+//		Trainer trainer = buildDefaultTrainer();
 
 		return trainer.test(sampler, initializer, instances);
 

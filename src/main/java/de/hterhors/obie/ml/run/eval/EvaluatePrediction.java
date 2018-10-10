@@ -156,11 +156,11 @@ public class EvaluatePrediction {
 		int FN = 0;
 
 		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
-			log.info("_____________" + state.getKey() + "______________");
-			log.info("Gold:\t");
-			log.info(gold.get(state.getKey()));
-			log.info("Result:\t");
-			log.info(result.get(state.getKey()));
+			log.debug("_____________" + state.getKey() + "______________");
+			log.debug("Gold:\t");
+			log.debug(gold.get(state.getKey()));
+			log.debug("Result:\t");
+			log.debug(result.get(state.getKey()));
 
 			List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
 					.collect(Collectors.toList());
@@ -175,17 +175,17 @@ public class EvaluatePrediction {
 			final double p = evaluator.precision(goldList, predictionList);
 			final double r = evaluator.recall(goldList, predictionList);
 			final double f1 = evaluator.f1(goldList, predictionList);
-			log.info("Doc-Precisiion = " + p);
-			log.info("Doc-Recall = " + r);
-			log.info("Doc-F1 = " + f1);
+			log.debug("Doc-Precisiion = " + p);
+			log.debug("Doc-Recall = " + r);
+			log.debug("Doc-F1 = " + f1);
 
 			meanP += p;
 			meanR += r;
 			// meanF1 += f1;
 
 		}
-		log.info("");
-		log.info("");
+		log.debug("");
+		log.debug("");
 
 		PRF1 x = new PRF1(TP, FP, FN);
 

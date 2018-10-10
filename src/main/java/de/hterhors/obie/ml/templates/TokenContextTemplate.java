@@ -1,6 +1,7 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -256,7 +257,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	private static void getContextFeatures(Vector featureVector, final String contextClass, final String[] leftContext,
+	private void getContextFeatures(Vector featureVector, final String contextClass, final String[] leftContext,
 			final String[] rightContext) {
 
 		final StringBuffer lCs = new StringBuffer();
