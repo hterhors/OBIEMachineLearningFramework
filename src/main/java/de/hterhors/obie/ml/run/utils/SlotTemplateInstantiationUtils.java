@@ -25,7 +25,7 @@ import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
-public class TemplateInstantiationUtils {
+public class SlotTemplateInstantiationUtils {
 
 	/*
 	 * This is used for wrong initialization of a data type value. Its supposed to
