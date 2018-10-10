@@ -21,7 +21,7 @@ public class FullDocumentModelScoreRanker implements IActiveLearningDocumentRank
 		List<OBIEInstance> rankedInstances = new ArrayList<>();
 
 		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = runner
-				.applyModelTo(remainingInstances);
+				.test(remainingInstances);
 
 		Collections.sort(predictions,
 				new Comparator<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>>() {
