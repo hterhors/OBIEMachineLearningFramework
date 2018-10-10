@@ -164,9 +164,9 @@ public class HighFrequencyBaseline {
 				final Class<? extends IOBIEThing> slotType = ((Class<? extends IOBIEThing>) ((ParameterizedType) slot
 						.getGenericType()).getActualTypeArguments()[0]);
 
-				if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class) ) {
+				if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
 
-					List<ClassFrequencyPair> cfps = HighFrequencyUtils.getMostFrequentClasses(slotType, instance,
+					List<ClassFrequencyPair> cfps = HighFrequencyUtils.getMostFrequentClassesOrValue(slotType, instance,
 							MAX_PREDICTIONS_TO_ADD);
 
 					for (ClassFrequencyPair cfp : cfps) {
@@ -258,10 +258,10 @@ public class HighFrequencyBaseline {
 				 * Search for data in the mention annotation data.
 				 */
 				try {
-					if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class) ) {
+					if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
 
-						List<ClassFrequencyPair> cfps = HighFrequencyUtils.getMostFrequentClasses(slotType, instance,
-								1);
+						List<ClassFrequencyPair> cfps = HighFrequencyUtils.getMostFrequentClassesOrValue(slotType,
+								instance, 1);
 
 						for (ClassFrequencyPair cfp : cfps) {
 

@@ -195,7 +195,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		}
 
 		final List<ClassFrequencyPair> mostFrequentClasses = HighFrequencyUtils
-				.getMostFrequentClasses(factor.getFactorScope().slotValueType, factor.getFactorScope().instance, 2);
+				.getMostFrequentClassesOrValue(factor.getFactorScope().slotValueType, factor.getFactorScope().instance, 2);
 
 		if (!mostFrequentClasses.isEmpty() && mostFrequentClasses.get(0).clazz != null) {
 

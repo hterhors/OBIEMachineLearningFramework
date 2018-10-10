@@ -322,8 +322,10 @@ public class EvaluatePrediction {
 		List<Set<RestrictedField>> restrictFieldsList = InvestigationRestriction
 				.getFieldRestrictionCombinations(classType, InvestigationRestriction.getMainSingleFields(classType));
 
+		
 		List<InvestigationRestriction> restrictions = new ArrayList<>();
 		restrictions.add(new InvestigationRestriction(classType, Collections.emptySet(), true));
+	
 		for (Set<RestrictedField> set : restrictFieldsList) {
 			if (set.size() > 1) {
 				/**
