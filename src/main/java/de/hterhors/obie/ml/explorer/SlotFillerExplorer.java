@@ -25,15 +25,6 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
-/**
- * Samples over existing (pre-filled) ontological templates for specific other
- * templates. E.g. the sampler samples over Injuries, AnimalModels and
- * Treatments for the ExperimentalGroup-template.
- * 
- * @author hterhors
- *
- * @date Mar 14, 2018
- */
 public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	private static Logger log = LogManager.getFormatterLogger(SlotFillerExplorer.class.getName());
@@ -60,6 +51,13 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	private final boolean restrictExplorationOnConceptsInInstance;
 
+	private String currentInstanceAnnotationID;
+
+	private int currentRootEntitySentenceIndex;
+
+	/**
+	 * NOT THREAD SAFE!
+	 */
 	public SlotFillerExplorer(OBIERunParameter param) {
 		this.restrictExplorationOnConceptsInInstance = param.restrictExplorationToFoundConcepts;
 		this.exploreClassesWithoutTextualEvidence = param.exploreClassesWithoutTextualEvidence;
@@ -77,55 +75,64 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		this.rnd = param.rndForSampling;
 	}
 
-	private String currentInstanceAnnotationID;
-
 	/**
 	 * NOT THREAD SAFE!
 	 */
 	@Override
-	public List<OBIEState> getNextStates(OBIEState previousState) {
+	public List<OBIEState> getNextStates(OBIEState currentState) {
 
-		this.currentState = previousState;
+		this.currentState = currentState;
 
-		// System.out.println("Instance: " + previousState);
-		List<OBIEState> generatedStates = new LinkedList<OBIEState>();
-		// System.out.println("################");
-		// System.out.println("Curtrent State: ");
-		// previousState.preFilledUsedObjects.forEach(System.out::println);
-		// System.out.println("################");
-		Collection<TemplateAnnotation> annotations = new OBIEState(previousState).getCurrentPrediction()
+		final List<OBIEState> proposalStates = new LinkedList<OBIEState>();
+
+		final Collection<TemplateAnnotation> templateAnnotations = new OBIEState(currentState).getCurrentPrediction()
 				.getTemplateAnnotations();
-		for (TemplateAnnotation psinkAnnotation : annotations) {
-			try {
 
-				final int rootEntitySentenceIndex;
-				if (enableDiscourseProgression) {
-					if (psinkAnnotation.getTemplateAnnotation().getCharacterOnset() == null) {
-						rootEntitySentenceIndex = 0;
-					} else {
-						rootEntitySentenceIndex = previousState.getInstance()
-								.charPositionToToken(psinkAnnotation.getTemplateAnnotation().getCharacterOnset())
-								.getSentenceIndex();
-					}
-				} else {
-					rootEntitySentenceIndex = 0;
-				}
+		for (final TemplateAnnotation templateAnnotation : templateAnnotations) {
 
-				this.currentInstanceAnnotationID = psinkAnnotation.getAnnotationID();
+			this.currentRootEntitySentenceIndex = getRootEntitySentenceIndex(templateAnnotation);
 
-				for (StateInstancePair state : topDownRecursiveFieldFilling(previousState.getInstance(),
-						psinkAnnotation.getTemplateAnnotation(), psinkAnnotation.rootClassType,
-						psinkAnnotation.rootClassType, rootEntitySentenceIndex, true)) {
-					generatedStates.add(state.state);
-				}
+			this.currentInstanceAnnotationID = templateAnnotation.getAnnotationID();
 
-			} catch (Exception e) {
-				e.printStackTrace();
+			for (StateInstancePair stateInstancePair : topDownRecursiveSlotFilling(
+					templateAnnotation.getTemplateAnnotation(), templateAnnotation.rootClassType, true)) {
+				proposalStates.add(stateInstancePair.state);
 			}
 
 		}
-		Collections.shuffle(generatedStates, rnd);
-		return generatedStates;
+
+		Collections.shuffle(proposalStates, rnd);
+
+		return proposalStates;
+	}
+
+	/**
+	 * Returns the sentence index of the root-template annotation.
+	 * 
+	 * @param currentState
+	 * @param templateAnnotation
+	 * @return
+	 */
+	private int getRootEntitySentenceIndex(final TemplateAnnotation templateAnnotation) {
+		final int rootEntitySentenceIndex;
+
+		if (enableDiscourseProgression) {
+			if (templateAnnotation.getTemplateAnnotation().getCharacterOnset() == null) {
+				rootEntitySentenceIndex = 0;
+			} else {
+				rootEntitySentenceIndex = currentState.getInstance()
+						.charPositionToToken(templateAnnotation.getTemplateAnnotation().getCharacterOnset())
+						.getSentenceIndex();
+			}
+		} else {
+			rootEntitySentenceIndex = 0;
+		}
+		return rootEntitySentenceIndex;
+	}
+
+	private List<StateInstancePair> topDownRecursiveSlotFilling(IOBIEThing parentTemplate,
+			Class<? extends IOBIEThing> slotType) {
+		return topDownRecursiveSlotFilling(parentTemplate, slotType, false);
 	}
 
 	/**
@@ -138,8 +145,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * 
 	 * @param internalInstance
 	 * @param currentInstanceAnnotationID
-	 * @param baseInstance
-	 * @param baseClassType_interface
+	 * @param parentTemplate
+	 * @param slotType
 	 * @param rootEntitySentenceIndex
 	 * @param rootEntitySentenceIndex
 	 * @return
@@ -147,29 +154,88 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @throws IllegalAccessException
 	 * @throws NoSuchFieldException
 	 */
-	public List<StateInstancePair> topDownRecursiveFieldFilling(OBIEInstance internalInstance, IOBIEThing baseInstance,
-			Class<? extends IOBIEThing> baseClassType_interface, Class<? extends IOBIEThing> rootEntityClassType,
-			int rootEntitySentenceIndex, final boolean sampleRootClassType)
-			throws InstantiationException, IllegalAccessException, NoSuchFieldException {
+	private List<StateInstancePair> topDownRecursiveSlotFilling(IOBIEThing parentTemplate,
+			Class<? extends IOBIEThing> slotType, final boolean currentlyExploreRootTemplate) {
 
-		List<StateInstancePair> generatedInstances = new LinkedList<>();
+		List<StateInstancePair> generatedStates = new LinkedList<>();
 
-		if (baseInstance == null && baseClassType_interface == null)
-			return generatedInstances;
+		if (parentTemplate == null && slotType == null)
+			return generatedStates;
 		/*
-		 * Is true if the modification was not by a pre filled template.
+		 * Is true if the modification filled by a pre-filled template.
 		 */
-		boolean wasNotModByPreFilled = true;
+		boolean wasModByPreFilled = false;
 
-		if (!sampleRootClassType || sampleRootClassType && investigationRestriction.investigateClassType) {
+		if (!currentlyExploreRootTemplate
+				|| currentlyExploreRootTemplate && investigationRestriction.investigateClassType) {
 
-			wasNotModByPreFilled = addVariations(internalInstance, baseInstance, baseClassType_interface,
-					generatedInstances, rootEntitySentenceIndex);
+			Set<IOBIEThing> potentialSlotFiller;
 
+			if (!exploreExistingTemplates || (wasModByPreFilled = (potentialSlotFiller = currentState
+					.getPreFilledTemplates(slotType)) != null)) {
+
+				potentialSlotFiller = new HashSet<>();
+				/*
+				 * Basic fields are already set. Only OntologyModelContent fields are missing.
+				 */
+
+				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(currentState.getInstance(),
+						slotType, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
+						restrictExplorationOnConceptsInInstance)) {
+
+					if (!exploreOnOntologyLevel && enableDiscourseProgression) {
+						/**
+						 * If the discourse progression is enabled we do not want to sample for slot
+						 * candidates which are mentioned before their parent class. This is only true
+						 * for the rootClass. TODO: Why?
+						 */
+						if (emptyCandidateInstance.getCharacterOnset() != null) {
+							final int slotEntitySentenceIndex = currentState.getInstance()
+									.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
+							if (currentRootEntitySentenceIndex > slotEntitySentenceIndex) {
+								continue;
+							}
+						}
+
+					}
+
+					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
+							parentTemplate);
+
+					potentialSlotFiller.add(emptyCandidateInstance);
+
+				}
+			}
 			/*
-			 * TODO: Add this?
+			 * Basic fields are already set. Only OntologyModelContent fields are missing.
+			 * 
+			 * For all values for field:
 			 */
-			if (!sampleRootClassType && wasNotModByPreFilled) {
+
+			for (IOBIEThing candidateFiller : potentialSlotFiller) {
+				/*
+				 * Do not reuse used pre existing candidates.
+				 */
+				if (wasModByPreFilled && this.currentState.preFilledObjectWasAlreadyUsed(candidateFiller)) {
+					continue;
+				}
+
+				final IOBIEThing clonedClass = OBIEUtils.deepClone(candidateFiller);
+
+				OBIEState generatedState = new OBIEState(this.currentState);
+				TemplateAnnotation entity = generatedState.getCurrentPrediction()
+						.getEntity(this.currentInstanceAnnotationID);
+
+				if (wasModByPreFilled) {
+					generatedState.addUsedPreFilledTemplate(candidateFiller);
+
+				}
+				entity.setTemplateAnnotation(clonedClass);
+
+				generatedStates.add(new StateInstancePair(generatedState, clonedClass));
+			}
+
+			if (!currentlyExploreRootTemplate && !wasModByPreFilled) {
 
 				/*
 				 * Add empty only if not pre filled was used. If null should be part of pre
@@ -180,174 +246,49 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 						.getEntity(this.currentInstanceAnnotationID);
 				entity.setTemplateAnnotation(null);
 
-				generatedInstances.add(new StateInstancePair(generatedState, null));
+				generatedStates.add(new StateInstancePair(generatedState, null));
 			}
 		}
 
-		if (!wasNotModByPreFilled || baseInstance == null)
-			return generatedInstances;
+		/*
+		 * If the slots were filled by pre-filled templates we do not have to
+		 * investigate that branch of the template structure.
+		 */
+		if (wasModByPreFilled || parentTemplate == null)
+			return generatedStates;
 
-		callRecursiveForProperties(internalInstance, baseInstance, generatedInstances, rootEntityClassType,
-				rootEntitySentenceIndex);
-
-		return generatedInstances;
-	}
-
-	private void callRecursiveForProperties(OBIEInstance internalInstance, IOBIEThing baseInstance,
-			List<StateInstancePair> generatedInstances, Class<? extends IOBIEThing> rootEntityClassType,
-			int rootEntitySentenceIndex) throws IllegalAccessException, InstantiationException, NoSuchFieldException {
-
-		List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(baseInstance.getClass());
-
-		// List<Field> fields =
-		// Arrays.stream(baseInstance.getClass().getDeclaredFields())
-		// .filter(f ->
-		// (f.isAnnotationPresent(OntologyModelContent.class))).collect(Collectors.toList());
+		List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(parentTemplate.getClass());
 
 		/*
 		 * For all fields:
 		 */
-		for (Field field : fields) {
+		for (Field slot : fields) {
 
-			if (!investigationRestriction.investigateField(field.getName())) {
+			if (!investigationRestriction.investigateField(slot.getName())) {
 				continue;
 			}
-			// field.setAccessible(true);
 
-			if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-				/*
-				 * Generate states for lists of objects. Change just one element of the list.
-				 */
-				@SuppressWarnings("unchecked")
-				List<IOBIEThing> listOfInstancesForField = (ArrayList<IOBIEThing>) field.get(baseInstance);
-
-				@SuppressWarnings("unchecked")
-				Class<? extends IOBIEThing> childBaseClassType = (Class<? extends IOBIEThing>) ((ParameterizedType) field
-						.getGenericType()).getActualTypeArguments()[0];
-
-				for (IOBIEThing childBaseInstance : listOfInstancesForField) {
-					recursiveFieldFillingForListElement(internalInstance, baseInstance, generatedInstances,
-							field.getName(), listOfInstancesForField, childBaseInstance, childBaseClassType,
-							rootEntityClassType, rootEntitySentenceIndex);
-				}
-
+			if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
+				recursiveFieldFillingForListElement(parentTemplate, generatedStates, slot);
 			} else {
-				/*
-				 * Sample for all possible properties of the chosen class. E.g.
-				 * WistarRatModel->{hasAgeCategory,hasGender...,}
-				 */
-				IOBIEThing propertyInstance = (IOBIEThing) field.get(baseInstance);
-				Class<? extends IOBIEThing> propertyClassType = (Class<? extends IOBIEThing>) field.getType();
-				recursiveFieldFillingForSingleElement(internalInstance, baseInstance, generatedInstances,
-						field.getName(), propertyInstance, propertyClassType, rootEntityClassType,
-						rootEntitySentenceIndex);
+				recursiveFieldFillingForSingleElement(parentTemplate, generatedStates, slot);
 			}
 
 		}
-	}
-
-	/**
-	 * Was modified by prefilled Template, return false.
-	 * 
-	 * @param internalInstance
-	 * @param baseInstance
-	 * @param slotSuperType
-	 * @param generatedInstances
-	 * @param rootEntitySentenceIndex
-	 * @return
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
-	 * @throws NoSuchFieldException
-	 */
-	private boolean addVariations(OBIEInstance internalInstance, IOBIEThing baseInstance,
-			Class<? extends IOBIEThing> slotSuperType, List<StateInstancePair> generatedInstances,
-			int rootEntitySentenceIndex) throws InstantiationException, IllegalAccessException, NoSuchFieldException {
-
-		Set<IOBIEThing> candidateInstances;
-
-		boolean wasNOTModByPreFilledTemplate = exploreExistingTemplates == false;
-
-		if (wasNOTModByPreFilledTemplate || (wasNOTModByPreFilledTemplate = (candidateInstances = currentState
-				.getPreFilledTemplates(slotSuperType)) == null)) {
-
-			candidateInstances = new HashSet<>();
-			/*
-			 * Basic fields are already set. Only OntologyModelContent fields are missing.
-			 * 
-			 * For all values for field:
-			 */
-
-			for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(internalInstance, slotSuperType,
-					exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
-					restrictExplorationOnConceptsInInstance)) {
-
-				if (!exploreOnOntologyLevel && enableDiscourseProgression) {
-					/**
-					 * If the discourse progression is enabled we do not want to sample for slot
-					 * candidates which are mentioned before their parent class. This is only true
-					 * for the rootClass. TODO: Why?
-					 */
-					if (emptyCandidateInstance.getCharacterOnset() != null) {
-						final int slotEntitySentenceIndex = internalInstance
-								.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
-						if (rootEntitySentenceIndex > slotEntitySentenceIndex) {
-							continue;
-						}
-					}
-
-				}
-
-				emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance, baseInstance);
-				candidateInstances.add(emptyCandidateInstance);
-
-			}
-		}
-		/*
-		 * Basic fields are already set. Only OntologyModelContent fields are missing.
-		 * 
-		 * For all values for field:
-		 */
-
-		for (IOBIEThing filledCandidateInstance : candidateInstances) {
-			/*
-			 * Do not reuse used pre existing candidates.
-			 */
-			if (!wasNOTModByPreFilledTemplate
-					&& this.currentState.preFilledObjectWasAlreadyUsed(filledCandidateInstance)) {
-				continue;
-			}
-
-			final IOBIEThing clonedClass = OBIEUtils.deepConstructorClone(filledCandidateInstance);
-
-			OBIEState generatedState = new OBIEState(this.currentState);
-			TemplateAnnotation entity = generatedState.getCurrentPrediction()
-					.getEntity(this.currentInstanceAnnotationID);
-
-			if (!wasNOTModByPreFilledTemplate) {
-				generatedState.addUsedPreFilledTemplate(filledCandidateInstance);
-
-			}
-			entity.setTemplateAnnotation(clonedClass);
-
-			// System.out.println("Candidate: " +
-			// generatedState.preFilledUsedObjects);
-
-			generatedInstances.add(new StateInstancePair(generatedState, clonedClass));
-		}
-		return wasNOTModByPreFilledTemplate;
+		return generatedStates;
 	}
 
 	/**
 	 * 
 	 * @param internalInstance
-	 * @param baseClass               the class that holds the list as a property.
-	 * @param generatedClasses        the list of all collected new base classes.
+	 * @param parentTemplate          the class that holds the list as a property.
+	 * @param generatedStates         the list of all collected new base classes.
 	 * @param fieldName               the name of the field. It is used to get
 	 *                                access to field in the new generated base
 	 *                                classes.
-	 * @param oldList                 the list we are currently iterating over. This
+	 * @param slotValues              the list we are currently iterating over. This
 	 *                                list wont be modified but cloned and modified.
-	 * @param childBaseClass          the current element in the list we are looking
+	 * @param slotElement             the current element in the list we are looking
 	 *                                at. This element will not be cloned. Instead
 	 *                                we create possible values for that element and
 	 *                                add it to the list.
@@ -361,144 +302,171 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @throws IllegalAccessException
 	 * @throws NoSuchFieldException
 	 */
-	private void recursiveFieldFillingForListElement(OBIEInstance internalInstance, IOBIEThing baseClass,
-			List<StateInstancePair> generatedClasses, String fieldName, List<IOBIEThing> oldList,
-			IOBIEThing childBaseClass, Class<? extends IOBIEThing> listBaseClassType,
-			Class<? extends IOBIEThing> rootEntityClassType, int rootEntitySentenceIndex)
-			throws InstantiationException, IllegalAccessException, NoSuchFieldException {
+	private void recursiveFieldFillingForListElement(IOBIEThing parentTemplate, List<StateInstancePair> generatedStates,
+			Field slot) {
+		try {
 
-		/**
-		 * A list of all elements except of the element that's gone to be changed.
-		 */
-		List<IOBIEThing> baseList = new ArrayList<>();
-
-		/*
-		 * Copy old list except of the current element.
-		 */
-		for (IOBIEThing thing : oldList) {
-			if (thing != childBaseClass)
-				baseList.add(OBIEUtils.deepConstructorClone(thing));
-		}
-
-		/*
-		 * Get and add possible values for current element.
-		 */
-		for (StateInstancePair possibleElementValue : topDownRecursiveFieldFilling(internalInstance, childBaseClass,
-				listBaseClassType, rootEntityClassType, rootEntitySentenceIndex, false)) {
-
-			if (!explorationCondition.matchesExplorationContitions(baseClass, fieldName, possibleElementValue.instance))
-				continue;
+			@SuppressWarnings("unchecked")
+			List<IOBIEThing> slotValues = (ArrayList<IOBIEThing>) slot.get(parentTemplate);
 
 			/*
-			 * Copy current baseClass so that we can replace the list.
+			 * Generate states for lists of objects. Change just one element of the list.
 			 */
-			IOBIEThing newClass = OBIEUtils.deepConstructorClone(baseClass);
 
-			/*
-			 * Copy the baseList elements to a new list that we will add to the newClass. We
-			 * can copy all values since the base class does no longer contain the current
-			 * element.
-			 */
-			ArrayList<IOBIEThing> newList = new ArrayList<>();
-			for (IOBIEThing thing : baseList) {
-				newList.add(OBIEUtils.deepConstructorClone(thing));
+			for (IOBIEThing slotElement : slotValues) {
+
+				final String fieldName = slot.getName();
+				@SuppressWarnings("unchecked")
+				Class<? extends IOBIEThing> listBaseClassType = (Class<? extends IOBIEThing>) ((ParameterizedType) slot
+						.getGenericType()).getActualTypeArguments()[0];
+
+				/**
+				 * A list of all elements except of the element that's gone to be changed.
+				 */
+				List<IOBIEThing> baseList = new ArrayList<>();
+
+				/*
+				 * Copy old list except of the current element.
+				 */
+				for (IOBIEThing thing : slotValues) {
+					if (thing != slotElement)
+						baseList.add(OBIEUtils.deepClone(thing));
+				}
+
+				/*
+				 * Get and add possible values for current element.
+				 */
+				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement,
+						listBaseClassType)) {
+
+					/**
+					 * Do not add null elements in lists.
+					 */
+					if (possibleElementValue.instance == null)
+						continue;
+
+					if (!explorationCondition.matchesExplorationContitions(parentTemplate, fieldName,
+							possibleElementValue.instance))
+						continue;
+
+					/*
+					 * Copy current baseClass so that we can replace the list.
+					 */
+					IOBIEThing newClass = OBIEUtils.deepClone(parentTemplate);
+
+					/*
+					 * Copy the baseList elements to a new list that we will add to the newClass. We
+					 * can copy all values since the base class does no longer contain the current
+					 * element.
+					 */
+					ArrayList<IOBIEThing> newList = new ArrayList<>();
+					for (IOBIEThing thing : baseList) {
+						newList.add(OBIEUtils.deepClone(thing));
+					}
+
+					/*
+					 * Add the new value to the new list.
+					 */
+					newList.add(possibleElementValue.instance);
+
+					/*
+					 * Add new list to new class.
+					 */
+					Field listFieldOfNewClass = ReflectionUtils.getAccessibleFieldByName(newClass.getClass(),
+							fieldName);
+					listFieldOfNewClass.set(newClass, newList);
+
+					/*
+					 * Collect new class.
+					 */
+					// generatedClasses.add(newClass);
+					// System.out.println();
+					// System.out.println("CurrentState:");
+					// this.currentState.preFilledUsedObjects.forEach(System.out::println);
+					// System.out.println("NextCandidateState:");
+					// possibleElementValue.state.preFilledUsedObjects.forEach(System.out::println);
+					// System.out.println();
+
+					OBIEState generatedState = new OBIEState(this.currentState);
+					// System.out.println("Add: " + possibleElementValue.newInstance);
+					generatedState.addUsedPreFilledTemplate(possibleElementValue.instance);
+					TemplateAnnotation entity = generatedState.getCurrentPrediction()
+							.getEntity(this.currentInstanceAnnotationID);
+
+					// System.out.println("Remove: " + childBaseClass);
+					generatedState.removeRecUsedPreFilledTemplate(
+
+							slotElement
+
+					);
+					// System.out.println();
+					// System.out.println("Results to:");
+					// generatedState.preFilledUsedObjects.forEach(System.out::println);
+					// System.out.println("------");
+
+					entity.setTemplateAnnotation(newClass);
+
+					generatedStates.add(new StateInstancePair(generatedState, newClass));
+
+				}
 			}
-
-			/*
-			 * Add the new value to the new list.
-			 */
-			newList.add(possibleElementValue.instance);
-
-			/*
-			 * Add new list to new class.
-			 */
-			Field listFieldOfNewClass = newClass.getClass().getDeclaredField(fieldName);
-			listFieldOfNewClass.setAccessible(true);
-			listFieldOfNewClass.set(newClass, newList);
-
-			/*
-			 * Collect new class.
-			 */
-			// generatedClasses.add(newClass);
-			// System.out.println();
-			// System.out.println("CurrentState:");
-			// this.currentState.preFilledUsedObjects.forEach(System.out::println);
-			// System.out.println("NextCandidateState:");
-			// possibleElementValue.state.preFilledUsedObjects.forEach(System.out::println);
-			// System.out.println();
-
-			OBIEState generatedState = new OBIEState(this.currentState);
-			// System.out.println("Add: " + possibleElementValue.newInstance);
-			generatedState.addUsedPreFilledTemplate(possibleElementValue.instance);
-			TemplateAnnotation entity = generatedState.getCurrentPrediction()
-					.getEntity(this.currentInstanceAnnotationID);
-
-			// System.out.println("Remove: " + childBaseClass);
-			generatedState.removeRecUsedPreFilledTemplate(
-
-					childBaseClass
-
-			);
-			// System.out.println();
-			// System.out.println("Results to:");
-			// generatedState.preFilledUsedObjects.forEach(System.out::println);
-			// System.out.println("------");
-
-			entity.setTemplateAnnotation(newClass);
-
-			generatedClasses.add(new StateInstancePair(generatedState, newClass));
-
+		} catch (SecurityException | IllegalArgumentException | IllegalAccessException e1) {
+			e1.printStackTrace();
 		}
+
 	}
 
-	private void recursiveFieldFillingForSingleElement(OBIEInstance internalInstance, IOBIEThing baseInstance,
-			List<StateInstancePair> generatedInstances, String fieldName, IOBIEThing childInstance,
-			Class<? extends IOBIEThing> childClassType, Class<? extends IOBIEThing> rootEntityClassType,
-			int rootEntitySentenceIndex) throws InstantiationException, IllegalAccessException, NoSuchFieldException {
+	@SuppressWarnings("unchecked")
+	private void recursiveFieldFillingForSingleElement(IOBIEThing parentTemplate,
+			List<StateInstancePair> generatedStates, Field slot) {
+		try {
+			final String slotName = slot.getName();
 
-		for (StateInstancePair modAtFieldClass : topDownRecursiveFieldFilling(internalInstance, childInstance,
-				childClassType, rootEntityClassType, rootEntitySentenceIndex, false)) {
+			IOBIEThing slotValue = (IOBIEThing) slot.get(parentTemplate);
 
-			/**
-			 * TODO: Allow setting fields to null again?
-			 */
-			if (modAtFieldClass.instance == null) {
-				continue;
-			}
+			final Class<? extends IOBIEThing> slotType = (Class<? extends IOBIEThing>) slot.getType();
 
-			if (!explorationCondition.matchesExplorationContitions(baseInstance, fieldName, modAtFieldClass.instance))
-				continue;
+			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType)) {
 
-			IOBIEThing genClass = OBIEUtils.deepConstructorClone(baseInstance);
-
-			try {
-				Field genClassField = genClass.getClass().getDeclaredField(fieldName);
-
-				genClassField.setAccessible(true);
-				genClassField.set(genClass, modAtFieldClass.instance);
-
-				// generatedInstances.add(genClass);
-
-				OBIEState generatedState = new OBIEState(this.currentState);
-				generatedState.addUsedPreFilledTemplate(modAtFieldClass.instance);
-
-				TemplateAnnotation entity = generatedState.getCurrentPrediction()
-						.getEntity(this.currentInstanceAnnotationID);
-
-				generatedState.removeRecUsedPreFilledTemplate(childInstance);
-
-				entity.setTemplateAnnotation(genClass);
-
-				generatedInstances.add(new StateInstancePair(generatedState, genClass));
-
-			} catch (NoSuchFieldException | SecurityException e) {
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				/*
-				 * Skip.
+				/**
+				 * TODO: Allow setting fields to null again?
 				 */
-				// System.err.println(e.getMessage());
+				if (modAtFieldClass.instance == null) {
+					continue;
+				}
+
+				if (!explorationCondition.matchesExplorationContitions(parentTemplate, slotName,
+						modAtFieldClass.instance))
+					continue;
+
+				IOBIEThing genClass = OBIEUtils.deepClone(parentTemplate);
+
+				try {
+
+					Field genClassField = ReflectionUtils.getAccessibleFieldByName(genClass.getClass(), slotName);
+					genClassField.set(genClass, modAtFieldClass.instance);
+
+					OBIEState generatedState = new OBIEState(this.currentState);
+					generatedState.addUsedPreFilledTemplate(modAtFieldClass.instance);
+
+					TemplateAnnotation entity = generatedState.getCurrentPrediction()
+							.getEntity(this.currentInstanceAnnotationID);
+
+					generatedState.removeRecUsedPreFilledTemplate(slotValue);
+
+					entity.setTemplateAnnotation(genClass);
+
+					generatedStates.add(new StateInstancePair(generatedState, genClass));
+
+				} catch (IllegalArgumentException e) {
+					/*
+					 * Skip.
+					 */
+					// System.err.println(e.getMessage());
+				}
 			}
+		} catch (IllegalArgumentException | IllegalAccessException e1) {
+			e1.printStackTrace();
 		}
 	}
 
