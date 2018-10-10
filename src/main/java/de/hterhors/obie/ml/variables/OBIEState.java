@@ -21,7 +21,7 @@ import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.EInstantiationType;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
-import de.hterhors.obie.ml.run.utils.TemplateInstantiationUtils;
+import de.hterhors.obie.ml.run.utils.SlotTemplateInstantiationUtils;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
 import de.hterhors.obie.ml.scorer.InstanceCollection.FeatureDataPoint;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
@@ -234,16 +234,16 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			if (ReflectionUtils.isAnnotationPresent(searchType, DatatypeProperty.class) )
 				break;
 
-			set.add(TemplateInstantiationUtils.getEmptyInstance(searchType));
+			set.add(SlotTemplateInstantiationUtils.getEmptyInstance(searchType));
 			break;
 		case RANDOM:
-			set.add(TemplateInstantiationUtils.getFullRandomInstance(instance, searchType));
+			set.add(SlotTemplateInstantiationUtils.getFullRandomInstance(instance, searchType));
 			break;
 		case WRONG:
-			set.add(TemplateInstantiationUtils.getFullWrong(searchType));
+			set.add(SlotTemplateInstantiationUtils.getFullWrong(searchType));
 			break;
 		case FULL_CORRECT:
-			set.addAll(TemplateInstantiationUtils.getFullCorrect(instance.getGoldAnnotation()));
+			set.addAll(SlotTemplateInstantiationUtils.getFullCorrect(instance.getGoldAnnotation()));
 			break;
 
 		default:
