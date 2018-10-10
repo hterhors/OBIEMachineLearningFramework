@@ -324,8 +324,7 @@ public class InvestigationRestriction implements Serializable {
 	 */
 	private static List<RestrictedField> getMainSingleFieldsRec(Class<? extends IOBIEThing> m) {
 
-		List<RestrictedField> fields = Arrays.stream(m.getDeclaredFields())
-				.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class))
+		List<RestrictedField> fields = ReflectionUtils.getAccessibleOntologyFields(m).stream()
 				.map(f -> new RestrictedField(f.getName(), true)).collect(Collectors.toList());
 
 		return fields;
@@ -344,26 +343,25 @@ public class InvestigationRestriction implements Serializable {
 	private static Set<RestrictedField> getAllSingleFieldsRec(Set<RestrictedField> fieldNames,
 			Class<? extends IOBIEThing> m) {
 
-		Arrays.stream(m.getDeclaredFields()).filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class))
-				.forEach(field -> {
-					field.setAccessible(true);
-					fieldNames.add(new RestrictedField(field.getName(), false));
+		ReflectionUtils.getAccessibleOntologyFields(m).forEach(field -> {
+			field.setAccessible(true);
+			fieldNames.add(new RestrictedField(field.getName(), false));
 
-					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-							Class<? extends IOBIEThing> ct = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
-									.getGenericType()).getActualTypeArguments()[0]);
-							if (ct.isAnnotationPresent(ImplementationClass.class))
-								getAllSingleFieldsRec(fieldNames, ReflectionUtils.getImplementationClass(ct));
-						} else {
-							if (field.getType().isAnnotationPresent(ImplementationClass.class))
-								getAllSingleFieldsRec(fieldNames, (Class<? extends IOBIEThing>) ReflectionUtils
-										.getImplementationClass((Class<? extends IOBIEThing>) field.getType()));
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				});
+			try {
+				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+					Class<? extends IOBIEThing> ct = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
+							.getGenericType()).getActualTypeArguments()[0]);
+					if (ct.isAnnotationPresent(ImplementationClass.class))
+						getAllSingleFieldsRec(fieldNames, ReflectionUtils.getImplementationClass(ct));
+				} else {
+					if (field.getType().isAnnotationPresent(ImplementationClass.class))
+						getAllSingleFieldsRec(fieldNames, (Class<? extends IOBIEThing>) ReflectionUtils
+								.getImplementationClass((Class<? extends IOBIEThing>) field.getType()));
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
 
 		for (Class<? extends IOBIEThing> assignableSubClass : ReflectionUtils.getAssignableSubClasses(m)) {
 			getAllSingleFieldsRec(fieldNames, assignableSubClass);
