@@ -58,7 +58,7 @@ public class ExplorationUtils {
 	 * classes. (except of DataTypeProperty and NamedIndividual, those are always no
 	 * aux. types).
 	 * 
-	 * @param field representing the property
+	 * @param slot representing the property
 	 * @return true if the class is just a auxiliary construct class, else false.
 	 */
 	@SuppressWarnings("unchecked")

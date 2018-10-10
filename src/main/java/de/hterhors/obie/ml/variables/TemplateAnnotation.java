@@ -21,7 +21,7 @@ public class TemplateAnnotation implements Serializable {
 
 	public TemplateAnnotation(TemplateAnnotation e) {
 		this.rootClassType = e.rootClassType;
-		this.templateAnnotation = OBIEUtils.deepConstructorClone(e.templateAnnotation);
+		this.templateAnnotation = OBIEUtils.deepClone(e.templateAnnotation);
 		this.annotationID = e.annotationID;
 		this.initClass = e.initClass;
 	}
@@ -69,7 +69,7 @@ public class TemplateAnnotation implements Serializable {
 	private final IOBIEThing initClass;
 
 	public TemplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass) {
-		this.initClass = OBIEUtils.deepConstructorClone(obieClass);
+		this.initClass = OBIEUtils.deepClone(obieClass);
 		this.rootClassType = rootClassType;
 		this.annotationID = UUID.randomUUID().toString();
 		this.templateAnnotation = obieClass;
