@@ -265,8 +265,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
 
-				if (!testLimitToAnnnotationElementsRecursively(annotation.get(),
-						parameter.maxNumberOfEntityElements, parameter.maxNumberOfDataTypeElements)) {
+				if (!testLimitToAnnnotationElementsRecursively(annotation.get(), parameter.maxNumberOfEntityElements,
+						parameter.maxNumberOfDataTypeElements)) {
 					log.debug("Number of elements in annotation exceeds limit of: "
 							+ parameter.maxNumberOfEntityElements + " for object property OR "
 							+ parameter.maxNumberOfDataTypeElements + " for datatype property" + "!Remove annotation "
@@ -372,7 +372,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		Instance instance = rawCorpus.getInstances().get(docName);
 
 		final InstanceTemplateAnnotations internalAnnotation = new InstanceTemplateAnnotations();
-	
+
 		for (Entry<Class<? extends IOBIEThing>, List<IOBIEThing>> annotations : instance.annotations.entrySet()) {
 
 			for (IOBIEThing a : annotations.getValue()) {
@@ -383,7 +383,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			}
 		}
-		
+
 		return new OBIEInstance(instance.name, instance.content, internalAnnotation, instance.annotations.keySet());
 
 	}
@@ -504,7 +504,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker selector) {
+	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker ranker) {
 
 		if (!(distributer instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException("Configuration does not support active learning validation: "
@@ -526,8 +526,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			return Collections.emptyList();
 		} else {
 
-			log.info("Rank remaining training data...");
-			List<OBIEInstance> remainingInstances = selector.rank((ActiveLearningDistributor) distributer, runner,
+			log.info("Rank remaining training instances (" + getDevelopCorpus().getInternalInstances().size()
+					+ ") using " + ranker.getClass().getSimpleName() + "...");
+			List<OBIEInstance> remainingInstances = ranker.rank((ActiveLearningDistributor) distributer, runner,
 					getDevelopCorpus().getInternalInstances());
 			log.info("done!");
 
