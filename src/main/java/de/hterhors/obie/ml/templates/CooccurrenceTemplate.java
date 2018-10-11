@@ -129,9 +129,9 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		internalInstance = state.getInstance();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 			entityRootClassType = entity.rootClassType;
-			addFactorRecursive(factors, entity.getTemplateAnnotation());
+			addFactorRecursive(factors, entity.get());
 		}
 
 		return factors;

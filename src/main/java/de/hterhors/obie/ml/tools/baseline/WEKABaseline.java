@@ -31,7 +31,7 @@ import de.hterhors.obie.ml.scorer.IExternalScorer;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
 import de.hterhors.obie.ml.scorer.InstanceCollection.FeatureDataPoint;
 import de.hterhors.obie.ml.scorer.LibSVMRegressionScorer;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import factors.Factor;
@@ -478,7 +478,7 @@ public class WEKABaseline {
 			OBIEState previousState = new OBIEState(trainInstance, parameter);
 
 			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			List<OBIEState> previousStates = new ArrayList<>();
 
@@ -542,8 +542,8 @@ public class WEKABaseline {
 
 		selectedStates.forEach(newState -> {
 
-			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
+			List<IOBIEThing> prediction = newState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
 					newState.toTrainingPoint(trainingData, true).setScore(objectiveFunction.f1(gold, prediction)));
@@ -583,8 +583,8 @@ public class WEKABaseline {
 
 		previousStates.forEach(newState -> {
 
-			List<IOBIEThing> prediction = newState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
+			List<IOBIEThing> prediction = newState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
 					newState.toTrainingPoint(trainingData, true).setScore(objectiveFunction.f1(gold, prediction)));
@@ -630,8 +630,8 @@ public class WEKABaseline {
 		 * Score all states so we can sort them.
 		 */
 		for (OBIEState genState : generatedStates) {
-			final List<IOBIEThing> prediction = genState.getCurrentPrediction().getTemplateAnnotations().stream()
-					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
+			final List<IOBIEThing> prediction = genState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+					.map(e -> e.get()).collect(Collectors.toList());
 			genState.setObjectiveScore(objectiveFunction.f1(gold, prediction));
 		}
 		/*
@@ -727,7 +727,7 @@ public class WEKABaseline {
 
 		final double initialScore = -1D;
 
-		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = new ArrayList<>();
+		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = new ArrayList<>();
 
 		for (OBIEInstance instance : instances) {
 			OBIEState previousState = new OBIEState(instance, parameter);
@@ -736,7 +736,7 @@ public class WEKABaseline {
 			 * Get best state according to the model.
 			 */
 			OBIEState bestState = explorePredicting(model, previousState, initialScore);
-			predictions.add(new SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>(instance,
+			predictions.add(new SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>(instance,
 					instance.getGoldAnnotation(), bestState));
 			// System.out.println("######################################");
 		}

@@ -20,7 +20,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -79,10 +79,10 @@ public class SlotTemplateInstantiationUtils {
 	 * @param instanceAnnotations
 	 * @return
 	 */
-	public static Set<IOBIEThing> getFullCorrect(InstanceEntityAnnotations instanceAnnotations) {
+	public static Set<IOBIEThing> getFullCorrect(InstanceTemplateAnnotations instanceAnnotations) {
 		Set<IOBIEThing> set = new HashSet<>();
 		for (TemplateAnnotation goldAnnotation : instanceAnnotations.getTemplateAnnotations()) {
-			set.add(OBIEUtils.deepClone(goldAnnotation.getTemplateAnnotation()));
+			set.add(OBIEUtils.deepClone(goldAnnotation.get()));
 
 		}
 		return set;

@@ -126,9 +126,9 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null,
-					entity.getTemplateAnnotation());
+					entity.get());
 		}
 
 		return factors;

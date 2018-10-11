@@ -8,7 +8,7 @@ import java.util.List;
 import corpus.SampledInstance;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.run.AbstractOBIERunner;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 
@@ -20,20 +20,20 @@ public class FullDocumentModelScoreRanker implements IActiveLearningDocumentRank
 
 		List<OBIEInstance> rankedInstances = new ArrayList<>();
 
-		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> predictions = runner
+		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = runner
 				.test(remainingInstances);
 
 		Collections.sort(predictions,
-				new Comparator<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>>() {
+				new Comparator<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>>() {
 
 					@Override
-					public int compare(SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState> o1,
-							SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState> o2) {
+					public int compare(SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> o1,
+							SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> o2) {
 						return Double.compare(o1.getState().getModelScore(), o2.getState().getModelScore());
 					}
 				});
 
-		for (SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState> sampledInstance : predictions) {
+		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> sampledInstance : predictions) {
 			rankedInstances.add(sampledInstance.getInstance());
 		}
 

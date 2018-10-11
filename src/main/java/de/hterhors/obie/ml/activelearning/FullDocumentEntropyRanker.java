@@ -13,7 +13,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import corpus.SampledInstance;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.run.AbstractOBIERunner;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.Trainer;
@@ -35,13 +35,13 @@ public class FullDocumentEntropyRanker implements IActiveLearningDocumentRanker 
 		Configurator.setLevel(Trainer.class.getName(), Level.FATAL);
 		Configurator.setLevel(AbstractOBIERunner.class.getName(), Level.FATAL);
 
-		List<SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState>> results = runner
+		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> results = runner
 				.test(remainingInstances);
 
 		Configurator.setLevel(Trainer.class.getName(), trainerLevel);
 		Configurator.setLevel(AbstractOBIERunner.class.getName(), runnerLevel);
 
-		for (SampledInstance<OBIEInstance, InstanceEntityAnnotations, OBIEState> predictedInstance : results) {
+		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> predictedInstance : results) {
 			OBIEState initialState = new OBIEState(predictedInstance.getState());
 
 			List<OBIEState> nextStates = new ArrayList<>();

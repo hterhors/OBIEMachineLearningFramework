@@ -14,8 +14,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import javax.swing.plaf.synth.SynthSpinnerUI;
+
 import com.google.j2objc.annotations.ReflectionSupport;
 
+import de.hterhors.obie.core.evaluation.PRF1Container;
 import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyFieldNames;
@@ -62,7 +65,7 @@ public class ExplorationUtils {
 	 * @return true if the class is just a auxiliary construct class, else false.
 	 */
 	@SuppressWarnings("unchecked")
-	public static boolean isAuxiliaryProperty(Class<? extends IOBIEThing> propertyInterface) {
+	public static boolean isAuxiliary(Class<? extends IOBIEThing> propertyInterface) {
 
 		/**
 		 * TODO: Check this in PSINK project!
@@ -139,6 +142,7 @@ public class ExplorationUtils {
 
 		List<Field> copyToFields = ReflectionUtils.getAccessibleOntologyFields(copyToClass.getClass()).stream()
 				.filter(f -> !Modifier.isStatic(f.getModifiers())).collect(Collectors.toList());
+
 		for (Field toField : copyToFields) {
 			try {
 
@@ -169,7 +173,7 @@ public class ExplorationUtils {
 	 * least one evidence in the text or is in the exploreWithoutEvidence list.
 	 * 
 	 * @param instance
-	 * @param slotSuperType_interface              the class-type interface of the
+	 * @param slotType                             the class-type interface of the
 	 *                                             slot
 	 * @param exploreClassesWithoutTextualEvidence a set of classes that should be
 	 *                                             explored without textual evidence
@@ -178,27 +182,25 @@ public class ExplorationUtils {
 	 *                                             level and not on mention level
 	 * @return
 	 */
-	public static Set<IOBIEThing> getCandidates(OBIEInstance instance,
-			Class<? extends IOBIEThing> slotSuperType_interface,
+	public static Set<IOBIEThing> getCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotType,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence, boolean typeCandidates,
 			boolean restrictExplorationOnConceptsInInstance) {
 
 		final Set<IOBIEThing> candidates = new HashSet<>();
 
-		if (!slotSuperType_interface.isAnnotationPresent(ImplementationClass.class)) {
+		if (!slotType.isAnnotationPresent(ImplementationClass.class)) {
 			return candidates;
 		}
 
 		/*
 		 * If class is of datatype than we do not have any individuals.
 		 */
-		if (!ReflectionUtils.isAnnotationPresent(slotSuperType_interface, DatatypeProperty.class)) {
+		if (!ReflectionUtils.isAnnotationPresent(slotType, DatatypeProperty.class)) {
 
 			/*
 			 * Add candidates for individuals of root class type
 			 */
-			final Collection<AbstractOBIEIndividual> rootTypeIndividuals = getPossibleIndividuals(
-					slotSuperType_interface);
+			final Collection<AbstractOBIEIndividual> rootTypeIndividuals = getPossibleIndividuals(slotType);
 
 			/*
 			 * Get all possible individual candidates.
@@ -206,19 +208,17 @@ public class ExplorationUtils {
 			for (AbstractOBIEIndividual individual : rootTypeIndividuals) {
 
 				if (typeCandidates) {
-					addSlotTypeIndividualCandidates(instance,
-							ReflectionUtils.getImplementationClass(slotSuperType_interface), candidates, individual,
-							exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
+					addSlotTypeIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotType),
+							candidates, individual, exploreClassesWithoutTextualEvidence,
+							restrictExplorationOnConceptsInInstance);
 				} else {
-					addFillerIndividualCandidates(instance,
-							ReflectionUtils.getImplementationClass(slotSuperType_interface), candidates, individual,
-							exploreClassesWithoutTextualEvidence);
+					addFillerIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotType),
+							candidates, individual, exploreClassesWithoutTextualEvidence);
 				}
 
 			}
 
-			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
-					.getAssignableSubInterfaces(slotSuperType_interface)) {
+			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils.getAssignableSubInterfaces(slotType)) {
 
 				final Collection<AbstractOBIEIndividual> subTypeIndividuals = getPossibleIndividuals(slotFillerType);
 
@@ -246,12 +246,10 @@ public class ExplorationUtils {
 		 * Add candidate for root super class
 		 */
 		if (typeCandidates) {
-			addClassCandidatesForSlotType(instance, slotSuperType_interface, candidates,
-					ReflectionUtils.getImplementationClass(slotSuperType_interface),
+			addOntologyTypeCandidates(instance, slotType, candidates, ReflectionUtils.getImplementationClass(slotType),
 					exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
 		} else {
-			addClassCandidatesForAnnotations(instance, slotSuperType_interface, candidates,
-					ReflectionUtils.getImplementationClass(slotSuperType_interface),
+			addTextualClassCandidates(instance, slotType, candidates, ReflectionUtils.getImplementationClass(slotType),
 					exploreClassesWithoutTextualEvidence);
 		}
 
@@ -274,6 +272,7 @@ public class ExplorationUtils {
 //							exploreClassesWithoutTextualEvidence);
 //				}
 //			}
+//		
 //		}
 		return candidates;
 	}
@@ -303,7 +302,7 @@ public class ExplorationUtils {
 		return null;
 	}
 
-	private static void addClassCandidatesForSlotType(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
+	private static void addOntologyTypeCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
 			Set<IOBIEThing> candidates, Class<? extends IOBIEThing> slotFillerType,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence,
 			boolean restrictExplorationOnConceptsInInstance) {
@@ -333,7 +332,7 @@ public class ExplorationUtils {
 		 */
 		if (exploreClassesWithoutTextualEvidence.contains(slotFillerType)
 				|| isDifferentiableToAllSiblingClasses(slotFillerType, slotSuperType)
-				|| isAuxiliaryProperty(slotSuperType)) {
+				|| isAuxiliary(slotSuperType)) {
 			/**
 			 * TESTME: Is it sufficient to create just a single state with this class.
 			 * Otherwise create a state for each mention in the text. (This should be only
@@ -344,25 +343,25 @@ public class ExplorationUtils {
 			candidates.add(newInstance);
 		} else {
 
-			/**
-			 * If not we need explicit text mentions to create this class.
-			 */
-			/*
-			 * 
-			 * Early pruning! Do not generate state where absolutely no evidence is in the
-			 * text. for either classes or individuals
-			 *
-			 */
-			if (restrictExplorationOnConceptsInInstance && (slotFillerType != null
-					&& !instance.getNamedEntityLinkingAnnotations().containsClassAnnotations(slotFillerType))) {
-				return;
-			}
-
-			/*
-			 * If the type is data type property then create an annotation instance for each
-			 * mention in the text.
-			 */
 			if (ReflectionUtils.isAnnotationPresent(slotFillerType, DatatypeProperty.class)) {
+				/**
+				 * If not we need explicit text mentions to create this class.
+				 */
+				/*
+				 * 
+				 * Early pruning! Do not generate state where absolutely no evidence is in the
+				 * text. for either classes or individuals
+				 *
+				 */
+				if (restrictExplorationOnConceptsInInstance && (slotFillerType != null
+						&& !instance.getNamedEntityLinkingAnnotations().containsClassAnnotations(slotFillerType))) {
+					return;
+				}
+
+				/*
+				 * If the type is data type property then create an annotation instance for each
+				 * mention in the text.
+				 */
 				/**
 				 * 
 				 */
@@ -390,7 +389,7 @@ public class ExplorationUtils {
 		}
 	}
 
-	private static void addClassCandidatesForAnnotations(OBIEInstance psinkDocument,
+	private static void addTextualClassCandidates(OBIEInstance psinkDocument,
 			Class<? extends IOBIEThing> baseClassType_interface, Set<IOBIEThing> candidates,
 			Class<? extends IOBIEThing> candidateType_class,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
@@ -417,44 +416,45 @@ public class ExplorationUtils {
 		 */
 		if (exploreClassesWithoutTextualEvidence.contains(candidateType_class)
 				|| (isDifferentiableToAllSiblingClasses(candidateType_class, baseClassType_interface)
-						|| isAuxiliaryProperty(baseClassType_interface))) {
+						|| isAuxiliary(baseClassType_interface))) {
 			/**
 			 * TESTME: Is it sufficient to create just a single state with this class.
 			 * Otherwise create a state for each mention in the text. (This should be only
 			 * necessary if the position or surface form of this "auxiliary" class is
 			 * important.
 			 */
-
 			IOBIEThing newInstance = newClassInstance(candidateType_class, UUID.randomUUID().toString());
 			candidates.add(newInstance);
 		} else {
+			if (ReflectionUtils.isAnnotationPresent(candidateType_class, DatatypeProperty.class)) {
 
-			/**
-			 * TODO: should this be executed always or just in else? Create annotation for
-			 * classes that do not need evidences?
-			 */
-			/**
-			 * If not we need explicit text mentions to create this class.
-			 */
-			Set<NERLClassAnnotation> possibleNERAnnotations = psinkDocument.getNamedEntityLinkingAnnotations()
-					.getClassAnnotations(candidateType_class);
-			/*
-			 * 
-			 * Early pruning! Do not generate state where absolutely no evidence is in the
-			 * text.
-			 *
-			 */
-			if (possibleNERAnnotations == null) {
-				return;
-			}
+				/**
+				 * If not we need explicit text mentions to create this class.
+				 */
+				Set<NERLClassAnnotation> possibleNERAnnotations = psinkDocument.getNamedEntityLinkingAnnotations()
+						.getClassAnnotations(candidateType_class);
+				/*
+				 * 
+				 * Early pruning! Do not generate state where absolutely no evidence is in the
+				 * text.
+				 *
+				 */
+				if (possibleNERAnnotations == null) {
+					return;
+				}
 
-			for (NERLClassAnnotation nera : possibleNERAnnotations) {
+				for (NERLClassAnnotation nera : possibleNERAnnotations) {
 
-				IOBIEThing newInstance = newClassInstance(candidateType_class, nera.annotationID);
+					IOBIEThing newInstance = newClassInstance(candidateType_class, nera.annotationID);
 
-				fillBasicFields(newInstance, nera);
-				fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
-				candidates.add(newInstance);
+					fillBasicFields(newInstance, nera);
+					fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
+					candidates.add(newInstance);
+				}
+			} else {
+				/*
+				 * Do not sample over classes without individuals.
+				 */
 			}
 		}
 	}
@@ -492,6 +492,7 @@ public class ExplorationUtils {
 
 		IOBIEThing newInstance = newClassForIndividual(slotSuperType, individualCandidate,
 				UUID.randomUUID().toString());
+
 		candidates.add(newInstance);
 
 	}
@@ -499,6 +500,9 @@ public class ExplorationUtils {
 	private static void addFillerIndividualCandidates(OBIEInstance instance,
 			Class<? extends IOBIEThing> baseClassType_class, Set<IOBIEThing> candidates,
 			AbstractOBIEIndividual individual, Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+
+		if (individual == null)
+			return;
 
 		boolean keepIndividual = includeIndividualForSampling(individual);
 
@@ -557,7 +561,7 @@ public class ExplorationUtils {
 				/*
 				 * NOTE: Pre fill auxiliary fields as default.
 				 */
-				if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
+				if (isAuxiliary((Class<? extends IOBIEThing>) field.getType())) {
 					field.set(newInstance, ReflectionUtils
 							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
 				}
@@ -599,7 +603,7 @@ public class ExplorationUtils {
 				 * TODO: Remove that !? This could be in a second iteration? Features? NOTE: Pre
 				 * fill auxiliary fields as default.
 				 */
-				if (isAuxiliaryProperty((Class<? extends IOBIEThing>) field.getType())) {
+				if (isAuxiliary((Class<? extends IOBIEThing>) field.getType())) {
 					field.set(newInstance, ReflectionUtils
 							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
 				}
@@ -612,8 +616,8 @@ public class ExplorationUtils {
 			return newInstance;
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
-			return null;
 		}
+		return null;
 
 	}
 
@@ -667,7 +671,7 @@ public class ExplorationUtils {
 		if (ReflectionUtils.isAnnotationPresent(classType, DatatypeProperty.class))
 			return false;
 
-		if (isAuxiliaryProperty(baseClassType_interface))
+		if (isAuxiliary(baseClassType_interface))
 			return false;
 
 		if (ReflectionUtils.getDirectSiblings(classType).isEmpty()) {

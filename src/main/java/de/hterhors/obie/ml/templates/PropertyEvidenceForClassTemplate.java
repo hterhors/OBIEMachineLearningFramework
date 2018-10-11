@@ -65,8 +65,8 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			addFactors(factors, entity.rootClassType, state.getInstance(), entity.getTemplateAnnotation());
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+			addFactors(factors, entity.rootClassType, state.getInstance(), entity.get());
 		}
 		return factors;
 	}

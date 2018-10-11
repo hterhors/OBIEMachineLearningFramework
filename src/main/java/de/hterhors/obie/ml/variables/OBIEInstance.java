@@ -27,7 +27,7 @@ import de.hterhors.obie.core.tokenizer.Token;
  *
  *         Mar 23, 2017
  */
-public final class OBIEInstance implements LabeledInstance<OBIEInstance, InstanceEntityAnnotations>, Serializable {
+public final class OBIEInstance implements LabeledInstance<OBIEInstance, InstanceTemplateAnnotations>, Serializable {
 
 	/**
 	 * 
@@ -45,7 +45,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	 * This object holds the (human) labeled, correct result, that should be used
 	 * during training and evaluation.
 	 */
-	final private InstanceEntityAnnotations goldAnnotation;
+	final private InstanceTemplateAnnotations goldAnnotation;
 
 	final private String content;
 
@@ -66,7 +66,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	public final Set<Class<? extends IOBIEThing>> rootClassTypes;
 
 	public OBIEInstance(final String documentName, final String documentContent,
-			final InstanceEntityAnnotations goldAnnotations, Set<Class<? extends IOBIEThing>> rootClassTypes) {
+			final InstanceTemplateAnnotations goldAnnotations, Set<Class<? extends IOBIEThing>> rootClassTypes) {
 		this.goldAnnotation = goldAnnotations;
 
 		this.name = documentName;
@@ -161,7 +161,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 
 	}
 
-	public InstanceEntityAnnotations getGoldAnnotation() {
+	public InstanceTemplateAnnotations getGoldAnnotation() {
 		return goldAnnotation;
 	}
 

@@ -58,10 +58,10 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 			try {
 				factors.addAll(
-						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getTemplateAnnotation()));
+						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}

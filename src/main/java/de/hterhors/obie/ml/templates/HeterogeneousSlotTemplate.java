@@ -75,7 +75,7 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 
 		Map<Class<? extends IOBIEThing>, List<TemplateAnnotation>> groupedBy = new HashMap<>();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 			groupedBy.putIfAbsent(entity.rootClassType, new ArrayList<>());
 			groupedBy.get(entity.rootClassType).add(entity);
 
@@ -95,11 +95,11 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 		Map<Class<? extends IOBIEThing>, Map<String, Integer>> countBy = new HashMap<>();
 
 		for (TemplateAnnotation ann : list) {
-			countBy.putIfAbsent(ann.getTemplateAnnotation().getClass(), new HashMap<>());
-			if (ReflectionUtils.isAnnotationPresent(ann.getTemplateAnnotation().getClass(), DatatypeProperty.class)) {
-				final String text = ((IDatatype) ann.getTemplateAnnotation()).getSemanticValue();
-				countBy.get(ann.getTemplateAnnotation().getClass()).put(text,
-						countBy.get(ann.getTemplateAnnotation().getClass()).getOrDefault(text, 0) + 1);
+			countBy.putIfAbsent(ann.get().getClass(), new HashMap<>());
+			if (ReflectionUtils.isAnnotationPresent(ann.get().getClass(), DatatypeProperty.class)) {
+				final String text = ((IDatatype) ann.get()).getSemanticValue();
+				countBy.get(ann.get().getClass()).put(text,
+						countBy.get(ann.get().getClass()).getOrDefault(text, 0) + 1);
 			}
 
 		}

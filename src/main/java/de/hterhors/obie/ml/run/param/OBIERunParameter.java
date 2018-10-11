@@ -295,7 +295,7 @@ public class OBIERunParameter implements Serializable {
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
 			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, final String runID,
-			boolean multiThreading, AbstractProjectEnvironment environment,
+			boolean multiThreading, AbstractProjectEnvironment projectEnvironment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
 			svm_parameter svmParam, InvestigationRestriction investigationRestriction,
@@ -315,7 +315,7 @@ public class OBIERunParameter implements Serializable {
 		requireGreaterThanZero(epochs);
 		Objects.requireNonNull(rootDirectory);
 		requireElements(rootSearchTypes);
-		Objects.requireNonNull(environment);
+		Objects.requireNonNull(projectEnvironment);
 		Objects.requireNonNull(corpusConfiguration);
 		Objects.requireNonNull(ontologyEnvironment);
 
@@ -374,10 +374,10 @@ public class OBIERunParameter implements Serializable {
 		this.ignoreEmptyInstancesonEvaluation = ignoreEmptyInstancesonEvaluation;
 		this.runID = runID;
 		this.multiThreading = multiThreading;
-		this.projectEnvironment = environment;
+		this.projectEnvironment = projectEnvironment;
 		this.ontologyEnvironment = ontologyEnvironment;
 
-		this.exploreClassesWithoutTextualEvidence = autoExpand(environment,
+		this.exploreClassesWithoutTextualEvidence = autoExpand(projectEnvironment.getOntologyThingInterface(),
 				manualExpand(manualExploreClassesWithoutEvidence));
 
 		this.explorationCondition = explorationCondition;
@@ -442,13 +442,18 @@ public class OBIERunParameter implements Serializable {
 
 	}
 
-	private Set<Class<? extends IOBIEThing>> autoExpand(AbstractProjectEnvironment scioEnvironment,
+	/**
+	 * 
+	 * @param projectEnvironment
+	 * @param set
+	 * @return
+	 */
+	private Set<Class<? extends IOBIEThing>> autoExpand(Class<? extends IOBIEThing> ontologyRootThing,
 			Set<Class<? extends IOBIEThing>> set) {
 
-		for (Class<? extends IOBIEThing> c : ReflectionUtils
-				.getAssignableSubInterfaces(scioEnvironment.getOntologyThingInterface())) {
-			if (ExplorationUtils.isAuxiliaryProperty(c)) {
-				if (c.isAnnotationPresent(ImplementationClass.class)) {
+		for (Class<? extends IOBIEThing> c : ReflectionUtils.getAssignableSubInterfaces(ontologyRootThing)) {
+			if (ExplorationUtils.isAuxiliary(c)) {
+				if (ReflectionUtils.isAnnotationPresent(c, ImplementationClass.class)) {
 					set.add(ReflectionUtils.getImplementationClass(c));
 				} else {
 					log.warn("Can not find implementation class for: " + c.getSimpleName());
@@ -857,8 +862,7 @@ public class OBIERunParameter implements Serializable {
 			return numberOfInitializedObjects;
 		}
 
-		public Builder setNumberOfInitializedObjects(
-				IInitializeNumberOfObjects numberOfInitializedObjects) {
+		public Builder setNumberOfInitializedObjects(IInitializeNumberOfObjects numberOfInitializedObjects) {
 			this.numberOfInitializedObjects = numberOfInitializedObjects;
 			return this;
 		}

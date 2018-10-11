@@ -42,14 +42,13 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat("0.00000000");
 
-	private final InstanceEntityAnnotations prediction;
-
-	private Map<Class<? extends IOBIEThing>, Double> influence;
+	private final InstanceTemplateAnnotations currentTemplateAnnotations;
 
 	private final Map<Class<? extends IOBIEThing>, Set<IOBIEThing>> preFilledObjectMap;
+
 	private final OBIERunParameter parameter;
 
-	public final Set<IOBIEThing> preFilledUsedObjects;
+	private final Set<IOBIEThing> preFilledUsedObjects;
 
 	private final InvestigationRestriction investigationRestriction;
 
@@ -119,7 +118,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	 */
 	public OBIEState(OBIEState state) {
 		super(state);
-		this.prediction = new InstanceEntityAnnotations(state.prediction);
+		this.currentTemplateAnnotations = new InstanceTemplateAnnotations(state.currentTemplateAnnotations);
 		this.preFilledObjectMap = state.preFilledObjectMap;
 		this.parameter = state.parameter;
 		this.preFilledUsedObjects = new HashSet<>(state.preFilledUsedObjects);
@@ -137,7 +136,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 		this.parameter = parameter;
 		this.preFilledUsedObjects = new HashSet<>();
-		this.prediction = new InstanceEntityAnnotations();
+		this.currentTemplateAnnotations = new InstanceTemplateAnnotations();
 		this.preFilledObjectMap = new HashMap<>();
 		this.investigationRestriction = parameter.investigationRestriction;
 
@@ -146,7 +145,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			for (Entry<Class<? extends IOBIEThing>, List<IOBIEThing>> inits : parameter.initializationObjects
 					.entrySet()) {
 				for (IOBIEThing iobieThing : inits.getValue()) {
-					this.prediction.addAnnotation(new TemplateAnnotation(inits.getKey(), iobieThing));
+					this.currentTemplateAnnotations.addAnnotation(new TemplateAnnotation(inits.getKey(), iobieThing));
 				}
 			}
 
@@ -163,7 +162,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			for (int i = 0; i < numOfEntities; i++) {
 				for (Class<? extends IOBIEThing> searchType : parameter.rootSearchTypes) {
 					for (IOBIEThing initInstance : getInitializingObject(instance, searchType, parameter.initializer)) {
-						this.prediction.addAnnotation(new TemplateAnnotation(searchType, initInstance));
+						this.currentTemplateAnnotations.addAnnotation(new TemplateAnnotation(searchType, initInstance));
 					}
 				}
 			}
@@ -231,7 +230,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		 */
 		switch (initializer) {
 		case EMPTY:
-			if (ReflectionUtils.isAnnotationPresent(searchType, DatatypeProperty.class) )
+			if (ReflectionUtils.isAnnotationPresent(searchType, DatatypeProperty.class))
 				break;
 
 			set.add(SlotTemplateInstantiationUtils.getEmptyInstance(searchType));
@@ -253,67 +252,8 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 	}
 
-	public InstanceEntityAnnotations getCurrentPrediction() {
-		return prediction;
-	}
-
-	public boolean tokenHasAnnotation(Token token) {
-
-		boolean containsAnnotation = false;
-		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
-
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.getTemplateAnnotation(),
-					(int) token.getFromCharPosition(), (int) token.getToCharPosition());
-
-			if (containsAnnotation)
-				return true;
-
-		}
-		return false;
-	}
-
-	private boolean checkForAnnotationRec(IOBIEThing scioClass, final int fromPosition, final int toPosition) {
-
-		if (scioClass == null)
-			return false;
-
-		if (scioClass.getCharacterOnset() == null)
-			return false;
-
-		if (scioClass.getCharacterOffset() == null)
-			return false;
-
-		if (fromPosition >= scioClass.getCharacterOnset() && toPosition <= scioClass.getCharacterOffset()) {
-			return true;
-		}
-
-		AtomicBoolean containsAnnotation = new AtomicBoolean(false);
-
-		ReflectionUtils.getAccessibleOntologyFields(scioClass.getClass()).forEach(field -> {
-			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(scioClass)) {
-						containsAnnotation.set(containsAnnotation.get()
-								|| checkForAnnotationRec(listObject, fromPosition, toPosition));
-						if (containsAnnotation.get())
-							return;
-					}
-				} else {
-					containsAnnotation.set(containsAnnotation.get()
-							|| checkForAnnotationRec((IOBIEThing) field.get(scioClass), fromPosition, toPosition));
-					if (containsAnnotation.get())
-						return;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-		return containsAnnotation.get();
-
-	}
-
-	public Map<Class<? extends IOBIEThing>, Double> getInfluence() {
-		return influence;
+	public InstanceTemplateAnnotations getCurrentTemplateAnnotations() {
+		return currentTemplateAnnotations;
 	}
 
 	public FeatureDataPoint toTrainingPoint(InstanceCollection data, boolean training) {
@@ -330,29 +270,14 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		} catch (MissingFactorException e) {
 			e.printStackTrace();
 		}
-		// System.out.println("######");
-		// features.entrySet().forEach(System.out::println);
-		// System.out.println("######");
-
 		return new FeatureDataPoint(data, features, getObjectiveScore(), training);
-	}
-
-	public void setInfluence(Map<Class<? extends IOBIEThing>, Double> influence) {
-
-		this.influence = influence;
-
-		// for (Class<? extends IPSINKThing> infKey : influence.keySet()) {
-		// this.influence.put(infKey, influence.getOrDefault(infKey, 0D) +
-		// influence.get(infKey));
-		// }
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((influence == null) ? 0 : influence.hashCode());
-		result = prime * result + ((prediction == null) ? 0 : prediction.hashCode());
+		result = prime * result + ((currentTemplateAnnotations == null) ? 0 : currentTemplateAnnotations.hashCode());
 		return result;
 	}
 
@@ -365,15 +290,10 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		if (getClass() != obj.getClass())
 			return false;
 		OBIEState other = (OBIEState) obj;
-		if (influence == null) {
-			if (other.influence != null)
+		if (currentTemplateAnnotations == null) {
+			if (other.currentTemplateAnnotations != null)
 				return false;
-		} else if (!influence.equals(other.influence))
-			return false;
-		if (prediction == null) {
-			if (other.prediction != null)
-				return false;
-		} else if (!prediction.equals(other.prediction))
+		} else if (!currentTemplateAnnotations.equals(other.currentTemplateAnnotations))
 			return false;
 		return true;
 	}
@@ -381,16 +301,16 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("#OfAnnotations:");
-		builder.append(prediction.getTemplateAnnotations().size());
+		builder.append(currentTemplateAnnotations.getTemplateAnnotations().size());
 		builder.append(" [");
 		builder.append(SCORE_FORMAT.format(modelScore));
 		builder.append("]: ");
 		builder.append(" [");
 		builder.append(SCORE_FORMAT.format(objectiveScore));
 		builder.append("]: ");
-		for (TemplateAnnotation e : prediction.getTemplateAnnotations()) {
+		for (TemplateAnnotation e : currentTemplateAnnotations.getTemplateAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getTemplateAnnotation(), parameter.investigationRestriction));
+			builder.append(OBIEClassFormatter.format(e.get(), parameter.investigationRestriction));
 			builder.append("\n");
 		}
 		return builder.toString();

@@ -1,5 +1,10 @@
 package de.hterhors.obie.ml.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 
 public class OBIEUtils {
@@ -24,4 +29,26 @@ public class OBIEUtils {
 
 	}
 
+	/**
+	 * Performs a deep clone on the given object using the serialization and
+	 * de-serialization. This method can be used to clone collections of classes
+	 * that implements Serialization.
+	 *
+	 * @deprecated Use {@link OBIEUtils#deepClone(IOBIEThing)} instead
+	 */
+	@Deprecated
+	public static IOBIEThing deepSerializeClone(IOBIEThing scioClass) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(baos);
+			oos.writeObject(scioClass);
+
+			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+			ObjectInputStream ois = new ObjectInputStream(bais);
+			return (IOBIEThing) ois.readObject();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 }

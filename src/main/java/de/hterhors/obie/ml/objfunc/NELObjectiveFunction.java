@@ -11,11 +11,11 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.ml.evaluation.evaluator.NamedEntityLinkingEvaluator;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.ObjectiveFunction;
 
-public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceEntityAnnotations>
+public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTemplateAnnotations>
 		implements Serializable {
 
 	/**
@@ -25,21 +25,21 @@ public class NELObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceE
 	private static Logger log = LogManager.getFormatterLogger(NELObjectiveFunction.class.getName());
 
 	@Override
-	public double computeScore(OBIEState state, InstanceEntityAnnotations goldResult) {
+	public double computeScore(OBIEState state, InstanceTemplateAnnotations goldResult) {
 
 		Set<String> gold = goldResult.getTemplateAnnotations().stream().map(s -> {
-			if (ReflectionUtils.isAnnotationPresent(s.getTemplateAnnotation().getClass(), DatatypeProperty.class) ) {
-				return ((IDatatype) s.getTemplateAnnotation()).getSemanticValue();
+			if (ReflectionUtils.isAnnotationPresent(s.get().getClass(), DatatypeProperty.class) ) {
+				return ((IDatatype) s.get()).getSemanticValue();
 			} else {
-				return s.getTemplateAnnotation().getTextMention();
+				return s.get().getTextMention();
 			}
 		}).collect(Collectors.toSet());
 
-		Set<String> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream().map(s -> {
-			if (ReflectionUtils.isAnnotationPresent(s.getTemplateAnnotation().getClass(), DatatypeProperty.class) ) {
-				return ((IDatatype) s.getTemplateAnnotation()).getSemanticValue();
+		Set<String> predictions = state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().map(s -> {
+			if (ReflectionUtils.isAnnotationPresent(s.get().getClass(), DatatypeProperty.class) ) {
+				return ((IDatatype) s.get()).getSemanticValue();
 			} else {
-				return s.getTemplateAnnotation().getTextMention();
+				return s.get().getTextMention();
 			}
 		}).collect(Collectors.toSet());
 

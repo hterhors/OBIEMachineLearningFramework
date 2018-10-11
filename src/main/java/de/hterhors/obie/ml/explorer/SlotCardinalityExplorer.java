@@ -118,7 +118,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 		List<OBIEState> proposalStates = new LinkedList<OBIEState>();
 
-		Collection<TemplateAnnotation> templateAnnotations = new OBIEState(currentState).getCurrentPrediction()
+		Collection<TemplateAnnotation> templateAnnotations = currentState.getCurrentTemplateAnnotations()
 				.getTemplateAnnotations();
 
 		for (TemplateAnnotation templateAnnotation : templateAnnotations) {
@@ -126,7 +126,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 			List<StateInstancePair> generatedStates = new ArrayList<>();
 
-			currentRootTemplate = OBIEUtils.deepClone(templateAnnotation.getTemplateAnnotation());
+			currentRootTemplate = OBIEUtils.deepClone(templateAnnotation.get());
 
 			topDownRecursiveListCardinalityChanger(generatedStates, currentRootTemplate, new ArrayList<SlotPath>());
 
@@ -248,9 +248,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 						continue;
 
 					OBIEState generatedState = new OBIEState(this.currentState);
-					TemplateAnnotation entity = generatedState.getCurrentPrediction()
-							.getEntity(this.currentAnnotationID);
-					entity.setTemplateAnnotation(clonedBaseClass);
+					generatedState.getCurrentTemplateAnnotations().getEntity(this.currentAnnotationID)
+							.update(clonedBaseClass);
 
 					generatedState.removeRecUsedPreFilledTemplate(currentSlotFillerList.get(i));
 					// System.out.println("Candidate: " +
@@ -380,9 +379,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					// generatedClasses.add(clonedBaseClass);
 
 					OBIEState generatedState = new OBIEState(this.currentState);
-					TemplateAnnotation entity = generatedState.getCurrentPrediction()
-							.getEntity(this.currentAnnotationID);
-					entity.setTemplateAnnotation(clonedBaseClass);
+					generatedState.getCurrentTemplateAnnotations().getEntity(this.currentAnnotationID)
+							.update(clonedBaseClass);
 
 					generatedState.addUsedPreFilledTemplate(candidateClass);
 

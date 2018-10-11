@@ -56,12 +56,12 @@ public class RandomBaseline {
 			System.out.println("_____________" + doc.getName() + "_______________");
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
+					.map(e -> e.get()).collect(Collectors.toList());
 			List<IOBIEThing> predictions = predictFillerByRandom(doc);
 
 			System.out.println("___________GOLD___________");
 			doc.getGoldAnnotation().getTemplateAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getTemplateAnnotation(), false)));
+					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.get(), false)));
 			System.out.println("___________RANDOM___________");
 			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 
@@ -178,7 +178,7 @@ public class RandomBaseline {
 						}
 
 					}
-				} else if (ExplorationUtils.isAuxiliaryProperty(slotType)) {
+				} else if (ExplorationUtils.isAuxiliary(slotType)) {
 
 					/*
 					 * If the mention annotation data contains evidence for that requested class.
@@ -278,7 +278,7 @@ public class RandomBaseline {
 								e.printStackTrace();
 							}
 						}
-					} else if (ExplorationUtils.isAuxiliaryProperty(slotType)) {
+					} else if (ExplorationUtils.isAuxiliary(slotType)) {
 						final Class<? extends IOBIEThing> slotClassType = ReflectionUtils
 								.getImplementationClass(slotType);
 						/*

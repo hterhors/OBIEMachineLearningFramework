@@ -6,7 +6,7 @@ import java.util.List;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.ObjectiveFunction;
@@ -21,13 +21,13 @@ public class StandardRERunner extends AbstractOBIERunner {
 	}
 
 	@Override
-	public ObjectiveFunction<OBIEState, InstanceEntityAnnotations> getObjectiveFunction() {
+	public ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> getObjectiveFunction() {
 		return new REObjectiveFunction(parameter);
 	}
 
 	@Override
 	protected List<EpochCallback> addEpochCallback(
-			DefaultSampler<OBIEInstance, OBIEState, InstanceEntityAnnotations> sampler) {
+			DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler) {
 		return Arrays.asList(
 				//
 				new EpochCallback() {
@@ -41,6 +41,8 @@ public class StandardRERunner extends AbstractOBIERunner {
 							saveModel(epoch);
 							trainWithObjective = false;
 						}
+						log.info("Call GC manually...");
+						System.gc();
 					}
 
 				},
@@ -49,7 +51,7 @@ public class StandardRERunner extends AbstractOBIERunner {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {
-							if (epoch == 1 || Math.random() >= 0.9) {
+							if (epoch != 2 && (epoch == 1 || Math.random() >= 0.9)) {
 								log.info("Use Objective Score for sampling...");
 								trainWithObjective = true;
 								sampler.setTrainSamplingStrategy(OBIERunParameter.trainSamplingStrategyObjectiveScore);

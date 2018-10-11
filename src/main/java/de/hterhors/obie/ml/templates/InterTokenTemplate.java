@@ -81,8 +81,8 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.getTemplateAnnotation());
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.get());
 		}
 
 		return factors;

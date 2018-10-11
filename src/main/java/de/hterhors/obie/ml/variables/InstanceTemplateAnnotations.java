@@ -8,21 +8,20 @@ import java.util.Map;
 
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 
-public class InstanceEntityAnnotations implements Serializable {
+public class InstanceTemplateAnnotations implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Since Entities only hold weak pointer via references to one another, using a
 	 * Map is sensible to enable an efficient access to the entities.
-	 * 
-	 * key = UUID unique for PSINKAnnotation.
 	 */
-	private final Map<String, TemplateAnnotation> entities = new HashMap<>();;
+	private final Map<String, TemplateAnnotation> entities = new HashMap<>();
 
-	public InstanceEntityAnnotations() {
+	public InstanceTemplateAnnotations() {
 	}
 
 	/**
@@ -30,7 +29,7 @@ public class InstanceEntityAnnotations implements Serializable {
 	 * 
 	 * @param cloneFrom
 	 */
-	public InstanceEntityAnnotations(InstanceEntityAnnotations cloneFrom) {
+	public InstanceTemplateAnnotations(InstanceTemplateAnnotations cloneFrom) {
 		for (TemplateAnnotation e : cloneFrom.entities.values()) {
 			this.entities.put(e.annotationID, new TemplateAnnotation(e));
 		}
@@ -40,8 +39,16 @@ public class InstanceEntityAnnotations implements Serializable {
 		return entities.get(entityID);
 	}
 
+	/**
+	 * Returns the unmodifiable collection of entities.
+	 * 
+	 * @return
+	 */
 	public Collection<TemplateAnnotation> getTemplateAnnotations() {
-		return Collections.unmodifiableCollection(entities.values());
+		/**
+		 * unmodifiableCollection
+		 */
+		return entities.values();
 	}
 
 	public void addAnnotation(TemplateAnnotation entity) {
@@ -68,7 +75,7 @@ public class InstanceEntityAnnotations implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		InstanceEntityAnnotations other = (InstanceEntityAnnotations) obj;
+		InstanceTemplateAnnotations other = (InstanceTemplateAnnotations) obj;
 		if (entities == null) {
 			if (other.entities != null)
 				return false;
@@ -83,7 +90,7 @@ public class InstanceEntityAnnotations implements Serializable {
 
 		for (TemplateAnnotation e : entities.values()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getTemplateAnnotation()
+			builder.append(OBIEClassFormatter.format(e.get()
 //					, investigationRestriction
 			));
 			builder.append("\n");

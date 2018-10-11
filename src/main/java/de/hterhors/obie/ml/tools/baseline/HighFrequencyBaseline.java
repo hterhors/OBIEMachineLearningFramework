@@ -51,12 +51,12 @@ public class HighFrequencyBaseline {
 			System.out.println(doc.getName());
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.getTemplateAnnotation()).collect(Collectors.toList());
+					.map(e -> e.get()).collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictFillerByFrequency(doc);
 
 			doc.getGoldAnnotation().getTemplateAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getTemplateAnnotation(), false)));
+					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.get(), false)));
 			System.out.println("____________________________");
 			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 
@@ -108,7 +108,7 @@ public class HighFrequencyBaseline {
 
 		for (TemplateAnnotation goldAnnotation : instance.getGoldAnnotation().getTemplateAnnotations()) {
 
-			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.getTemplateAnnotation();
+			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.get();
 			IOBIEThing predictionClass = null;
 			try {
 				predictionClass = goldClass.getClass().newInstance();
@@ -184,7 +184,7 @@ public class HighFrequencyBaseline {
 						}
 
 					}
-				} else if (ExplorationUtils.isAuxiliaryProperty(slotType)) {
+				} else if (ExplorationUtils.isAuxiliary(slotType)) {
 
 					/*
 					 * If the mention annotation data contains evidence for that requested class.
@@ -278,7 +278,7 @@ public class HighFrequencyBaseline {
 							}
 
 						}
-					} else if (ExplorationUtils.isAuxiliaryProperty(slotType)) {
+					} else if (ExplorationUtils.isAuxiliary(slotType)) {
 						final Class<? extends IOBIEThing> slotClassType = ReflectionUtils
 								.getImplementationClass(slotType);
 						/*

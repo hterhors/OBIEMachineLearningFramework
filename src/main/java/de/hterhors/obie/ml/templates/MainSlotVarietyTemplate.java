@@ -121,11 +121,11 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		 * If there is only one rootClass (e.g. OrganismModel) the entry of the map for
 		 * that class should be equal to state.getPredictedResult.getEntities().size();
 		 */
-		state.getCurrentPrediction().getTemplateAnnotations().stream().forEach(a -> {
+		state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().forEach(a -> {
 
-			countRootClasses.put(a.getTemplateAnnotation().getClass(),
-					1 + countRootClasses.getOrDefault(a.getTemplateAnnotation().getClass(), 0));
-			entityRootClassTypeMapper.put(a.getTemplateAnnotation().getClass(), a.rootClassType);
+			countRootClasses.put(a.get().getClass(),
+					1 + countRootClasses.getOrDefault(a.get().getClass(), 0));
+			entityRootClassTypeMapper.put(a.get().getClass(), a.rootClassType);
 
 		});
 
@@ -139,9 +139,9 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			childrenOfEntities.put(ec.getKey(), new HashSet[ec.getValue()]);
 		}
 
-		for (TemplateAnnotation annotation : state.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation annotation : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			final IOBIEThing entityScioClass = annotation.getTemplateAnnotation();
+			final IOBIEThing entityScioClass = annotation.get();
 
 			final int index = indexRootClassCounter.getOrDefault(entityScioClass.getClass(), 0);
 

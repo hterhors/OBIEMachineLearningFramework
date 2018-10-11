@@ -1,10 +1,5 @@
 package de.hterhors.obie.ml.variables;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -27,32 +22,9 @@ public class TemplateAnnotation implements Serializable {
 	}
 
 	/**
-	 * Performs a deep clone on the given object using the serialization and
-	 * de-serialization. This method can be used to clone collections of classes
-	 * that implements Serialization.
-	 */
-	public static IOBIEThing deepSerializeClone(IOBIEThing scioClass) {
-
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
-			oos.writeObject(scioClass);
-
-			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-			ObjectInputStream ois = new ObjectInputStream(bais);
-			return (IOBIEThing) ois.readObject();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	/**
 	 * The root class type of the annotation. If the scioClass changes during
-	 * sampling, the rootClassType remains always the same. It is used for the
-	 * scope of the factors.
+	 * sampling, the rootClassType remains always the same. It is used for the scope
+	 * of the factors.
 	 */
 	final public Class<? extends IOBIEThing> rootClassType;
 
@@ -69,18 +41,18 @@ public class TemplateAnnotation implements Serializable {
 	private final IOBIEThing initClass;
 
 	public TemplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass) {
-		this.initClass = OBIEUtils.deepClone(obieClass);
 		this.rootClassType = rootClassType;
-		this.annotationID = UUID.randomUUID().toString();
 		this.templateAnnotation = obieClass;
+		this.initClass = OBIEUtils.deepClone(obieClass);
+		this.annotationID = UUID.randomUUID().toString();
 
 	}
 
-	public void setTemplateAnnotation(IOBIEThing annotationInstance) {
-		this.templateAnnotation = annotationInstance;
+	public void update(IOBIEThing templateAnnotation) {
+		this.templateAnnotation = templateAnnotation;
 	}
 
-	public IOBIEThing getTemplateAnnotation() {
+	public IOBIEThing get() {
 		return templateAnnotation;
 	}
 
@@ -93,6 +65,8 @@ public class TemplateAnnotation implements Serializable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((annotationID == null) ? 0 : annotationID.hashCode());
+		result = prime * result + ((initClass == null) ? 0 : initClass.hashCode());
+		result = prime * result + ((rootClassType == null) ? 0 : rootClassType.hashCode());
 		result = prime * result + ((templateAnnotation == null) ? 0 : templateAnnotation.hashCode());
 		return result;
 	}
@@ -110,6 +84,16 @@ public class TemplateAnnotation implements Serializable {
 			if (other.annotationID != null)
 				return false;
 		} else if (!annotationID.equals(other.annotationID))
+			return false;
+		if (initClass == null) {
+			if (other.initClass != null)
+				return false;
+		} else if (!initClass.equals(other.initClass))
+			return false;
+		if (rootClassType == null) {
+			if (other.rootClassType != null)
+				return false;
+		} else if (!rootClassType.equals(other.rootClassType))
 			return false;
 		if (templateAnnotation == null) {
 			if (other.templateAnnotation != null)

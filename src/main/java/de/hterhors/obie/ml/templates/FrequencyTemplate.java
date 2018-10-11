@@ -100,9 +100,9 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getTemplateAnnotation(),
+			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get(),
 					entity.rootClassType));
 
 		}

@@ -101,19 +101,6 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 		return Collections.unmodifiableMap(rBDSV);
 	}
 
-	private <K> Map<K, Map<String, Set<INERLAnnotation>>> indexByText2(Map<K, Set<INERLAnnotation>> retrievals) {
-		final Map<K, Map<String, Set<INERLAnnotation>>> rbtm = new HashMap<>();
-		for (Entry<K, Set<INERLAnnotation>> retrieval : retrievals.entrySet()) {
-
-			rbtm.put(retrieval.getKey(), new HashMap<>());
-			for (INERLAnnotation nera : retrieval.getValue()) {
-				rbtm.get(retrieval.getKey()).putIfAbsent(nera.getText(), new HashSet<>());
-				rbtm.get(retrieval.getKey()).get(nera.getText()).add(nera);
-			}
-		}
-		return Collections.unmodifiableMap(rbtm);
-	}
-
 	public static class Builder {
 
 		private final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals = new HashMap<>();
@@ -239,7 +226,8 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @return true if data is available, else false.
 	 */
 	public boolean containsIndividualAnnotations(AbstractOBIEIndividual individual) {
-		return individual!=null && individualRetrievals.containsKey(individual) && !individualRetrievals.get(individual).isEmpty();
+		return individual != null && individualRetrievals.containsKey(individual)
+				&& !individualRetrievals.get(individual).isEmpty();
 	}
 
 	/**

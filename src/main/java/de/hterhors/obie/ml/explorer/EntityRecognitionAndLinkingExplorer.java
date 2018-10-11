@@ -9,16 +9,19 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -36,8 +39,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 	public EntityRecognitionAndLinkingExplorer(OBIERunParameter param) {
 
 		this.possibleRootClassTypes = Collections.unmodifiableSet(param.rootSearchTypes.stream()
-				.map(i -> ReflectionUtils.getImplementationClass(i))
-				.collect(Collectors.toSet()));
+				.map(i -> ReflectionUtils.getImplementationClass(i)).collect(Collectors.toSet()));
 		log.info("Intialize MultiTokenBoundaryExplorer with: " + possibleRootClassTypes);
 		this.maxNumberOfSampleElements = param.maxNumberOfEntityElements;
 		this.rnd = param.rndForSampling;
@@ -49,7 +51,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 	public List<OBIEState> getNextStates(OBIEState previousState) {
 		List<OBIEState> generatedStates = new ArrayList<OBIEState>();
 
-		if (previousState.getCurrentPrediction().getTemplateAnnotations().size() >= maxNumberOfSampleElements) {
+		if (previousState.getCurrentTemplateAnnotations().getTemplateAnnotations().size() >= maxNumberOfSampleElements) {
 			generatedStates.add(previousState);
 			return generatedStates;
 		}
@@ -77,7 +79,8 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 					 */
 					for (int nextTokenIndex = 0; nextTokenIndex < tokenPerAnnotation; nextTokenIndex++) {
 
-						assign &= !previousState.tokenHasAnnotation(tokens.get(i + nextTokenIndex));
+						assign &= !tokenHasAnnotation(tokens.get(i + nextTokenIndex),
+								previousState.getCurrentTemplateAnnotations());
 
 						if (!assign)
 							break;
@@ -143,7 +146,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 
 							TemplateAnnotation tokenAnnotation = new TemplateAnnotation(classToAnnotate, annotation);
 
-							generatedState.getCurrentPrediction().addAnnotation(tokenAnnotation);
+							generatedState.getCurrentTemplateAnnotations().addAnnotation(tokenAnnotation);
 							generatedStates.add(generatedState);
 						} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 								| InvocationTargetException | NoSuchMethodException | SecurityException e) {
@@ -159,4 +162,60 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 		// System.out.println("###");
 		return generatedStates;
 	}
+
+	public boolean tokenHasAnnotation(Token token, InstanceTemplateAnnotations prediction) {
+
+		boolean containsAnnotation = false;
+		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
+
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(),
+					(int) token.getFromCharPosition(), (int) token.getToCharPosition());
+
+			if (containsAnnotation)
+				return true;
+
+		}
+		return false;
+	}
+
+	private boolean checkForAnnotationRec(IOBIEThing scioClass, final int fromPosition, final int toPosition) {
+
+		if (scioClass == null)
+			return false;
+
+		if (scioClass.getCharacterOnset() == null)
+			return false;
+
+		if (scioClass.getCharacterOffset() == null)
+			return false;
+
+		if (fromPosition >= scioClass.getCharacterOnset() && toPosition <= scioClass.getCharacterOffset()) {
+			return true;
+		}
+
+		final AtomicBoolean containsAnnotation = new AtomicBoolean(false);
+
+		ReflectionUtils.getAccessibleOntologyFields(scioClass.getClass()).forEach(field -> {
+			try {
+				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(scioClass)) {
+						containsAnnotation.set(containsAnnotation.get()
+								|| checkForAnnotationRec(listObject, fromPosition, toPosition));
+						if (containsAnnotation.get())
+							return;
+					}
+				} else {
+					containsAnnotation.set(containsAnnotation.get()
+							|| checkForAnnotationRec((IOBIEThing) field.get(scioClass), fromPosition, toPosition));
+					if (containsAnnotation.get())
+						return;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		return containsAnnotation.get();
+
+	}
+
 }

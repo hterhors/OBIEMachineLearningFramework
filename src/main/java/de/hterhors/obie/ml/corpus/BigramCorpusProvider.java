@@ -37,7 +37,7 @@ import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -186,7 +186,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		for (OBIEInstance internalInstance : trainingDocuments) {
 			for (TemplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
 					.getTemplateAnnotations()) {
-				checkForTextualAnnotations(internalAnnotation.getTemplateAnnotation(), internalInstance.getName(),
+				checkForTextualAnnotations(internalAnnotation.get(), internalInstance.getName(),
 						internalInstance.getContent());
 			}
 		}
@@ -265,7 +265,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
 
-				if (!testLimitToAnnnotationElementsRecursively(annotation.getTemplateAnnotation(),
+				if (!testLimitToAnnnotationElementsRecursively(annotation.get(),
 						parameter.maxNumberOfEntityElements, parameter.maxNumberOfDataTypeElements)) {
 					log.debug("Number of elements in annotation exceeds limit of: "
 							+ parameter.maxNumberOfEntityElements + " for object property OR "
@@ -371,7 +371,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		Instance instance = rawCorpus.getInstances().get(docName);
 
-		final InstanceEntityAnnotations internalAnnotation = new InstanceEntityAnnotations();
+		final InstanceTemplateAnnotations internalAnnotation = new InstanceTemplateAnnotations();
+	
 		for (Entry<Class<? extends IOBIEThing>, List<IOBIEThing>> annotations : instance.annotations.entrySet()) {
 
 			for (IOBIEThing a : annotations.getValue()) {
@@ -382,6 +383,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			}
 		}
+		
 		return new OBIEInstance(instance.name, instance.content, internalAnnotation, instance.annotations.keySet());
 
 	}

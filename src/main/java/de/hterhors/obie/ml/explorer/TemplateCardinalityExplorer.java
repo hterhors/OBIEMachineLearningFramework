@@ -75,7 +75,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 		 */
 		for (Class<? extends IOBIEThing> rootTemplateType : rootClassTypes) {
 
-			final int size = previousState.getCurrentPrediction().getTemplateAnnotations().size();
+			final int size = previousState.getCurrentTemplateAnnotations().getTemplateAnnotations().size();
 
 			if (ReflectionUtils.isAnnotationPresent(rootTemplateType, DatatypeProperty.class)
 					&& size >= maxNumberOfDataTypeElements) {
@@ -92,7 +92,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 
 			for (IOBIEThing candidateClass : candidates) {
 				final OBIEState generatedState = new OBIEState(previousState);
-				generatedState.getCurrentPrediction()
+				generatedState.getCurrentTemplateAnnotations()
 						.addAnnotation(new TemplateAnnotation(rootTemplateType, candidateClass));
 				generatedStates.add(generatedState);
 
@@ -100,9 +100,9 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 
 		}
 
-		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentPrediction().getTemplateAnnotations()) {
+		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 			final OBIEState generatedState = new OBIEState(previousState);
-			generatedState.getCurrentPrediction().removeEntity(internalAnnotaton);
+			generatedState.getCurrentTemplateAnnotations().removeEntity(internalAnnotaton);
 			generatedStates.add(generatedState);
 		}
 

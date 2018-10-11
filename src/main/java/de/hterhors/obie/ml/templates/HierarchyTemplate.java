@@ -54,8 +54,8 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentPrediction().getTemplateAnnotations()) {
-			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getTemplateAnnotation()));
+		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+			factors.addAll(addFactorRecursive(entity.rootClassType, entity.get()));
 		}
 		return factors;
 	}

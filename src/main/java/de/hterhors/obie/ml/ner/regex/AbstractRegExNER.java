@@ -310,7 +310,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 			final Class<? extends IOBIEThing> interfaceOfRelatedClasstype = ReflectionUtils
 					.getDirectInterfaces(relatedRootClass);
 
-			if (ExplorationUtils.isAuxiliaryProperty(interfaceOfRelatedClasstype)) {
+			if (ExplorationUtils.isAuxiliary(interfaceOfRelatedClasstype)) {
 
 				Map<Class<? extends R>, Set<Pattern>> relatedClasses = addPlainRegExPatternForClasses(
 						interfaceOfRelatedClasstype);

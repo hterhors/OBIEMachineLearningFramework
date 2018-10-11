@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
-import de.hterhors.obie.ml.variables.InstanceEntityAnnotations;
+import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.ObjectiveFunction;
 
@@ -20,7 +20,7 @@ import learning.ObjectiveFunction;
  * @author hterhors
  *
  */
-public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceEntityAnnotations> implements Serializable {
+public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> implements Serializable {
 
 	/**
 	 * 
@@ -34,11 +34,11 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceEn
 	}
 
 	@Override
-	public double computeScore(OBIEState state, InstanceEntityAnnotations goldResult) {
+	public double computeScore(OBIEState state, InstanceTemplateAnnotations goldResult) {
 
-		List<IOBIEThing> predictions = state.getCurrentPrediction().getTemplateAnnotations().stream()
-				.map(s -> s.getTemplateAnnotation()).collect(Collectors.toList());
-		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.getTemplateAnnotation())
+		List<IOBIEThing> predictions = state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+				.map(s -> s.get()).collect(Collectors.toList());
+		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.get())
 				.collect(Collectors.toList());
 
 		// System.out.println("predictions = ");
