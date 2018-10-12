@@ -181,10 +181,13 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 //		System.out.println("Compare: " + goldInstance);
 //		System.out.println("With: " + predictedInstance);
 
-		final CacheKey ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
+		CacheKey ck = null;
+		if (enableCaching) {
+			ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
 
-		if (enableCaching && cache.containsKey(ck)) {
-			return cache.get(ck);
+			if (cache.containsKey(ck)) {
+				return cache.get(ck);
+			}
 		}
 
 		final PRF1 score = new PRF1();
