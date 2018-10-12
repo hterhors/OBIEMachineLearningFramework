@@ -5,8 +5,6 @@ import java.util.Set;
 
 import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.variables.NERLClassAnnotation;
-import de.hterhors.obie.ml.variables.NERLIndividualAnnotation;
 
 public interface INamedEntitityLinker {
 

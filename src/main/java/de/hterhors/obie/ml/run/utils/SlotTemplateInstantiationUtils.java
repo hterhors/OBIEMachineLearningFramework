@@ -18,10 +18,10 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
+import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
-import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 

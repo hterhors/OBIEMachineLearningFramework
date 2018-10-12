@@ -20,11 +20,11 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramInternalCorpus;
+import de.hterhors.obie.ml.ner.NERLClassAnnotation;
+import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
-import de.hterhors.obie.ml.variables.NERLClassAnnotation;
-import de.hterhors.obie.ml.variables.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 

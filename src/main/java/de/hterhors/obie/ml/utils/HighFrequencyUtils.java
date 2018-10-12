@@ -23,9 +23,9 @@ import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.variables.NERLClassAnnotation;
-import de.hterhors.obie.ml.variables.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.variables.NamedEntityLinkingAnnotations;
+import de.hterhors.obie.ml.ner.NERLClassAnnotation;
+import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
+import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 
 public class HighFrequencyUtils {
