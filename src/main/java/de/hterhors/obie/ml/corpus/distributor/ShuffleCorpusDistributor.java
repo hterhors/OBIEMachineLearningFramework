@@ -110,7 +110,7 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 		/**
 		 * The seed that was used to initialize the random.
 		 */
-		long seed = 100L;
+		long seed = new Random().nextLong();
 
 		public Builder setTrainingProportion(int trainingProportion) {
 			this.trainingProportion = trainingProportion;

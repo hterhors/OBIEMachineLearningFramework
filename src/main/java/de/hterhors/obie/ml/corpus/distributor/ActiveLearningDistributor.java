@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
-import de.hterhors.obie.ml.corpus.distributor.ShuffleCorpusDistributor.Builder;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 
 /**
@@ -101,7 +100,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		/**
 		 * Selection of data sets from the training data.
 		 */
-		private long initializationSelectionSeed = 100L;
+		private long initializationSelectionSeed = new Random().nextLong();
 
 		/**
 		 * The fraction of the training data to start with.
@@ -166,6 +165,8 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		}
 
 		/**
+		 * Set absolute number of training data that should be drawn in every step
+		 * 
 		 * @param b the b to set
 		 * @return
 		 */
