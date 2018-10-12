@@ -137,7 +137,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 		}
 
-		Collections.shuffle(proposalStates, rnd);
+		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
 		return proposalStates;
 
 	}

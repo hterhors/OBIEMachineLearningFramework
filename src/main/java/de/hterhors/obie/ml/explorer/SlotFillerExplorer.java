@@ -101,7 +101,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 		}
 
-		Collections.shuffle(proposalStates, rnd);
+		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
 
 		return proposalStates;
 	}

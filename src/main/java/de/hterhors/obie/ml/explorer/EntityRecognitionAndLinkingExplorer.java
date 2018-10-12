@@ -19,10 +19,10 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
+import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
-import de.hterhors.obie.ml.variables.NERLClassAnnotation;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
@@ -51,7 +51,8 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 	public List<OBIEState> getNextStates(OBIEState previousState) {
 		List<OBIEState> generatedStates = new ArrayList<OBIEState>();
 
-		if (previousState.getCurrentTemplateAnnotations().getTemplateAnnotations().size() >= maxNumberOfSampleElements) {
+		if (previousState.getCurrentTemplateAnnotations().getTemplateAnnotations()
+				.size() >= maxNumberOfSampleElements) {
 			generatedStates.add(previousState);
 			return generatedStates;
 		}
@@ -156,7 +157,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 				}
 			}
 		}
-		Collections.shuffle(generatedStates, rnd);
+		Collections.shuffle(generatedStates, new Random(rnd.nextLong()));
 		// System.out.println("###");
 		// generatedStates.forEach(System.out::println);
 		// System.out.println("###");
@@ -168,8 +169,8 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 		boolean containsAnnotation = false;
 		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
 
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(),
-					(int) token.getFromCharPosition(), (int) token.getToCharPosition());
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(), (int) token.getFromCharPosition(),
+					(int) token.getToCharPosition());
 
 			if (containsAnnotation)
 				return true;
