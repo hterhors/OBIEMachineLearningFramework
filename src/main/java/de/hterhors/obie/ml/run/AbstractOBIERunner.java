@@ -7,8 +7,10 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,13 +19,13 @@ import org.apache.logging.log4j.Logger;
 import corpus.SampledInstance;
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.evaluation.PRF1Container;
-import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.exceptions.NotSupportedException;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
+import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.run.eval.EvaluatePrediction;
 import de.hterhors.obie.ml.run.param.EScorerType;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
@@ -37,13 +39,11 @@ import de.hterhors.obie.ml.stopcrit.sampling.StopAtRepeatedModelScore;
 import de.hterhors.obie.ml.templates.AbstractOBIETemplate;
 import de.hterhors.obie.ml.utils.ModelFileNameUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
-import de.hterhors.obie.ml.variables.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import exceptions.UnkownTemplateRequestedException;
 import learning.AdvancedLearner;
 import learning.AdvancedLearner.TrainingTriple;
-import learning.DefaultLearner;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -314,9 +314,9 @@ public abstract class AbstractOBIERunner {
 		return test(corpusProvider.getTrainingCorpus().getInternalInstances());
 	}
 
-	public List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> testInstance(OBIEInstance instance)
-			throws IOException, FileNotFoundException, ClassNotFoundException, UnkownTemplateRequestedException,
-			Exception {
+	public List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> testInstance(
+			OBIEInstance instance) throws IOException, FileNotFoundException, ClassNotFoundException,
+			UnkownTemplateRequestedException, Exception {
 		final List<OBIEInstance> instances = new ArrayList<>();
 		instances.add(instance);
 		return test(instances);
