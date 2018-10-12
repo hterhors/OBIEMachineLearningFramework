@@ -1,4 +1,4 @@
-package de.hterhors.obie.ml.variables;
+package de.hterhors.obie.ml.ner;
 
 import java.io.Serializable;
 import java.util.Collections;

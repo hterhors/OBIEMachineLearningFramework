@@ -1,4 +1,4 @@
-package de.hterhors.obie.ml.variables;
+package de.hterhors.obie.ml.ner;
 
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.dtinterpreter.IDatatypeInterpretation;
@@ -10,9 +10,9 @@ public class NERLClassAnnotation implements INERLAnnotation {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final String NAMED_ENTITY_ANNOTATION_PREFIX = "NERL_Class_Annotation:";
+//	private static final String NAMED_ENTITY_ANNOTATION_PREFIX = "NERL_Class_Annotation:";
 
-	final public String annotationID;
+//	final public String annotationID;
 
 	final public String text;
 
@@ -29,7 +29,7 @@ public class NERLClassAnnotation implements INERLAnnotation {
 		this.text = text;
 		this.onset = offset;
 		this.classType = relatedSCIOClassType;
-		this.annotationID = NAMED_ENTITY_ANNOTATION_PREFIX + relatedSCIOClassType.getSimpleName() + offset + text;
+//		this.annotationID = NAMED_ENTITY_ANNOTATION_PREFIX + relatedSCIOClassType.getSimpleName() + offset + text;
 	}
 
 	public String getDTValueIfAnyElseTextMention() {
@@ -40,7 +40,10 @@ public class NERLClassAnnotation implements INERLAnnotation {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((annotationID == null) ? 0 : annotationID.hashCode());
+		result = prime * result + ((classType == null) ? 0 : classType.hashCode());
+		result = prime * result + onset;
+		result = prime * result + ((semanticInterpretation == null) ? 0 : semanticInterpretation.hashCode());
+		result = prime * result + ((text == null) ? 0 : text.hashCode());
 		return result;
 	}
 
@@ -53,10 +56,22 @@ public class NERLClassAnnotation implements INERLAnnotation {
 		if (getClass() != obj.getClass())
 			return false;
 		NERLClassAnnotation other = (NERLClassAnnotation) obj;
-		if (annotationID == null) {
-			if (other.annotationID != null)
+		if (classType == null) {
+			if (other.classType != null)
 				return false;
-		} else if (!annotationID.equals(other.annotationID))
+		} else if (!classType.equals(other.classType))
+			return false;
+		if (onset != other.onset)
+			return false;
+		if (semanticInterpretation == null) {
+			if (other.semanticInterpretation != null)
+				return false;
+		} else if (!semanticInterpretation.equals(other.semanticInterpretation))
+			return false;
+		if (text == null) {
+			if (other.text != null)
+				return false;
+		} else if (!text.equals(other.text))
 			return false;
 		return true;
 	}
