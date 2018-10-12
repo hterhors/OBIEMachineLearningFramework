@@ -30,10 +30,10 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tools.visualization.graphml.templates.NamedIndividual;
+import de.hterhors.obie.ml.ner.INERLAnnotation;
+import de.hterhors.obie.ml.ner.NERLClassAnnotation;
+import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
-import de.hterhors.obie.ml.variables.INERLAnnotation;
-import de.hterhors.obie.ml.variables.NERLClassAnnotation;
-import de.hterhors.obie.ml.variables.NERLIndividualAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import weka.gui.SysErrLog;
 
@@ -331,15 +331,14 @@ public class ExplorationUtils {
 		 * that are.
 		 */
 		if (exploreClassesWithoutTextualEvidence.contains(slotFillerType)
-				|| isDifferentiableToAllSiblingClasses(slotFillerType, slotSuperType)
-				|| isAuxiliary(slotSuperType)) {
+				|| isDifferentiableToAllSiblingClasses(slotFillerType, slotSuperType) || isAuxiliary(slotSuperType)) {
 			/**
 			 * TESTME: Is it sufficient to create just a single state with this class.
 			 * Otherwise create a state for each mention in the text. (This should be only
 			 * necessary if the position or text of this "auxiliary" class is important.
 			 */
 
-			IOBIEThing newInstance = newClassInstance(slotFillerType, UUID.randomUUID().toString());
+			IOBIEThing newInstance = newClassInstance(slotFillerType);
 			candidates.add(newInstance);
 		} else {
 
@@ -368,7 +367,7 @@ public class ExplorationUtils {
 				for (NERLClassAnnotation nera : instance.getNamedEntityLinkingAnnotations()
 						.getClassAnnotationsBySemanticValues(slotFillerType)) {
 
-					IOBIEThing newInstance = newClassInstance(slotFillerType, nera.annotationID);
+					IOBIEThing newInstance = newClassInstance(slotFillerType);
 					fillBasicFields(newInstance, nera);
 					fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
 					candidates.add(newInstance);
@@ -423,7 +422,7 @@ public class ExplorationUtils {
 			 * necessary if the position or surface form of this "auxiliary" class is
 			 * important.
 			 */
-			IOBIEThing newInstance = newClassInstance(candidateType_class, UUID.randomUUID().toString());
+			IOBIEThing newInstance = newClassInstance(candidateType_class);
 			candidates.add(newInstance);
 		} else {
 			if (ReflectionUtils.isAnnotationPresent(candidateType_class, DatatypeProperty.class)) {
@@ -445,7 +444,7 @@ public class ExplorationUtils {
 
 				for (NERLClassAnnotation nera : possibleNERAnnotations) {
 
-					IOBIEThing newInstance = newClassInstance(candidateType_class, nera.annotationID);
+					IOBIEThing newInstance = newClassInstance(candidateType_class);
 
 					fillBasicFields(newInstance, nera);
 					fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
@@ -490,8 +489,7 @@ public class ExplorationUtils {
 		 * Else create exactly one instance without textual reference.
 		 */
 
-		IOBIEThing newInstance = newClassForIndividual(slotSuperType, individualCandidate,
-				UUID.randomUUID().toString());
+		IOBIEThing newInstance = newClassForIndividual(slotSuperType, individualCandidate);
 
 		candidates.add(newInstance);
 
@@ -525,7 +523,7 @@ public class ExplorationUtils {
 		}
 
 		for (NERLIndividualAnnotation nera : possibleNERAnnotations) {
-			IOBIEThing newThing = newClassForIndividual(baseClassType_class, individual, nera.annotationID);
+			IOBIEThing newThing = newClassForIndividual(baseClassType_class, individual);
 			fillBasicFields(newThing, nera);
 			candidates.add(newThing);
 		}
@@ -553,7 +551,7 @@ public class ExplorationUtils {
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	private static IOBIEThing newClassInstance(Class<? extends IOBIEThing> ipsinkThing, final String annotationID) {
+	private static IOBIEThing newClassInstance(Class<? extends IOBIEThing> ipsinkThing) {
 		try {
 			IOBIEThing newInstance = (IOBIEThing) ipsinkThing.newInstance();
 
@@ -567,9 +565,12 @@ public class ExplorationUtils {
 				}
 			}
 
-			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
-					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
-			annotationIDField.set(newInstance, annotationID);
+			/**
+			 * @Deprectaed AnnotationID is no longer available
+			 */
+//			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
+//					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
+//			annotationIDField.set(newInstance, annotationID);
 
 			return newInstance;
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -589,7 +590,7 @@ public class ExplorationUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	private static IOBIEThing newClassForIndividual(Class<? extends IOBIEThing> baseClassType_class,
-			AbstractOBIEIndividual individual, final String annotationID) {
+			AbstractOBIEIndividual individual) {
 
 		try {
 			IOBIEThing newInstance = (IOBIEThing) baseClassType_class.newInstance();
@@ -608,10 +609,12 @@ public class ExplorationUtils {
 							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
 				}
 			}
-
-			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
-					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
-			annotationIDField.set(newInstance, annotationID);
+			/**
+			 * @Deprectaed AnnotationID is no longer available
+			 */
+//			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
+//					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
+//			annotationIDField.set(newInstance, annotationID);
 
 			return newInstance;
 		} catch (InstantiationException | IllegalAccessException e) {
