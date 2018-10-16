@@ -291,10 +291,10 @@ public class OBIERunParameter implements Serializable {
 
 	public final AbstractCorpusDistributor corpusDistributor;
 
-	private OBIERunParameter(final String corpusNamePrefix, final boolean excludeEmptyInstancesFromCorpus,
+	private OBIERunParameter(String corpusNamePrefix, boolean excludeEmptyInstancesFromCorpus,
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
-			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, final String runID,
+			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, String runID,
 			boolean multiThreading, AbstractProjectEnvironment projectEnvironment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
@@ -302,9 +302,9 @@ public class OBIERunParameter implements Serializable {
 			Map<Class<? extends IOBIEThing>, List<IOBIEThing>> initializationObjects, boolean exploreExistingTemplates,
 			boolean exploreOnOntologyLevel, boolean enableDiscourseProgression,
 			IInitializeNumberOfObjects numberOfInitializedObjects, IOBIEEvaluator evaluator,
-			final int maxNumberOfEntityElements, final int maxNumberOfDataTypeElements, Regularizer regularizer,
+			int maxNumberOfEntityElements, int maxNumberOfDataTypeElements, Regularizer regularizer,
 			int maxNumberOfSamplingSteps, Random rndForSampling, boolean ignoreEmptyInstancesonEvaluation,
-			final AbstractCorpusDistributor corpusConfiguration, AbstractOntologyEnvironment ontologyEnvironment,
+			AbstractCorpusDistributor corpusConfiguration, AbstractOntologyEnvironment ontologyEnvironment,
 			boolean restrictExplorationOnConceptsInInstance) {
 
 		if (!validate()) {
@@ -394,6 +394,7 @@ public class OBIERunParameter implements Serializable {
 
 		this.maxNumberOfEntityElements = maxNumberOfEntityElements;
 		this.maxNumberOfDataTypeElements = maxNumberOfDataTypeElements;
+
 	}
 
 	private void requireGreaterThanZero(double number) {

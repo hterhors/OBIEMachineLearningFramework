@@ -51,12 +51,12 @@ public class HighFrequencyBaseline {
 			System.out.println(doc.getName());
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictFillerByFrequency(doc);
 
 			doc.getGoldAnnotation().getTemplateAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.get(), false)));
+					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getThing(), false)));
 			System.out.println("____________________________");
 			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 
@@ -108,7 +108,7 @@ public class HighFrequencyBaseline {
 
 		for (TemplateAnnotation goldAnnotation : instance.getGoldAnnotation().getTemplateAnnotations()) {
 
-			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.get();
+			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.getThing();
 			IOBIEThing predictionClass = null;
 			try {
 				predictionClass = goldClass.getClass().newInstance();

@@ -69,7 +69,7 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
 			factors.addAll(
-					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get()));
+					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
 
 		}
 		return factors;

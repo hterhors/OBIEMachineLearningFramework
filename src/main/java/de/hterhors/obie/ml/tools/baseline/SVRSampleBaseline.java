@@ -340,8 +340,8 @@ public class SVRSampleBaseline {
 //					.forName(abstractTemplate.getName()).getConstructor(OBIEParameter.class, List.class)
 //					.newInstance(parameter, corpusProvider.getTrainingCorpus().getInternalInstances());
 //		} else {
-		t = (AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope>) Class
-				.forName(abstractTemplate.getName()).getConstructor(OBIERunParameter.class).newInstance(parameter);
+		t = (AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope>) Class.forName(abstractTemplate.getName())
+				.getConstructor(OBIERunParameter.class).newInstance(parameter);
 //		}
 		return t;
 	}
@@ -431,7 +431,7 @@ public class SVRSampleBaseline {
 			OBIEState previousState = new OBIEState(trainInstance, parameter);
 
 			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			List<OBIEState> previousStates = new ArrayList<>();
 
@@ -496,7 +496,7 @@ public class SVRSampleBaseline {
 		selectedStates.forEach(newState -> {
 
 			List<IOBIEThing> prediction = newState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			data.addFeatureDataPoint(newState.toTrainingPoint(data, true).setScore(evaluator.f1(gold, prediction)));
 
@@ -536,7 +536,7 @@ public class SVRSampleBaseline {
 		previousStates.forEach(newState -> {
 
 			List<IOBIEThing> prediction = newState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			data.addFeatureDataPoint(newState.toTrainingPoint(data, true).setScore(evaluator.f1(gold, prediction)));
 
@@ -581,8 +581,8 @@ public class SVRSampleBaseline {
 		 * Score all states so we can sort them.
 		 */
 		for (OBIEState genState : generatedStates) {
-			final List<IOBIEThing> prediction = genState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+			final List<IOBIEThing> prediction = genState.getCurrentTemplateAnnotations().getTemplateAnnotations()
+					.stream().map(e -> e.getThing()).collect(Collectors.toList());
 			genState.setObjectiveScore(evaluator.f1(gold, prediction));
 		}
 		/*
@@ -623,18 +623,19 @@ public class SVRSampleBaseline {
 		/*
 		 * Select only new scopes (or all if forced) for computation.
 		 */
-		Set<T> scopesToCompute = null;
+//		Set<T> scopesToCompute = null;
 		/*
 		 * Extract only the ones which are not already associate with a factor.
 		 */
-		Set<T> newFactorScopesForTemplate = sharedFactorPool.extractNewFactorScopes(allGeneratedScopesForTemplate);
+//		Set<T> newFactorScopesForTemplate = 
+		sharedFactorPool.filterNewFactorScopes(allGeneratedScopesForTemplate);
 
-		scopesToCompute = newFactorScopesForTemplate;
+//		scopesToCompute = newFactorScopesForTemplate;
 
 		/*
 		 * Compute all selected factors (in parallel).
 		 */
-		Set<Factor<T>> newFactors = computeNewFactors(template, scopesToCompute);
+		Set<Factor<T>> newFactors = computeNewFactors(template, allGeneratedScopesForTemplate);
 
 		sharedFactorPool.addFactors(newFactors);
 	}

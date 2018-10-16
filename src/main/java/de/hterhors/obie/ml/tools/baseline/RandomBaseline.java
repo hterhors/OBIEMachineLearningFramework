@@ -56,12 +56,12 @@ public class RandomBaseline {
 			System.out.println("_____________" + doc.getName() + "_______________");
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.get()).collect(Collectors.toList());
+					.map(e -> e.getThing()).collect(Collectors.toList());
 			List<IOBIEThing> predictions = predictFillerByRandom(doc);
 
 			System.out.println("___________GOLD___________");
 			doc.getGoldAnnotation().getTemplateAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.get(), false)));
+					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getThing(), false)));
 			System.out.println("___________RANDOM___________");
 			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 

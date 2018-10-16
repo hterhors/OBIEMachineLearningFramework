@@ -169,7 +169,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 		boolean containsAnnotation = false;
 		for (TemplateAnnotation internalAnnotation : prediction.getTemplateAnnotations()) {
 
-			containsAnnotation = checkForAnnotationRec(internalAnnotation.get(), (int) token.getFromCharPosition(),
+			containsAnnotation = checkForAnnotationRec(internalAnnotation.getThing(), (int) token.getFromCharPosition(),
 					(int) token.getToCharPosition());
 
 			if (containsAnnotation)

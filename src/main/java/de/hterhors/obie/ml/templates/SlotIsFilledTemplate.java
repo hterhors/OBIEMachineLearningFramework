@@ -55,7 +55,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, entity.get()));
+			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getThing()));
 		}
 
 		return factors;
@@ -74,8 +74,8 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (parentClassType != null) {
 			for (Class<? extends IOBIEThing> parentClass : ReflectionUtils.getSuperRootClasses(parentClassType)) {
-				factors.add(new Scope(templateRootClassType, this, parentClass.getSimpleName(), numberOfSlotFiller,
-						propertyNameChain, numberOfDistinctSlotFiller));
+				factors.add(new Scope(templateRootClassType, this, ReflectionUtils.simpleName(parentClass),
+						numberOfSlotFiller, propertyNameChain, numberOfDistinctSlotFiller));
 			}
 		}
 		if (obieThing == null)

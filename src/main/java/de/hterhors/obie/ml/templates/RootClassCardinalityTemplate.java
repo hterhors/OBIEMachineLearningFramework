@@ -83,13 +83,13 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 		 * If there is only one rootClass (e.g. OrganismModel) the entry of the map for
 		 * that class should be equal to state.getPredictedResult.getEntities().size();
 		 */
-		state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().map(a -> a.get())
+		state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().map(a -> a.getThing())
 				.forEach(s -> countRootClasses.put(s.getClass(), 1 + countRootClasses.getOrDefault(s.getClass(), 0)));
 
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
 			factors.addAll(addFactors(entity.rootClassType, state.getInstance(), countRootClasses,
-					entity.get()));
+					entity.getThing()));
 
 		}
 		return factors;

@@ -82,7 +82,7 @@ public class SlotTemplateInstantiationUtils {
 	public static Set<IOBIEThing> getFullCorrect(InstanceTemplateAnnotations instanceAnnotations) {
 		Set<IOBIEThing> set = new HashSet<>();
 		for (TemplateAnnotation goldAnnotation : instanceAnnotations.getTemplateAnnotations()) {
-			set.add(OBIEUtils.deepClone(goldAnnotation.get()));
+			set.add(OBIEUtils.deepClone(goldAnnotation.getThing()));
 
 		}
 		return set;

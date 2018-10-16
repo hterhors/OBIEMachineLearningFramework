@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -65,14 +66,18 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 	class Scope extends FactorScope {
 
-		public String classOrIndividualName;
-		public Set<String> surfaceForms;
+		public Class<? extends IOBIEThing> classType;
+		public final AbstractOBIEIndividual individual;
+		public final String surfaceForm;
+		public OBIEInstance instance;
 
-		public Scope(String classOrIndividualName, Set<String> surfaceForms,
-				Class<? extends IOBIEThing> entityRootClassType) {
-			super(thisTemplate, entityRootClassType, classOrIndividualName, surfaceForms);
-			this.classOrIndividualName = classOrIndividualName;
-			this.surfaceForms = surfaceForms;
+		public Scope(OBIEInstance internalInstance, Class<? extends IOBIEThing> entityRootClassType,
+				Class<? extends IOBIEThing> classType, AbstractOBIEIndividual individual, String surfaceForm) {
+			super(thisTemplate, internalInstance, entityRootClassType, classType, individual, surfaceForm);
+			this.classType = classType;
+			this.individual = individual;
+			this.surfaceForm = surfaceForm;
+			this.instance = internalInstance;
 		}
 
 	}
@@ -82,16 +87,16 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		List<Scope> factors = new ArrayList<>();
 
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.get());
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.getThing());
 		}
 
 		return factors;
 	}
 
 	private void addFactorRecursive(List<Scope> factors, OBIEInstance internalInstance,
-			Class<? extends IOBIEThing> rootClassType, IOBIEThing scioClass) {
+			Class<? extends IOBIEThing> rootClassType, IOBIEThing obieThing) {
 
-		if (scioClass == null)
+		if (obieThing == null)
 			return;
 
 		/*
@@ -99,26 +104,21 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		 */
 		// if
 		// (!scioClass.getClass().isAnnotationPresent(DataTypeProperty.class)) {
-		final Set<String> surfaceForms = getSurfaceForms(internalInstance, scioClass);
 
-		if (surfaceForms != null) {
-			factors.add(new Scope(scioClass.getClass().getSimpleName(), surfaceForms, rootClassType));
-			if (scioClass.getIndividual() != null)
-				factors.add(new Scope(scioClass.getIndividual().name, surfaceForms, rootClassType));
-		}
-		// }
+		factors.add(new Scope(internalInstance, rootClassType, obieThing.getClass(), obieThing.getIndividual(),
+				obieThing.getTextMention()));
 
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getAccessibleOntologyFields(scioClass.getClass()).forEach(field -> {
+		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-					for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
+					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
 						addFactorRecursive(factors, internalInstance, rootClassType, element);
 					}
 				} else {
-					addFactorRecursive(factors, internalInstance, rootClassType, (IOBIEThing) field.get(scioClass));
+					addFactorRecursive(factors, internalInstance, rootClassType, (IOBIEThing) field.get(obieThing));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -136,47 +136,46 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 	 * 
 	 * @param internalInstance
 	 * 
-	 * @param filler
+	 * @param classType
 	 * @return null if there are no annotations for that class
 	 */
-	private Set<String> getSurfaceForms(OBIEInstance internalInstance, final IOBIEThing filler) {
+	private Set<String> getSurfaceForms(OBIEInstance internalInstance, final Class<? extends IOBIEThing> classType,
+			AbstractOBIEIndividual individual, final String surfaceForm) {
 
-		if (filler == null)
+		if (classType == null)
 			return null;
 
-		Set<String> surfaceForms;
-		if (enableDistantSupervision) {
-			/*
-			 * If DV is enabled add all surface forms of that class.
-			 */
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(filler.getClass())) {
-				if (ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
-					surfaceForms = new HashSet<>();
-					surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
-				} else {
-					surfaceForms = new HashSet<>();
-					surfaceForms.addAll(
-							internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(filler.getClass())
+		Set<String> surfaceForms = new HashSet<>();
+
+		if (ReflectionUtils.isAnnotationPresent(classType, DatatypeProperty.class)) {
+
+			surfaceForms.add(normalizeSurfaceForm(surfaceForm));
+
+		} else {
+
+			if (enableDistantSupervision) {
+				/*
+				 * If DSV is enabled add all surface forms of that class / individual.
+				 */
+
+				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(classType)) {
+					surfaceForms
+							.addAll(internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(classType)
 									.stream().map(nera -> nera.text).collect(Collectors.toList()));
-					surfaceForms.addAll(internalInstance.getNamedEntityLinkingAnnotations()
-							.getIndividualAnnotations(filler.getIndividual()).stream().map(nera -> nera.text)
-							.collect(Collectors.toList()));
+				}
+
+				if (individual != null && internalInstance.getNamedEntityLinkingAnnotations()
+						.containsIndividualAnnotations(individual)) {
+					surfaceForms.addAll(
+							internalInstance.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual)
+									.stream().map(nera -> nera.text).collect(Collectors.toList()));
 				}
 			} else {
-				return null;
+				/*
+				 * If DV is not enabled add just the surface form of that individual annotation.
+				 */
+				surfaceForms.add(surfaceForm);
 			}
-		} else {
-			/*
-			 * If DV is not enabled add just the surface form of that individual annotation.
-			 */
-			surfaceForms = new HashSet<>();
-			if (ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
-				// surfaceForms.add(((IDataType) filler).getValue());
-				surfaceForms.add(normalizeSurfaceForm(filler.getTextMention()));
-			} else {
-				surfaceForms.add(filler.getTextMention());
-			}
-
 		}
 		return surfaceForms;
 	}
@@ -190,13 +189,18 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 		Vector featureVector = factor.getFeatureVector();
 
-		final String name = factor.getFactorScope().classOrIndividualName;
-
-		final Set<String> surfaceForms = factor.getFactorScope().surfaceForms;
+		final Set<String> surfaceForms = getSurfaceForms(factor.getFactorScope().instance,
+				factor.getFactorScope().classType, factor.getFactorScope().individual,
+				factor.getFactorScope().surfaceForm);
 
 		for (String surfaceForm : surfaceForms) {
-			getTokenNgrams(featureVector, name, surfaceForm);
+			getTokenNgrams(featureVector, ReflectionUtils.simpleName(factor.getFactorScope().classType), surfaceForm);
 		}
+
+		if (factor.getFactorScope().individual != null)
+			for (String surfaceForm : surfaceForms) {
+				getTokenNgrams(featureVector, factor.getFactorScope().individual.name, surfaceForm);
+			}
 
 	}
 
@@ -209,12 +213,6 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		final int maxNgramSize = tokens.length;
 
 		featureVector.set(LEFT + name + RIGHT + TOKEN_SPLITTER_SPACE + cM, true);
-
-		/*
-		 * TODO: need this?
-		 */
-//		if (name.isAnnotationPresent(DatatypeProperty.class))
-//			return;
 
 		for (int ngram = 1; ngram < maxNgramSize; ngram++) {
 			for (int i = 0; i < maxNgramSize - 1; i++) {

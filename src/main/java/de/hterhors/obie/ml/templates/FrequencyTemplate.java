@@ -102,20 +102,19 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.get(),
-					entity.rootClassType));
+			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing(),
+					entity.rootClassType);
 
 		}
 		return factors;
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<Scope> addFactorRecursive(Class<? extends IOBIEThing> entityRootClassType, OBIEInstance instance,
-			IOBIEThing obieThing, Class<? extends IOBIEThing> propertyClassType) {
-		List<Scope> factors = new ArrayList<>();
+	private void addFactorRecursive(List<Scope> factors, Class<? extends IOBIEThing> entityRootClassType,
+			OBIEInstance instance, IOBIEThing obieThing, Class<? extends IOBIEThing> propertyClassType) {
 
 		if (obieThing == null)
-			return factors;
+			return;
 
 		if (ReflectionUtils.isAnnotationPresent(obieThing.getClass(), DatatypeProperty.class)) {
 			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
@@ -140,18 +139,17 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field
 							.getGenericType()).getActualTypeArguments()[0];
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
-						factors.addAll(addFactorRecursive(entityRootClassType, instance, element, fieldGenericType));
+						addFactorRecursive(factors, entityRootClassType, instance, element, fieldGenericType);
 					}
 
 				} else {
-					factors.addAll(addFactorRecursive(entityRootClassType, instance, (IOBIEThing) field.get(obieThing),
-							(Class<? extends IOBIEThing>) field.getType()));
+					addFactorRecursive(factors, entityRootClassType, instance, (IOBIEThing) field.get(obieThing),
+							(Class<? extends IOBIEThing>) field.getType());
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
-		return factors;
 	}
 
 	@Override
@@ -179,11 +177,11 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 				/*
 				 * For abstract individual type
 				 */
-				featureVector.set(factor.getFactorScope().individual.getClass().getSimpleName() + MAX_EVIDENCE,
-						isMaxFrequency);
 				featureVector.set(
-						factor.getFactorScope().individual.getClass().getSimpleName() + "_has_real_max_evidence",
-						isMaxFrequency && realIndMax);
+						ReflectionUtils.simpleName(factor.getFactorScope().individual.getClass()) + MAX_EVIDENCE,
+						isMaxFrequency);
+				featureVector.set(ReflectionUtils.simpleName(factor.getFactorScope().individual.getClass())
+						+ "_has_real_max_evidence", isMaxFrequency && realIndMax);
 
 				/*
 				 * For specific individual
@@ -194,8 +192,8 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 			}
 		}
 
-		final List<ClassFrequencyPair> mostFrequentClasses = HighFrequencyUtils
-				.getMostFrequentClassesOrValue(factor.getFactorScope().slotValueType, factor.getFactorScope().instance, 2);
+		final List<ClassFrequencyPair> mostFrequentClasses = HighFrequencyUtils.getMostFrequentClassesOrValue(
+				factor.getFactorScope().slotValueType, factor.getFactorScope().instance, 2);
 
 		if (!mostFrequentClasses.isEmpty() && mostFrequentClasses.get(0).clazz != null) {
 
@@ -213,8 +211,10 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 					final boolean isMaxFrequency = factor.getFactorScope().datatypeValue
 							.equals(mostFrequentClasses.get(0).datatypeValue);
-					featureVector.set(factor.getFactorScope().thingType.getSimpleName() + MAX_EVIDENCE, isMaxFrequency);
-					featureVector.set(factor.getFactorScope().thingType.getSimpleName() + GREATER_THAN_MAX_EV,
+					featureVector.set(ReflectionUtils.simpleName(factor.getFactorScope().thingType) + MAX_EVIDENCE,
+							isMaxFrequency);
+					featureVector.set(
+							ReflectionUtils.simpleName(factor.getFactorScope().thingType) + GREATER_THAN_MAX_EV,
 							isMaxFrequency && realMax);
 				}
 			} else {
@@ -222,12 +222,14 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 				final Class<? extends IOBIEThing> mostFrequentClass = mostFrequentClasses.get(0).clazz;
 
 				final boolean isMaxFrequency = factor.getFactorScope().thingType == mostFrequentClass;
-				featureVector.set(factor.getFactorScope().thingType.getSimpleName() + MAX_EVIDENCE, isMaxFrequency);
-				featureVector.set(factor.getFactorScope().thingType.getSimpleName() + GREATER_THAN_MAX_EV,
-						isMaxFrequency && realMax);
-				featureVector.set(factor.getFactorScope().slotValueType.getSimpleName() + MAX_EVIDENCE, isMaxFrequency);
-				featureVector.set(factor.getFactorScope().slotValueType.getSimpleName() + GREATER_THAN_MAX_EV,
-						isMaxFrequency && realMax);
+
+				final String thingTypeName = ReflectionUtils.simpleName(factor.getFactorScope().thingType);
+				final String slotValueTypeName = ReflectionUtils.simpleName(factor.getFactorScope().slotValueType);
+
+				featureVector.set(thingTypeName + MAX_EVIDENCE, isMaxFrequency);
+				featureVector.set(thingTypeName + GREATER_THAN_MAX_EV, isMaxFrequency && realMax);
+				featureVector.set(slotValueTypeName + MAX_EVIDENCE, isMaxFrequency);
+				featureVector.set(slotValueTypeName + GREATER_THAN_MAX_EV, isMaxFrequency && realMax);
 			}
 
 		}

@@ -74,29 +74,29 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	/**
 	 * Training, development, test corpus.
 	 */
-	private BigramInternalCorpus trainingCorpus;
-	private BigramInternalCorpus developmentCorpus;
-	private BigramInternalCorpus testCorpus;
+	transient private BigramInternalCorpus trainingCorpus;
+	transient private BigramInternalCorpus developmentCorpus;
+	transient private BigramInternalCorpus testCorpus;
 
 	protected final Set<String> errors = new HashSet<>();
 
 	/**
 	 * This corpus contains all instances from training, development and test data.
 	 */
-	protected BigramInternalCorpus remainingFullCorpus;
+	transient protected BigramInternalCorpus remainingFullCorpus;
 
 	/**
 	 * All internal instances that were converted from the raw corpus.
 	 */
 	public final List<OBIEInstance> allExistingInternalInstances = new ArrayList<>();
 
-	private int currentFold = -1;
+	transient private int currentFold = -1;
 
 	public OBIECorpus getRawCorpus() {
 		return rawCorpus;
 	}
 
-	private int currentActiveLearningItertion = 0;
+	transient public int currentActiveLearningItertion = 0;
 
 	private final Set<Class<? extends INamedEntitityLinker>> entityLinker;
 
@@ -135,9 +135,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		AtomicInteger countEntities = new AtomicInteger();
 
-		rawCorpus.getAllInstanceNames().parallelStream().forEach(docName -> {
+		rawCorpus.getInstances().values().parallelStream().forEach(instance -> {
 			try {
-				OBIEInstance internalInstance = convertToInternalInstances(docName);
+				OBIEInstance internalInstance = convertToInternalInstances(instance);
 
 				allExistingInternalInstances.add(internalInstance);
 
@@ -186,7 +186,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		for (OBIEInstance internalInstance : trainingDocuments) {
 			for (TemplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
 					.getTemplateAnnotations()) {
-				checkForTextualAnnotations(internalAnnotation.get(), internalInstance.getName(),
+				checkForTextualAnnotations(internalAnnotation.getThing(), internalInstance.getName(),
 						internalInstance.getContent());
 			}
 		}
@@ -236,6 +236,13 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 	private BigramCorpusProvider applyParameterToCorpus(OBIERunParameter parameter) {
 		log.info("Apply parameter to corpus...");
+
+		if (this.distributer != null)
+			throw new IllegalStateException("Can not override corpus distribution configuration once it is set!");
+
+		log.info("Set corpus distributor to: " + parameter.corpusDistributor.getDistributorID());
+		this.distributer = parameter.corpusDistributor;
+
 		log.info("\"remove empty documents\"-flag was set to: " + parameter.excludeEmptyInstancesFromCorpus);
 		log.info("\"maximum number of annotations\" was set to: " + parameter.maxNumberOfEntityElements);
 
@@ -265,8 +272,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
 
-				if (!testLimitToAnnnotationElementsRecursively(annotation.get(), parameter.maxNumberOfEntityElements,
-						parameter.maxNumberOfDataTypeElements)) {
+				if (!testLimitToAnnnotationElementsRecursively(annotation.getThing(),
+						parameter.maxNumberOfEntityElements, parameter.maxNumberOfDataTypeElements)) {
 					log.debug("Number of elements in annotation exceeds limit of: "
 							+ parameter.maxNumberOfEntityElements + " for object property OR "
 							+ parameter.maxNumberOfDataTypeElements + " for datatype property" + "!Remove annotation "
@@ -367,9 +374,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * @param documents
 	 * 
 	 */
-	private OBIEInstance convertToInternalInstances(String docName) throws Exception {
-
-		Instance instance = rawCorpus.getInstances().get(docName);
+	private OBIEInstance convertToInternalInstances(Instance instance) throws Exception {
 
 		final InstanceTemplateAnnotations internalAnnotation = new InstanceTemplateAnnotations();
 
@@ -433,8 +438,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			fileIn.close();
 			log.info("Successfully loaded!");
 
-			return ((BigramCorpusProvider) data).setConfiguration(param.corpusDistributor)
-					.applyParameterToCorpus(param);
+			return ((BigramCorpusProvider) data).applyParameterToCorpus(param);
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 			log.warn(
@@ -442,16 +446,6 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			System.exit(COULD_NOT_LOAD_MODEL_ERROR);
 		}
 		throw new RuntimeException();
-	}
-
-	private BigramCorpusProvider setConfiguration(AbstractCorpusDistributor corpus) {
-
-		if (this.distributer != null)
-			throw new IllegalStateException("Can not override corpus distribution configuration once it is set!");
-
-		log.info("Set corpus distributor to: " + corpus.getClass().getSimpleName());
-		this.distributer = corpus;
-		return this;
 	}
 
 	@Override

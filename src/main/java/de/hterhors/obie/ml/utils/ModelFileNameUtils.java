@@ -63,7 +63,7 @@ public class ModelFileNameUtils {
 		return s.substring(0, s.length() - 1);
 	}
 
-	private static File buildModelDirectory(final OBIERunParameter parameter, final BigramCorpusProvider corpusProvider) {
+	private static File buildModelDirectory(final OBIERunParameter parameter) {
 
 		final StringBuffer modelDir = new StringBuffer();
 
@@ -87,9 +87,9 @@ public class ModelFileNameUtils {
 		return modelName.toString();
 	}
 
-	public static File getModelInfoFile(final OBIERunParameter parameter, final BigramCorpusProvider corpusProvider) {
+	public static File getModelInfoFile(final OBIERunParameter parameter) {
 
-		final File modelDir = buildModelDirectory(parameter, corpusProvider);
+		final File modelDir = buildModelDirectory(parameter);
 
 		if (!modelDir.exists()) {
 			modelDir.mkdirs();
@@ -110,7 +110,6 @@ public class ModelFileNameUtils {
 	}
 
 	public static File getModelFile(OBIERunParameter parameter, BigramCorpusProvider corpusProvider, final int epoch) {
-		return new File(buildModelDirectory(parameter, corpusProvider),
-				buildModelName(parameter, corpusProvider, epoch));
+		return new File(buildModelDirectory(parameter), buildModelName(parameter, corpusProvider, epoch));
 	}
 }

@@ -37,8 +37,8 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTe
 	public double computeScore(OBIEState state, InstanceTemplateAnnotations goldResult) {
 
 		List<IOBIEThing> predictions = state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
-				.map(s -> s.get()).collect(Collectors.toList());
-		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.get())
+				.map(s -> s.getThing()).collect(Collectors.toList());
+		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.getThing())
 				.collect(Collectors.toList());
 
 		// System.out.println("predictions = ");

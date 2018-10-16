@@ -52,7 +52,7 @@ public class TemplateAnnotation implements Serializable {
 		this.templateAnnotation = templateAnnotation;
 	}
 
-	public IOBIEThing get() {
+	public IOBIEThing getThing() {
 		return templateAnnotation;
 	}
 

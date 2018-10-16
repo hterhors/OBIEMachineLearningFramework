@@ -13,6 +13,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.templates.InBetweenContextTemplate.PositionPair;
 import de.hterhors.obie.ml.templates.LocalTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -55,19 +56,29 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 	class Scope extends FactorScope {
 
-		final OBIEInstance instance;
-		final String fromClassName;
-		final String toClassName;
-		final int sentenceDistance;
+		public final OBIEInstance internalInstance;
+		public final Class<? extends IOBIEThing> parentClass;
+		public final Integer parentCharacterOnset;
+		public final Integer parentCharacterOffset;
+		public final Class<? extends IOBIEThing> childClass;
+		public final Integer childCharacterOnset;
+		public final Integer childCharacterOffset;
+		public final String childTextMention;
 
-		public Scope(final String fromClassName, final String toClassName, int sentenceDistance,
-				OBIEInstance internalInstance, Class<? extends IOBIEThing> entityRootClassType) {
-			super(LocalTemplate.this, internalInstance, fromClassName, toClassName, sentenceDistance,
-					entityRootClassType);
-			this.instance = internalInstance;
-			this.fromClassName = fromClassName;
-			this.toClassName = toClassName;
-			this.sentenceDistance = sentenceDistance;
+		public Scope(OBIEInstance internalInstance, Class<? extends IOBIEThing> rootClassType,
+				Class<? extends IOBIEThing> parentClass, Integer parentCharacterOnset, Integer parentCharacterOffset,
+				Class<? extends IOBIEThing> childClass, Integer childCharacterOnset, Integer childCharacterOffset,
+				String childTextMention) {
+			super(LocalTemplate.this, internalInstance, parentClass, parentCharacterOnset, parentCharacterOffset,
+					childClass, childCharacterOnset, childCharacterOffset, childTextMention);
+			this.parentClass = parentClass;
+			this.parentCharacterOnset = parentCharacterOnset;
+			this.parentCharacterOffset = parentCharacterOffset;
+			this.childClass = childClass;
+			this.childCharacterOnset = childCharacterOnset;
+			this.childCharacterOffset = childCharacterOffset;
+			this.childTextMention = childTextMention;
+			this.internalInstance = internalInstance;
 		}
 
 	}
@@ -76,8 +87,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null,
-					entity.get());
+			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, null, entity.getThing());
 		}
 
 		return factors;
@@ -92,74 +102,9 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factor parent - child relation
 		 */
 		if (parent != null) {
-
-			if (enableDistantSupervision) {
-
-				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(child.getClass())
-						&& internalInstance.getNamedEntityLinkingAnnotations()
-								.containsClassAnnotations(parent.getClass())) {
-					Set<NERLClassAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
-							.getClassAnnotations(parent.getClass()).stream().collect(Collectors.toSet());
-
-					Set<NERLClassAnnotation> childNeras;
-					if (ReflectionUtils.isAnnotationPresent(child.getClass(), DatatypeProperty.class)) {
-						childNeras = internalInstance.getNamedEntityLinkingAnnotations()
-								.getClassAnnotationsByTextMention(child.getClass(), child.getTextMention());
-					} else {
-						childNeras = internalInstance.getNamedEntityLinkingAnnotations()
-								.getClassAnnotations(child.getClass()).stream().collect(Collectors.toSet());
-					}
-					if (childNeras != null) {
-						for (NERLClassAnnotation parentNera : parentNeras) {
-							for (NERLClassAnnotation childNera : childNeras) {
-
-								Integer fromPosition = Integer.valueOf(parentNera.onset + parentNera.text.length());
-								Class<? extends IOBIEThing> classType1 = parentNera.classType;
-								Integer toPosition = Integer.valueOf(childNera.onset);
-								Class<? extends IOBIEThing> classType2 = childNera.classType;
-								/*
-								 * Switch "from" and "to" if from is after to position.
-								 */
-								if (fromPosition > toPosition) {
-									fromPosition = Integer.valueOf(childNera.onset + childNera.text.length());
-									classType1 = childNera.classType;
-
-									toPosition = Integer.valueOf(parentNera.onset);
-									classType2 = parentNera.classType;
-								}
-								addFactor(factors, fromPosition, toPosition, classType1, classType2, internalInstance,
-										rootClassType);
-
-							}
-						}
-					} else {
-						/*
-						 * TODO: What to do here? print warning that
-						 */
-					}
-
-				}
-
-			} else {
-				Integer fromPosition = parent.getCharacterOffset();
-				Integer toPosition = child.getCharacterOnset();
-
-				if (fromPosition != null && toPosition != null) {
-					Class<? extends IOBIEThing> classType1 = parent.getClass();
-					Class<? extends IOBIEThing> classType2 = child.getClass();
-					/*
-					 * Switch "from" and "to" if from is after to position.
-					 */
-					if (fromPosition > toPosition) {
-						fromPosition = child.getCharacterOffset();
-						toPosition = parent.getCharacterOnset();
-						classType1 = child.getClass();
-						classType2 = parent.getClass();
-					}
-					addFactor(factors, fromPosition, toPosition, classType1, classType2, internalInstance,
-							rootClassType);
-				}
-			}
+			factors.add(new Scope(internalInstance, rootClassType, parent.getClass(), parent.getCharacterOnset(),
+					parent.getCharacterOffset(), child.getClass(), child.getCharacterOnset(),
+					child.getCharacterOffset(), child.getTextMention()));
 		}
 		ReflectionUtils.getAccessibleOntologyFields(child.getClass()).forEach(field -> {
 			try {
@@ -177,9 +122,98 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	private void addFactor(final List<Scope> factors, Integer fromPosition, Integer toPosition,
+	static class Distance {
+
+		public final String fromName;
+		public final String toName;
+		public final int distance;
+
+		public Distance(String fromClassNameType, String toClassNameType, int distance) {
+			this.fromName = fromClassNameType;
+			this.toName = toClassNameType;
+			this.distance = distance;
+		}
+
+	}
+
+	private List<Distance> computeDistances(OBIEInstance internalInstance, Class<? extends IOBIEThing> parentClass,
+			Integer parentCharOnset, Integer parentCharOffset, Class<? extends IOBIEThing> childClass,
+			Integer childCharOnset, Integer childCharOffset, final String childSurfaceForm) {
+
+		List<Distance> positionPairs = new ArrayList<>();
+
+		if (enableDistantSupervision) {
+
+			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(childClass)
+					&& internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(parentClass)) {
+
+				Set<NERLClassAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
+						.getClassAnnotations(parentClass).stream().collect(Collectors.toSet());
+
+				Set<NERLClassAnnotation> childNeras;
+				if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
+					childNeras = internalInstance.getNamedEntityLinkingAnnotations()
+							.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
+				} else {
+					childNeras = internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(childClass)
+							.stream().collect(Collectors.toSet());
+				}
+				if (childNeras != null) {
+					for (NERLClassAnnotation parentNera : parentNeras) {
+						for (NERLClassAnnotation childNera : childNeras) {
+
+							Integer fromPosition = Integer.valueOf(parentNera.onset + parentNera.text.length());
+							Class<? extends IOBIEThing> classType1 = parentNera.classType;
+							Integer toPosition = Integer.valueOf(childNera.onset);
+							Class<? extends IOBIEThing> classType2 = childNera.classType;
+							/*
+							 * Switch "from" and "to" if from is after to position.
+							 */
+							if (fromPosition > toPosition) {
+								fromPosition = Integer.valueOf(childNera.onset + childNera.text.length());
+								classType1 = childNera.classType;
+
+								toPosition = Integer.valueOf(parentNera.onset);
+								classType2 = parentNera.classType;
+							}
+							addPositionPairs(positionPairs, fromPosition, toPosition, classType1, classType2,
+									internalInstance);
+
+						}
+					}
+				} else {
+					/*
+					 * TODO: What to do here? print warning
+					 */
+				}
+
+			}
+
+		} else {
+			Integer fromPosition = parentCharOffset;
+			Integer toPosition = childCharOnset;
+
+			if (fromPosition != null && toPosition != null) {
+				Class<? extends IOBIEThing> classType1 = parentClass;
+				Class<? extends IOBIEThing> classType2 = childClass;
+				/*
+				 * Switch "from" and "to" if from is after to position.
+				 */
+				if (fromPosition > toPosition) {
+					fromPosition = childCharOffset;
+					toPosition = parentCharOnset;
+					classType1 = childClass;
+					classType2 = parentClass;
+				}
+				addPositionPairs(positionPairs, fromPosition, toPosition, classType1, classType2, internalInstance);
+			}
+		}
+		return positionPairs;
+	}
+
+	private void addPositionPairs(List<Distance> positionPairs, Integer fromPosition, Integer toPosition,
 			Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
-			OBIEInstance internalInstance, Class<? extends IOBIEThing> rootClassType) {
+			OBIEInstance internalInstance) {
 		/*
 		 * Inclusive
 		 */
@@ -194,8 +228,8 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 			final int class2SentenceIndex = internalInstance.charPositionToToken(toPosition).getSentenceIndex();
 			final int distance = Math.abs(class1SentenceIndex - class2SentenceIndex);
 
-			factors.add(new Scope(classType1.getSimpleName(), classType2.getSimpleName(), distance, internalInstance,
-					rootClassType));
+			positionPairs.add(new Distance(ReflectionUtils.simpleName(classType1),
+					ReflectionUtils.simpleName(classType2), distance));
 
 			for (Class<? extends IOBIEThing> rootClassType1 : ReflectionUtils.getSuperRootClasses(classType1)) {
 				if (!ReflectionUtils.isAnnotationPresent(rootClassType1, DatatypeProperty.class))
@@ -208,8 +242,8 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 							 * Add features for root classes of annotations.
 							 */
 
-							factors.add(new Scope(rootClassType1.getSimpleName(), rootClassType2.getSimpleName(),
-									distance, internalInstance, rootClassType));
+							positionPairs.add(new Distance(ReflectionUtils.simpleName(rootClassType1),
+									ReflectionUtils.simpleName(rootClassType2), distance));
 
 					}
 			}
@@ -223,24 +257,33 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 		Vector featureVector = factor.getFeatureVector();
 
-		final String fromName = factor.getFactorScope().fromClassName;
+		final List<Distance> positionPairs = computeDistances(factor.getFactorScope().internalInstance,
+				factor.getFactorScope().parentClass, factor.getFactorScope().parentCharacterOnset,
+				factor.getFactorScope().parentCharacterOffset, factor.getFactorScope().childClass,
+				factor.getFactorScope().childCharacterOnset, factor.getFactorScope().childCharacterOffset,
+				factor.getFactorScope().childTextMention);
 
-		final String toName = factor.getFactorScope().toClassName;
+		for (Distance positionPair : positionPairs) {
 
-		final int sentenceDistance = factor.getFactorScope().sentenceDistance;
-		// for (int localityDist = 0; localityDist < sentenceDistance;
-		// localityDist++) {
-		//
-		// featureVector.set(fromName + "->" + toName + " sentence dist < "
-		// + localityDist,
-		// localityDist < sentenceDistance);
-		// featureVector.set(class1Name + "->" + class2Name + " sentence
-		// dist > " + localityDist,
-		// sentenceDistance > localityDist);
-		//
-		// }
-		featureVector.set(fromName + "->" + toName + " sentence dist = " + sentenceDistance, true);
+			final String fromName = positionPair.fromName;
 
+			final String toName = positionPair.toName;
+
+			final int sentenceDistance = positionPair.distance;
+			// for (int localityDist = 0; localityDist < sentenceDistance;
+			// localityDist++) {
+			//
+			// featureVector.set(fromName + "->" + toName + " sentence dist < "
+			// + localityDist,
+			// localityDist < sentenceDistance);
+			// featureVector.set(class1Name + "->" + class2Name + " sentence
+			// dist > " + localityDist,
+			// sentenceDistance > localityDist);
+			//
+			// }
+			featureVector.set(fromName + "->" + toName + " sentence dist = " + sentenceDistance, true);
+
+		}
 	}
 
 }

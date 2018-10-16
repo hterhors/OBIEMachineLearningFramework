@@ -46,7 +46,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, entity.get()));
+			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getThing()));
 
 		}
 		return factors;

@@ -126,7 +126,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 			List<StateInstancePair> generatedStates = new ArrayList<>();
 
-			currentRootTemplate = OBIEUtils.deepClone(templateAnnotation.get());
+			currentRootTemplate = OBIEUtils.deepClone(templateAnnotation.getThing());
 
 			topDownRecursiveListCardinalityChanger(generatedStates, currentRootTemplate, new ArrayList<SlotPath>());
 

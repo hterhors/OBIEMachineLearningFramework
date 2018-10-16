@@ -101,7 +101,7 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			addRecursive(factors, entity.rootClassType, state.getInstance(), entity.get());
+			addRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 		return factors;
 	}

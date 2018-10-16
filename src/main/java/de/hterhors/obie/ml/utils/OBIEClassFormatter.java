@@ -63,13 +63,13 @@ public class OBIEClassFormatter {
 			sb.append("(" + c.getCharacterOnset() + "-" + c.getCharacterOffset() + ")");
 		}
 
-		if (ReflectionUtils.isAnnotationPresent(c.getClass(), DatatypeProperty.class) )
-			sb.append(getDepth(depth) + c.getClass().getSimpleName() + ": \"" + c.getTextMention() + "\" ("
+		if (ReflectionUtils.isAnnotationPresent(c.getClass(), DatatypeProperty.class))
+			sb.append(getDepth(depth) + ReflectionUtils.simpleName(c.getClass()) + ": \"" + c.getTextMention() + "\" ("
 					+ ((IDatatype) c).getSemanticValue() + ")");
 		else {
 			AbstractOBIEIndividual individual = ((AbstractOBIEIndividual) c.getClass()
 					.getField(OntologyInitializer.INDIVIDUAL_FIELD_NAME).get(c));
-			sb.append(getDepth(depth) + c.getClass().getSimpleName());
+			sb.append(getDepth(depth) + ReflectionUtils.simpleName(c.getClass()));
 			sb.append(individual == null ? " " : (" " + (printAll ? individual.nameSpace : "") + individual.name));
 		}
 
@@ -104,13 +104,13 @@ public class OBIEClassFormatter {
 								sb.append("(" + l.getCharacterOnset() + "-" + l.getCharacterOffset() + ": \""
 										+ l.getTextMention() + "\")");
 							}
-							if (ReflectionUtils.isAnnotationPresent(l.getClass(), DatatypeProperty.class) ) {
+							if (ReflectionUtils.isAnnotationPresent(l.getClass(), DatatypeProperty.class)) {
 								sb.append("\n");
-								sb.append(getDepth(depth + 1) + l.getClass().getSimpleName() + ": \""
+								sb.append(getDepth(depth + 1) + ReflectionUtils.simpleName(l.getClass()) + ": \""
 										+ l.getTextMention() + "\" (" + ((IDatatype) l).getSemanticValue() + ")");
 //							} else if (l.getClass().isAnnotationPresent(NamedIndividual.class)) {
 //								sb.append("\n");
-//								sb.append(getDepth(depth + 1) + l.getClass().getSimpleName());
+//								sb.append(getDepth(depth + 1) + l.getClass()));
 							} else {
 								sb.append("\n");
 								sb.append(toStringUsingRelfections(l, depth + 1, printAll, investigationRestriction));
@@ -126,11 +126,11 @@ public class OBIEClassFormatter {
 								+ ((IOBIEThing) field.get(c)).getTextMention() + "\")");
 					}
 					IOBIEThing cn = (IOBIEThing) field.get(c);
-					if (ReflectionUtils.isAnnotationPresent(cn.getClass(), DatatypeProperty.class) ) {
-						sb.append(getDepth(depth + 1) + cn.getClass().getSimpleName() + ": \"" + cn.getTextMention()
-								+ "\" (" + ((IDatatype) cn).getSemanticValue() + ")\n");
+					if (ReflectionUtils.isAnnotationPresent(cn.getClass(), DatatypeProperty.class)) {
+						sb.append(getDepth(depth + 1) + ReflectionUtils.simpleName(cn.getClass()) + ": \""
+								+ cn.getTextMention() + "\" (" + ((IDatatype) cn).getSemanticValue() + ")\n");
 //					} else if (cn.getClass().isAnnotationPresent(NamedIndividual.class)) {
-//						sb.append(ONE_DEPTH + cn.getClass().getSimpleName() + "\n");
+//						sb.append(ONE_DEPTH + cn.getClass()) + "\n");
 					} else {
 						sb.append("\n");
 						sb.append(toStringUsingRelfections(cn, depth + 1, printAll, investigationRestriction));

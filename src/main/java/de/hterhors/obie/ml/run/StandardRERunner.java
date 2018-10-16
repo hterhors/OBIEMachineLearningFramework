@@ -1,8 +1,12 @@
 package de.hterhors.obie.ml.run;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
+import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
 import de.hterhors.obie.ml.run.param.OBIERunParameter;
@@ -16,8 +20,39 @@ import sampling.DefaultSampler;
 
 public class StandardRERunner extends AbstractOBIERunner {
 
+	Random random;
+	Set<Integer> epochsTrainedWithObjective = new HashSet<>();
+
+	/**
+	 * TODO: REMOVE @see super
+	 * 
+	 * @param parameter
+	 * @param corpusProvider
+	 */
+	public StandardRERunner(OBIERunParameter parameter, BigramCorpusProvider corpusProvider) {
+		super(parameter, corpusProvider);
+		/*
+		 * TODO: parameterize ?
+		 */
+		this.random = new Random(100L);
+		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
+			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
+				epochsTrainedWithObjective.add(epoch);
+		}
+
+	}
+
 	public StandardRERunner(OBIERunParameter parameter) {
 		super(parameter);
+		/*
+		 * TODO: parameterize ?
+		 */
+		this.random = new Random(100L);
+		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
+			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
+				epochsTrainedWithObjective.add(epoch);
+		}
+
 	}
 
 	@Override
@@ -26,7 +61,7 @@ public class StandardRERunner extends AbstractOBIERunner {
 	}
 
 	@Override
-	protected List<EpochCallback> addEpochCallback(
+	protected List<EpochCallback> addEpochCallbackOnTrain(
 			DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler) {
 		return Arrays.asList(
 				//
@@ -51,7 +86,7 @@ public class StandardRERunner extends AbstractOBIERunner {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {
-							if (epoch != 2 && (epoch == 1 || Math.random() >= 0.9)) {
+							if (epochsTrainedWithObjective.contains(epoch)) {
 								log.info("Use Objective Score for sampling...");
 								trainWithObjective = true;
 								sampler.setTrainSamplingStrategy(OBIERunParameter.trainSamplingStrategyObjectiveScore);

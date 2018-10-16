@@ -27,6 +27,8 @@ import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 public class ReflectionUtils {
 
+	private static final Map<Class<?>, String> simpleNameChaching = new HashMap<>();
+
 	private static final Map<Class<? extends IOBIEThing>, List<Field>> chachedFields = new HashMap<>();
 	private static final Map<Class<? extends IOBIEThing>, Map<InvestigationRestriction, Set<String>>> chachedFieldNames = new HashMap<>();
 	private static final Map<Class<? extends IOBIEThing>, Map<InvestigationRestriction, List<Field>>> chachedFields_invest = new HashMap<>();
@@ -306,6 +308,17 @@ public class ReflectionUtils {
 
 		Objects.requireNonNull(declaredField);
 		return declaredField;
+	}
+
+	public static String simpleName(final Class<?> clazz) {
+
+		final String simpleName;
+
+		if ((simpleName = simpleNameChaching.get(clazz)) == null) {
+			simpleNameChaching.put(clazz, simpleName);
+		}
+
+		return simpleName;
 	}
 
 }

@@ -94,7 +94,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 			this.currentTempalateAnnotationID = templateAnnotation.getAnnotationID();
 
-			for (StateInstancePair stateInstancePair : topDownRecursiveSlotFilling(templateAnnotation.get(),
+			for (StateInstancePair stateInstancePair : topDownRecursiveSlotFilling(templateAnnotation.getThing(),
 					templateAnnotation.rootClassType, true)) {
 				proposalStates.add(stateInstancePair.state);
 			}
@@ -117,11 +117,11 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		final int rootEntitySentenceIndex;
 
 		if (enableDiscourseProgression) {
-			if (templateAnnotation.get().getCharacterOnset() == null) {
+			if (templateAnnotation.getThing().getCharacterOnset() == null) {
 				rootEntitySentenceIndex = 0;
 			} else {
 				rootEntitySentenceIndex = currentState.getInstance()
-						.charPositionToToken(templateAnnotation.get().getCharacterOnset()).getSentenceIndex();
+						.charPositionToToken(templateAnnotation.getThing().getCharacterOnset()).getSentenceIndex();
 			}
 		} else {
 			rootEntitySentenceIndex = 0;

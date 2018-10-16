@@ -63,7 +63,7 @@ public class UpperBound {
 			log.info(doc.getName());
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> (IOBIEThing) e.get()).collect(Collectors.toList());
+					.map(e -> (IOBIEThing) e.getThing()).collect(Collectors.toList());
 
 			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
 
@@ -104,7 +104,7 @@ public class UpperBound {
 
 		log.info("______GoldAnnotations:______");
 		doc.getGoldAnnotation().getTemplateAnnotations()
-				.forEach(s -> log.info(OBIEClassFormatter.format(s.get(), false)));
+				.forEach(s -> log.info(OBIEClassFormatter.format(s.getThing(), false)));
 		log.info("____________________________");
 		log.info("_________Predicted:_________");
 		upperBoundPredictions.forEach(f -> log.info(OBIEClassFormatter.format(f, false)));
@@ -142,7 +142,7 @@ public class UpperBound {
 
 			maxIsReached = ++counter == MAX_CARDINALITY;
 			try {
-				IOBIEThing goldModel = (IOBIEThing) goldAnnotation.get();
+				IOBIEThing goldModel = (IOBIEThing) goldAnnotation.getThing();
 				IOBIEThing predictionModel = null;
 
 				/*

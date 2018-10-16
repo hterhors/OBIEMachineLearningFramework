@@ -1,6 +1,5 @@
 package de.hterhors.obie.ml.scorer;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -20,11 +19,11 @@ public class OBIEScorer implements Scorer {
 	private static Logger log = LogManager.getFormatterLogger(OBIEScorer.class.getName());
 
 	/**
-	 * The scorer scores a state w.r.t. the model. It retrieves all factors
-	 * related to the state and multiplies their individual scores. These
-	 * individual factor scores are basically the exponential of the dot product
-	 * of the feature values and the weights of the template of the factor:
-	 * <i>exp(factor.features * factor.template.weights)</i> for all factors.
+	 * The scorer scores a state w.r.t. the model. It retrieves all factors related
+	 * to the state and multiplies their individual scores. These individual factor
+	 * scores are basically the exponential of the dot product of the feature values
+	 * and the weights of the template of the factor: <i>exp(factor.features *
+	 * factor.template.weights)</i> for all factors.
 	 * 
 	 * @param model
 	 */
@@ -32,37 +31,46 @@ public class OBIEScorer implements Scorer {
 	}
 
 	/**
-	 * Computes a score for each passed state given the individual factors.
-	 * Scoring is done is done in parallel if flag is set and scorer
-	 * implementation does not override this method.
+	 * Computes a score for each passed state given the individual factors. Scoring
+	 * is done is done in parallel if flag is set and scorer implementation does not
+	 * override this method.
 	 * 
 	 * @param states
 	 * @param multiThreaded
 	 */
 	public void score(List<? extends AbstractState<?>> states, boolean multiThreaded) {
+
 		Stream<? extends AbstractState<?>> stream = Utils.getStream(states, multiThreaded);
+
 		stream.forEach(s -> {
-			scoreSingleState(s);
+			try {
+				s.setModelScore(scoreSingleState(s.getFactorGraph().getFactors()));
+			} catch (MissingFactorException e) {
+				e.printStackTrace();
+			}
 //			System.out.println(s);
 		});
 	}
 
 	/**
-	 * Computes the score of this state according to the trained model. The
-	 * computed score is returned but also updated in the state objects
-	 * <i>score</i> field.
+	 * Computes the score of this state according to the trained model. The computed
+	 * score is returned but also updated in the state objects <i>score</i> field.
 	 * 
-	 * @param state
+	 * @param list
 	 * @return
 	 */
 
-	protected double scoreSingleState(AbstractState<?> state) {
-		Collection<Factor<?>> factors = null;
-		try {
-			factors = state.getFactorGraph().getFactors();
-		} catch (MissingFactorException e) {
-			e.printStackTrace();
-		}
+	protected double scoreSingleState(List<Factor<? extends FactorScope>> factors) {
+
+		if (factors.size() <= 0)
+			return Double.MIN_VALUE;
+
+//		Collection<Factor<?>> factors = null;
+//		try {
+//			factors = list.getFactorGraph().getFactors();
+//		} catch (MissingFactorException e) {
+//			e.printStackTrace();
+//		}
 		// final Map<Class<? extends IOBIEThing>, Double> influence = new
 		// HashMap<>();
 
@@ -84,16 +92,6 @@ public class OBIEScorer implements Scorer {
 			double dotProduct = featureVector.dotProduct(weights);// /
 																	// counter.get(key);
 			double factorScore = Math.exp(dotProduct);
-			if (factor.getFactorScope() instanceof FactorScope) {
-				// ActiveLearningScope als = (ActiveLearningScope)
-				// factor.getFactorScope();
-				// for (Class<? extends IOBIEThing> variableKey :
-				// als.getInfluencedVariables()) {
-				// influence.put(variableKey,
-				// influence.getOrDefault(variableKey, 1D) * factorScore);
-				// }
-
-			}
 			// System.out.println(factorScore);
 			// log.debug(factorScore);
 			score *= factorScore;// / counter.get(key);
@@ -102,12 +100,8 @@ public class OBIEScorer implements Scorer {
 		// ((OBIEState) state).setInfluence(influence);
 		// }
 
-		if (factors.size() > 0)
-			state.setModelScore(score);
-		else
-			state.setModelScore(Double.MIN_VALUE);
-
 		return score;
+
 	}
 
 }

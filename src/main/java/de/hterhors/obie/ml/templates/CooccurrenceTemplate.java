@@ -131,7 +131,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		internalInstance = state.getInstance();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 			entityRootClassType = entity.rootClassType;
-			addFactorRecursive(factors, entity.get());
+			addFactorRecursive(factors, entity.getThing());
 		}
 
 		return factors;

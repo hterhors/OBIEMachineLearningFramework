@@ -310,7 +310,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		builder.append("]: ");
 		for (TemplateAnnotation e : currentTemplateAnnotations.getTemplateAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.get(), parameter.investigationRestriction));
+			builder.append(OBIEClassFormatter.format(e.getThing(), parameter.investigationRestriction));
 			builder.append("\n");
 		}
 		return builder.toString();
