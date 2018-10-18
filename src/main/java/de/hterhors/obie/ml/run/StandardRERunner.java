@@ -23,25 +23,6 @@ public class StandardRERunner extends AbstractOBIERunner {
 	Random random;
 	Set<Integer> epochsTrainedWithObjective = new HashSet<>();
 
-	/**
-	 * TODO: REMOVE @see super
-	 * 
-	 * @param parameter
-	 * @param corpusProvider
-	 */
-	public StandardRERunner(OBIERunParameter parameter, BigramCorpusProvider corpusProvider) {
-		super(parameter, corpusProvider);
-		/*
-		 * TODO: parameterize ?
-		 */
-		this.random = new Random(100L);
-		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
-			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
-				epochsTrainedWithObjective.add(epoch);
-		}
-
-	}
-
 	public StandardRERunner(OBIERunParameter parameter) {
 		super(parameter);
 		/*
@@ -57,7 +38,7 @@ public class StandardRERunner extends AbstractOBIERunner {
 
 	@Override
 	public ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> getObjectiveFunction() {
-		return new REObjectiveFunction(parameter);
+		return new REObjectiveFunction(getParameter());
 	}
 
 	@Override
@@ -70,7 +51,7 @@ public class StandardRERunner extends AbstractOBIERunner {
 					@Override
 					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 
-						if (!(parameter.corpusDistributor instanceof ActiveLearningDistributor)
+						if (!(getParameter().corpusDistributor instanceof ActiveLearningDistributor)
 								|| numberOfEpochs == epoch) {
 
 							saveModel(epoch);
