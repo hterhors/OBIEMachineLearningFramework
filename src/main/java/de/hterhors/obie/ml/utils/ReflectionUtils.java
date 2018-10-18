@@ -315,7 +315,7 @@ public class ReflectionUtils {
 		final String simpleName;
 
 		if ((simpleName = simpleNameChaching.get(clazz)) == null) {
-			simpleNameChaching.put(clazz, simpleName);
+			simpleNameChaching.put(clazz, clazz.getSimpleName());
 		}
 
 		return simpleName;

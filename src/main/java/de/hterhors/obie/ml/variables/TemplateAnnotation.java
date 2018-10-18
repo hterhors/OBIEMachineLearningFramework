@@ -31,7 +31,7 @@ public class TemplateAnnotation implements Serializable {
 	private IOBIEThing templateAnnotation;
 	final String annotationID;
 
-	public IOBIEThing getInitializationClass() {
+	public IOBIEThing getInitializationThing() {
 		return initClass;
 	}
 
