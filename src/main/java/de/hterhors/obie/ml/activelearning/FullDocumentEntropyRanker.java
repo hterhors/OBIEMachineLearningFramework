@@ -77,7 +77,7 @@ public class FullDocumentEntropyRanker implements IActiveLearningDocumentRanker 
 			/*
 			 * Normalize by length
 			 */
-			entropy = 1 - (entropy / maxEntropy);
+			entropy /= maxEntropy;
 
 			entropyInstances.add(new RankedInstance(entropy, predictedInstance.getInstance()));
 
