@@ -128,7 +128,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.getThing().equals(resultEntity.getInitializationClass()))
+				if (!resultEntity.getThing().equals(resultEntity.getInitializationThing()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
@@ -221,7 +221,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.getThing().equals(resultEntity.getInitializationClass()))
+				if (!resultEntity.getThing().equals(resultEntity.getInitializationThing()))
 					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
 			}
 
@@ -294,7 +294,7 @@ public class EvaluatePrediction {
 			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.getThing().equals(resultEntity.getInitializationClass()))
+				if (!resultEntity.getThing().equals(resultEntity.getInitializationThing()))
 					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
 			}
 
