@@ -67,7 +67,7 @@ public abstract class AbstractOBIERunner {
 	/**
 	 * Final set of parameter that are shared across the system.
 	 */
-	final public OBIERunParameter parameter;
+	private OBIERunParameter parameter;
 
 	/**
 	 * Objective function specified by the implementing runner class. E.g. in the
@@ -104,45 +104,6 @@ public abstract class AbstractOBIERunner {
 
 	public DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler;
 
-	/**
-	 * TODO: REMOVE THIS CONSTRUCTOR just clone but with setting corpus provider
-	 * 
-	 * @param parameter
-	 * @param corpusProvider
-	 */
-	public AbstractOBIERunner(OBIERunParameter parameter, BigramCorpusProvider corpusProvider) {
-		log.info("Initialize OBIE runner...");
-		this.parameter = parameter;
-
-		log.debug("Parameter: " + this.parameter.toInfoString());
-		this.initializer = d -> new OBIEState(d, parameter);
-		this.objectiveFunction = getObjectiveFunction();
-
-		this.corpusProvider = corpusProvider;
-
-		this.maxObjectiveScore = new StopAtMaxObjectiveScore(parameter.maxNumberOfSamplingSteps);
-		this.maxModelScoreStoppingCriteria = new StopAtRepeatedModelScore(parameter.maxNumberOfSamplingSteps,
-				3 * parameter.explorers.size());
-
-		try {
-			reset();
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
-
-		try {
-			File infoFile = ModelFileNameUtils.getModelInfoFile(this.parameter);
-			PrintStream infoPrinter = new PrintStream(infoFile);
-			infoPrinter.println(parameter.toInfoString());
-			infoPrinter.close();
-			log.info("Create info-file of current run in:" + infoFile.getAbsolutePath());
-		} catch (IOException e) {
-			e.printStackTrace();
-			log.warn("Could not log info file!");
-		}
-
-	}
-
 	public AbstractOBIERunner(OBIERunParameter parameter) {
 		log.info("Initialize OBIE runner...");
 		this.parameter = parameter;
@@ -156,11 +117,7 @@ public abstract class AbstractOBIERunner {
 		this.maxModelScoreStoppingCriteria = new StopAtRepeatedModelScore(parameter.maxNumberOfSamplingSteps,
 				3 * parameter.explorers.size());
 
-		try {
-			reset();
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
+		clean(parameter);
 
 		try {
 			File infoFile = ModelFileNameUtils.getModelInfoFile(this.parameter);
@@ -174,6 +131,32 @@ public abstract class AbstractOBIERunner {
 		}
 	}
 
+	public OBIERunParameter getParameter() {
+		return parameter;
+	}
+
+	public void clean(OBIERunParameter cleanParameter) {
+		this.parameter = cleanParameter;
+		try {
+			this.templates = newTemplates();
+
+			this.scorer = newScorer();
+
+			this.model = newModel(this.scorer, this.templates);
+
+			this.explorers = newExplorer();
+
+			this.sampler = newSampler(this.model, this.explorers, this.scorer);
+
+			this.learner = newLearner(this.model);
+
+			this.trainer = newTrainer();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+
+	}
+
 	/**
 	 * Continues training for a given set of documents using the previous loaded or
 	 * traind model.
@@ -181,7 +164,7 @@ public abstract class AbstractOBIERunner {
 	 * @param trainingInstances
 	 * @throws Exception
 	 */
-	public void continueTraining(List<OBIEInstance> trainingInstances) throws Exception {
+	private void continueTraining(List<OBIEInstance> trainingInstances) throws Exception {
 
 		/*
 		 * Sort to ensure same order before shuffling.
@@ -199,8 +182,8 @@ public abstract class AbstractOBIERunner {
 
 	}
 
-	public void cleanTrain() throws Exception {
-		cleanTrain(new ArrayList<>(corpusProvider.getTrainingCorpus().getInternalInstances()));
+	public void train() throws Exception {
+		train(new ArrayList<>(corpusProvider.getTrainingCorpus().getInternalInstances()));
 	}
 
 	/**
@@ -209,9 +192,7 @@ public abstract class AbstractOBIERunner {
 	 * @param trainingInstances
 	 * @throws Exception
 	 */
-	public void cleanTrain(List<OBIEInstance> trainingInstances) throws Exception {
-
-		reset();
+	public void train(List<OBIEInstance> trainingInstances) throws Exception {
 
 		List<EpochCallback> epochCallbacks = addEpochCallbackOnTrain(sampler);
 
@@ -222,24 +203,6 @@ public abstract class AbstractOBIERunner {
 		continueTraining(trainingInstances);
 
 //		trainer.train(sampler, initializer, learner, trainingInstances, parameter.epochs);
-	}
-
-	public void reset() throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-			InvocationTargetException, NoSuchMethodException {
-
-		this.templates = newTemplates();
-
-		this.scorer = newScorer();
-
-		this.model = newModel(this.scorer, this.templates);
-
-		this.explorers = newExplorer();
-
-		this.sampler = newSampler(this.model, this.explorers, this.scorer);
-
-		this.learner = newLearner(this.model);
-
-		this.trainer = newTrainer();
 	}
 
 	private Model<OBIEInstance, OBIEState> newModel(Scorer scorer,
