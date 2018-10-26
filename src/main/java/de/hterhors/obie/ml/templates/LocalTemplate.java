@@ -12,8 +12,8 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
-import de.hterhors.obie.ml.templates.InBetweenContextTemplate.PositionPair;
+import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.templates.InBetweenContextTemplate.PositionPairContainer;
 import de.hterhors.obie.ml.templates.LocalTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -49,7 +49,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	public LocalTemplate(OBIERunParameter parameter) {
+	public LocalTemplate(RunParameter parameter) {
 		super(parameter);
 		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
 	}

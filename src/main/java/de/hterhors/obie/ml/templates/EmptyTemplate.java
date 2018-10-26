@@ -11,7 +11,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.EmptyTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -27,7 +27,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public EmptyTemplate(OBIERunParameter parameter) {
+	public EmptyTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

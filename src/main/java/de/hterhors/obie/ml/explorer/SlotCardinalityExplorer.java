@@ -19,7 +19,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -78,7 +78,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 	private final InvestigationRestriction investigationRestriction;
 
-	private String currentAnnotationID;
+	private long currentAnnotationID;
 
 	private final Random rnd;
 
@@ -98,7 +98,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 	 * @throws OWLOntologyCreationException
 	 * @throws ClassNotFoundException
 	 */
-	public SlotCardinalityExplorer(OBIERunParameter param) {
+	public SlotCardinalityExplorer(RunParameter param) {
 		this.maxNumberOfEntityElements = param.maxNumberOfEntityElements;
 		this.maxNumberOfDataTypeElementsInList = param.maxNumberOfDataTypeElements;
 		this.exploreClassesWithoutTextualEvidence = param.exploreClassesWithoutTextualEvidence;

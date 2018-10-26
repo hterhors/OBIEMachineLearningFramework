@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.SentenceLocalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -56,7 +56,7 @@ import learning.Vector;
  */
 public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public SentenceLocalityTemplate(OBIERunParameter parameter) {
+	public SentenceLocalityTemplate(RunParameter parameter) {
 		super(parameter);
 		// TODO Auto-generated constructor stub
 	}

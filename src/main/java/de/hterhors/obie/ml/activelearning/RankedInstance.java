@@ -4,11 +4,11 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
 
 public class RankedInstance implements Comparable<RankedInstance> {
 
-	protected final double entropy;
+	protected final double value;
 	protected final OBIEInstance instance;
 
-	public RankedInstance(double entropy, OBIEInstance instance) {
-		this.entropy = entropy;
+	public RankedInstance(double value, OBIEInstance instance) {
+		this.value = value;
 		this.instance = instance;
 	}
 
@@ -17,12 +17,12 @@ public class RankedInstance implements Comparable<RankedInstance> {
 		/*
 		 * Highest entropy first
 		 */
-		return -Double.compare(entropy, o.entropy);
+		return -Double.compare(value, o.value);
 	}
 
 	@Override
 	public String toString() {
-		return "EntropyInstance [entropy=" + entropy + ", instance=" + instance + "]";
+		return "RankedInstance [value=" + value + ", instance=" + instance + "]";
 	}
 
 }

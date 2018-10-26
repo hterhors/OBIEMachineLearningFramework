@@ -14,7 +14,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.InBetweenContextTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -62,12 +62,12 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	public InBetweenContextTemplate(OBIERunParameter parameter) {
+	public InBetweenContextTemplate(RunParameter parameter) {
 		super(parameter);
 		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
 	}
 
-	static class PositionPair {
+	static class PositionPairContainer {
 
 		final String fromClassNameType;
 		final int fromTokenIndex;
@@ -75,7 +75,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 		final String toClassNameType;
 		final int toTokenIndex;
 
-		public PositionPair(String fromClassNameType, int fromTokenIndex, String toClassNameType, int toTokenIndex) {
+		public PositionPairContainer(String fromClassNameType, int fromTokenIndex, String toClassNameType, int toTokenIndex) {
 			this.fromClassNameType = fromClassNameType;
 			this.fromTokenIndex = fromTokenIndex;
 			this.toClassNameType = toClassNameType;
@@ -154,12 +154,12 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	}
 
-	private List<PositionPair> computePositionPairs(OBIEInstance internalInstance,
+	private List<PositionPairContainer> computePositionPairs(OBIEInstance internalInstance,
 			Class<? extends IOBIEThing> parentClass, Integer parentCharOnset, Integer parentCharOffset,
 			Class<? extends IOBIEThing> childClass, Integer childCharOnset, Integer childCharOffset,
 			final String childSurfaceForm) {
 
-		List<PositionPair> positionsPairs = new ArrayList<>();
+		List<PositionPairContainer> positionsPairs = new ArrayList<>();
 
 		if (enableDistantSupervision) {
 
@@ -232,7 +232,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 		return positionsPairs;
 	}
 
-	private void addPositionPair(final List<PositionPair> positionPairs, Integer fromPosition, Integer toPosition,
+	private void addPositionPair(final List<PositionPairContainer> positionPairs, Integer fromPosition, Integer toPosition,
 			Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
 			OBIEInstance internalInstance) {
 		try {
@@ -247,7 +247,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 			int toTokenIndex = internalInstance.charPositionToTokenPosition(toPosition);
 
 			if (toTokenIndex - fromTokenIndex <= MAX_TOKENS_DISTANCE && toTokenIndex - fromTokenIndex >= 0) {
-				positionPairs.add(new PositionPair(ReflectionUtils.simpleName(classType1), fromTokenIndex,
+				positionPairs.add(new PositionPairContainer(ReflectionUtils.simpleName(classType1), fromTokenIndex,
 						ReflectionUtils.simpleName(classType2), toTokenIndex));
 
 				for (Class<? extends IOBIEThing> rootClassType1 : ReflectionUtils.getSuperRootClasses(classType1)) {
@@ -262,7 +262,7 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 								 * Add features for root classes of annotations.
 								 */
 
-								positionPairs.add(new PositionPair(ReflectionUtils.simpleName(rootClassType1),
+								positionPairs.add(new PositionPairContainer(ReflectionUtils.simpleName(rootClassType1),
 										fromTokenIndex, ReflectionUtils.simpleName(rootClassType2), toTokenIndex));
 
 						}
@@ -283,13 +283,13 @@ public class InBetweenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 		final List<Token> tokens = factor.getFactorScope().internalInstance.getTokens();
 
-		final List<PositionPair> positionPairs = computePositionPairs(factor.getFactorScope().internalInstance,
+		final List<PositionPairContainer> positionPairs = computePositionPairs(factor.getFactorScope().internalInstance,
 				factor.getFactorScope().parentClass, factor.getFactorScope().parentCharacterOnset,
 				factor.getFactorScope().parentCharacterOffset, factor.getFactorScope().childClass,
 				factor.getFactorScope().childCharacterOnset, factor.getFactorScope().childCharacterOffset,
 				factor.getFactorScope().childTextMention);
 
-		for (PositionPair positionPair : positionPairs) {
+		for (PositionPairContainer positionPair : positionPairs) {
 
 			final String fromName = positionPair.fromClassNameType;
 			final int fromTokenIndex = positionPair.fromTokenIndex;

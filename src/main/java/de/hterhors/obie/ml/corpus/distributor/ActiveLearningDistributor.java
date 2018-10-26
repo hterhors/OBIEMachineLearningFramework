@@ -47,22 +47,22 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 	/**
 	 * Shuffle of data sets from the training data.
 	 */
-	public final Random random;
+	private final Random random;
 
 	/**
 	 * The fraction of the training data to start with.
 	 */
-	public final float initialTrainingSelectionFraction;
+	private final float initialTrainingSelectionFraction;
 
 	/**
 	 * The proportion of the training data.
 	 */
-	public final int trainingProportion;
+	private final int trainingProportion;
 
 	/**
 	 * The proportion of the test data.
 	 */
-	public final int testProportion;
+	private final int testProportion;
 
 	/**
 	 * The number of new training data per active learning step.
@@ -210,6 +210,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		/**
 		 * TODO: If development is given as input than take this as initial if desired.
 		 */
+		Collections.sort(corpusProvider.allExistingInternalInstances, OBIEInstance.COMPARE_BY_NAME);
 		Collections.shuffle(corpusProvider.allExistingInternalInstances, random);
 
 		final int totalNumberOfDocuments = Math.round(corpusProvider.allExistingInternalInstances.size());

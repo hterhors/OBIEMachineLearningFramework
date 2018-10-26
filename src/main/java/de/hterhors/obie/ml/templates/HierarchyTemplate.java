@@ -14,7 +14,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.HierarchyTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -35,7 +35,7 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	final private static String FEATURE_GREATER_THAN_HIERARCHY = "Type_of_%s_has_hierarchy > %d";
 	final private static String FEATURE_EQUAL_HIERARCHY = "Type_of_%s_has_hierarchy = %d";
 
-	public HierarchyTemplate(OBIERunParameter parameter) {
+	public HierarchyTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

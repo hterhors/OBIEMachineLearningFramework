@@ -19,8 +19,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.set.SynchronizedSet;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 
 import corpus.SampledInstance;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
@@ -35,13 +37,14 @@ import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
-import de.hterhors.obie.ml.run.AbstractOBIERunner;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import learning.Trainer;
 
 /**
  * This class provide the corpora for training, development and test data.
@@ -74,9 +77,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	/**
 	 * Training, development, test corpus.
 	 */
-	transient private BigramInternalCorpus trainingCorpus;
-	transient private BigramInternalCorpus developmentCorpus;
-	transient private BigramInternalCorpus testCorpus;
+	transient public BigramInternalCorpus trainingCorpus;
+	transient public BigramInternalCorpus developmentCorpus;
+	transient public BigramInternalCorpus testCorpus;
 
 	protected final Set<String> errors = new HashSet<>();
 
@@ -122,7 +125,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		log.info("Apply NEL-tools to " + rawCorpus.getAllInstanceNames().size() + " instances...");
 		log.info("Instantiate NEL-tools...");
-		final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
+		final Set<INamedEntitityLinker> linker = this.entityLinker.stream().map(linkerClass -> {
 			try {
 				return linkerClass.getConstructor(Set.class).newInstance(this.rawCorpus.getRootClasses());
 			} catch (Exception e) {
@@ -234,7 +237,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		});
 	}
 
-	private BigramCorpusProvider applyParameterToCorpus(OBIERunParameter parameter) {
+	private BigramCorpusProvider applyParameterToCorpus(RunParameter parameter) {
 		log.info("Apply parameter to corpus...");
 
 		if (this.distributer != null)
@@ -312,9 +315,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		log.info("Distributed instances: ~"
 				+ (Math.round((float) this.remainingFullCorpus.getInternalInstances().size()
-						/ (float) this.allExistingInternalInstances.size() * 100))
-				+ "% (" + this.remainingFullCorpus.getInternalInstances().size() + "/"
-				+ this.allExistingInternalInstances.size() + ")");
+						/ (float) totalNumberOfInstances * 100))
+				+ "% (" + this.remainingFullCorpus.getInternalInstances().size() + "/" + totalNumberOfInstances + ")");
 
 		if (distributer instanceof FoldCrossCorpusDistributor) {
 			final AtomicInteger i = new AtomicInteger(0);
@@ -420,7 +422,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public static BigramCorpusProvider loadCorpusFromFile(final OBIERunParameter param) {
+	public static BigramCorpusProvider loadCorpusFromFile(final RunParameter param) {
 
 		final File file = CorpusFileTools.buildAnnotatedBigramCorpusFile(
 				param.projectEnvironment.getBigramCorpusFileDirectory(), param.corpusNamePrefix, param.rootSearchTypes,
@@ -498,7 +500,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker ranker) {
+	public List<OBIEInstance> updateActiveLearning(AbstractRunner runner, IActiveLearningDocumentRanker ranker) {
 
 		if (!(distributer instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException("Configuration does not support active learning validation: "
@@ -508,33 +510,43 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		final int remaining = getDevelopCorpus().getInternalInstances().size();
 
-		final List<OBIEInstance> trainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
-
-		if (remaining <= ((ActiveLearningDistributor) distributer).b) {
-			trainingInstances.addAll(getDevelopCorpus().getInternalInstances());
-
-			this.developmentCorpus = new BigramInternalCorpus(Collections.emptyList());
-
-			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
-
+		if (remaining == 0) {
 			return Collections.emptyList();
 		} else {
 
+			final List<OBIEInstance> trainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
+
+			Level trainerLevel = LogManager.getFormatterLogger(Trainer.class.getName()).getLevel();
+			Level runnerLevel = LogManager.getFormatterLogger(AbstractRunner.class).getLevel();
+
+			Configurator.setLevel(Trainer.class.getName(), Level.FATAL);
+			Configurator.setLevel(AbstractRunner.class.getName(), Level.FATAL);
+
 			log.info("Rank remaining training instances (" + getDevelopCorpus().getInternalInstances().size()
 					+ ") using " + ranker.getClass().getSimpleName() + "...");
-			List<OBIEInstance> remainingInstances = ranker.rank((ActiveLearningDistributor) distributer, runner,
-					getDevelopCorpus().getInternalInstances());
+			List<OBIEInstance> rankedInstances = ranker.rank(getDevelopCorpus().getInternalInstances());
 			log.info("done!");
 
-			List<OBIEInstance> newInstances = remainingInstances.subList(0,
-					((ActiveLearningDistributor) distributer).b);
+			Configurator.setLevel(Trainer.class.getName(), trainerLevel);
+			Configurator.setLevel(AbstractRunner.class.getName(), runnerLevel);
+
+			List<OBIEInstance> newInstances;
+			List<OBIEInstance> remainingInstances;
+
+			if (remaining <= ((ActiveLearningDistributor) distributer).b) {
+				newInstances = rankedInstances;
+				remainingInstances = Collections.emptyList();
+			} else {
+				newInstances = rankedInstances.subList(0, ((ActiveLearningDistributor) distributer).b);
+				remainingInstances = new ArrayList<>(
+						rankedInstances.subList(((ActiveLearningDistributor) distributer).b, rankedInstances.size()));
+			}
 
 			trainingInstances.addAll(newInstances);
 
 			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
 
-			this.developmentCorpus = new BigramInternalCorpus(new ArrayList<>(remainingInstances
-					.subList(((ActiveLearningDistributor) distributer).b, remainingInstances.size())));
+			this.developmentCorpus = new BigramInternalCorpus(remainingInstances);
 
 			return newInstances;
 		}

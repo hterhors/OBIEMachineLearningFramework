@@ -3,7 +3,7 @@ package de.hterhors.obie.ml.explorer;
 import java.util.Arrays;
 import java.util.List;
 
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.OBIEState;
 
 /**
@@ -17,7 +17,7 @@ import de.hterhors.obie.ml.variables.OBIEState;
  */
 public class NoChangeExplorer extends AbstractOBIEExplorer {
 
-	public NoChangeExplorer(OBIERunParameter param) throws ClassNotFoundException {
+	public NoChangeExplorer(RunParameter param) throws ClassNotFoundException {
 	}
 
 	@Override

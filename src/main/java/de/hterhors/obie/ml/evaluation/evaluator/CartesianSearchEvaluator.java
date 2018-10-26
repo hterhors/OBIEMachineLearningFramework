@@ -187,8 +187,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 */
 	@Override
 	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
-
-		final int maxSize = Math.max(gold.size(), prediction.size());
+			final int maxSize = Math.max(gold.size(), prediction.size());
 
 		if (maxSize > maxNumberOfAnnotations) {
 			log.warn("Skip comparison... to many cases as defined in the parameter!");

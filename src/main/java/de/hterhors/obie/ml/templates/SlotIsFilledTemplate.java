@@ -10,7 +10,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.SlotIsFilledTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -27,24 +27,24 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LogManager.getFormatterLogger(SlotIsFilledTemplate.class.getName());
 
-	public SlotIsFilledTemplate(OBIERunParameter parameter) {
+	public SlotIsFilledTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 
 	class Scope extends FactorScope {
 
-		final String templateName;
+		final String templateAnnotationName;
 		final int numberOfSlotFiller;
 		final int numberOfDistinctSlotFiller;
-		final String propertyNameChain;
+		final String slotChain;
 
 		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				String templateName, int numberOfSlotFiller, String propertyNameChain, int numberOfDistinctSlotFiller) {
 			super(template, templateName, numberOfSlotFiller, numberOfDistinctSlotFiller, propertyNameChain,
 					entityRootClassType);
 			this.numberOfSlotFiller = numberOfSlotFiller;
-			this.templateName = templateName;
-			this.propertyNameChain = propertyNameChain;
+			this.templateAnnotationName = templateName;
+			this.slotChain = propertyNameChain;
 			this.numberOfDistinctSlotFiller = numberOfDistinctSlotFiller;
 		}
 	}
@@ -114,12 +114,6 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 	private int distinctSize(List<IOBIEThing> data, boolean isDatatype) {
 
-		/**
-		 * TODO: FIX THAT DATA MIGHT BE NULL IN EXPLORER!
-		 */
-		if (data == null)
-			return 0;
-
 		if (isDatatype) {
 			return (int) data.stream().filter(d -> d != null).map(d -> ((IDatatype) d).getSemanticValue()).unordered()
 					.distinct().count();
@@ -133,10 +127,10 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
-		final String parentClassName = factor.getFactorScope().templateName;
+		final String parentClassName = factor.getFactorScope().templateAnnotationName;
 		final boolean slotIsFilled = factor.getFactorScope().numberOfSlotFiller > 0;
 
-		final String propertyNameChain = factor.getFactorScope().propertyNameChain;
+		final String propertyNameChain = factor.getFactorScope().slotChain;
 
 		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >2 element",
 				factor.getFactorScope().numberOfSlotFiller >= 2);

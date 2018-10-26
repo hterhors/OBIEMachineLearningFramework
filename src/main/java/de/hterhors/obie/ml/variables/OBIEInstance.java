@@ -3,6 +3,7 @@ package de.hterhors.obie.ml.variables;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,13 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
+	public static final Comparator<OBIEInstance> COMPARE_BY_NAME = new Comparator<OBIEInstance>() {
+		@Override
+		public int compare(OBIEInstance o1, OBIEInstance o2) {
+			return o1.getName().compareTo(o2.getName());
+		}
+	};
 
 	private static Logger log = LogManager.getFormatterLogger(OBIEInstance.class);
 

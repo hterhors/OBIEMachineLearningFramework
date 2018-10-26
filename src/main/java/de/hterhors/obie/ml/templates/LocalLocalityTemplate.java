@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.LocalLocalityTemplate.Scope;
 import de.hterhors.obie.ml.templates.utils.ClassTypePositionPair;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
@@ -27,7 +27,7 @@ import learning.Vector;
 @Deprecated
 public class LocalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public LocalLocalityTemplate(OBIERunParameter parameter) {
+	public LocalLocalityTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
@@ -80,12 +80,12 @@ public class HighFrequencyUtils {
 	public static class IndividualFrequencyPair implements Comparable<IndividualFrequencyPair> {
 
 		public static final IndividualFrequencyPair nullValue = new IndividualFrequencyPair(null, null, null, 0);
-		final public AbstractOBIEIndividual individual;
+		final public AbstractIndividual individual;
 		final public Class<? extends IOBIEThing> belongingClazz;
 		final public int frequency;
 		final public String textMention;
 
-		public IndividualFrequencyPair(Class<? extends IOBIEThing> belongingClazz, AbstractOBIEIndividual individual,
+		public IndividualFrequencyPair(Class<? extends IOBIEThing> belongingClazz, AbstractIndividual individual,
 				String textMention, int frequency) {
 			this.individual = individual;
 			if (belongingClazz != null) {
@@ -261,7 +261,7 @@ public class HighFrequencyUtils {
 				return individualCache.get(ck).subList(0, Math.min(n, individualCache.get(ck).size()));
 			}
 
-			final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> evidences = new HashMap<>();
+			final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> evidences = new HashMap<>();
 			/*
 			 * Get nerl-annotations.
 			 */
@@ -280,7 +280,7 @@ public class HighFrequencyUtils {
 			 * For each individual search for nerl-annotations. If some exists store in list
 			 * as evidence.
 			 */
-			for (AbstractOBIEIndividual individual : factory.getIndividuals()) {
+			for (AbstractIndividual individual : factory.getIndividuals()) {
 
 				final Set<NERLIndividualAnnotation> individualNerlAnnotations;
 				if ((individualNerlAnnotations = nerlas.getIndividualAnnotations(individual)) != null)
@@ -298,12 +298,12 @@ public class HighFrequencyUtils {
 			/*
 			 * Sort individuals.
 			 */
-			final List<Map.Entry<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>>> entryList = sort(evidences);
+			final List<Map.Entry<AbstractIndividual, Set<NERLIndividualAnnotation>>> entryList = sort(evidences);
 
 			final List<IndividualFrequencyPair> sortedIFPairs = new ArrayList<>();
 
 			for (int i = 0; i < entryList.size(); i++) {
-				AbstractOBIEIndividual bestClassType = entryList.get(i).getKey();
+				AbstractIndividual bestClassType = entryList.get(i).getKey();
 				/**
 				 * TODO: NOTE: get random from set! Maybe buggy, if we are not only interested
 				 * in the class type but also in the textmention.

@@ -7,12 +7,12 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.FrequencyTemplate.Scope;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
@@ -46,7 +46,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(FrequencyTemplate.class.getName());
 
-	public FrequencyTemplate(OBIERunParameter parameter) {
+	public FrequencyTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 
@@ -72,7 +72,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		/**
 		 * The individual if any.
 		 */
-		final AbstractOBIEIndividual individual;
+		final AbstractIndividual individual;
 
 		/**
 		 * The value for the data type if scioClassType is a Datatype class.
@@ -86,7 +86,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
 				OBIEInstance instance, final Class<IOBIEThing> thingType, final String datatypeValue,
-				final Class<? extends IOBIEThing> slotValueType, AbstractOBIEIndividual individual) {
+				final Class<? extends IOBIEThing> slotValueType, AbstractIndividual individual) {
 			super(template, thingType, datatypeValue, instance, slotValueType, entityRootClassType, individual);
 			this.thingType = thingType;
 			this.datatypeValue = datatypeValue;
@@ -170,7 +170,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 				} else {
 					realIndMax = true;
 				}
-				final AbstractOBIEIndividual mostFrequentIndividual = mostFrequentIndividuals.get(0).individual;
+				final AbstractIndividual mostFrequentIndividual = mostFrequentIndividuals.get(0).individual;
 
 				final boolean isMaxFrequency = factor.getFactorScope().individual.equals(mostFrequentIndividual);
 

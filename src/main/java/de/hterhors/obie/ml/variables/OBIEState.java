@@ -20,7 +20,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.EInstantiationType;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.run.utils.SlotTemplateInstantiationUtils;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
 import de.hterhors.obie.ml.scorer.InstanceCollection.FeatureDataPoint;
@@ -46,7 +46,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 	private final Map<Class<? extends IOBIEThing>, Set<IOBIEThing>> preFilledObjectMap;
 
-	private final OBIERunParameter parameter;
+	private final RunParameter parameter;
 
 	private final Set<IOBIEThing> preFilledUsedObjects;
 
@@ -131,7 +131,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	 * @param instance
 	 * @param parameter
 	 */
-	public OBIEState(OBIEInstance instance, OBIERunParameter parameter) {
+	public OBIEState(OBIEInstance instance, RunParameter parameter) {
 		super(instance);
 
 		this.parameter = parameter;

@@ -9,7 +9,7 @@ import java.util.Set;
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -18,12 +18,12 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class StandardRERunner extends AbstractOBIERunner {
+public class StandardRERunner extends AbstractRunner {
 
 	Random random;
 	Set<Integer> epochsTrainedWithObjective = new HashSet<>();
 
-	public StandardRERunner(OBIERunParameter parameter) {
+	public StandardRERunner(RunParameter parameter) {
 		super(parameter);
 		/*
 		 * TODO: parameterize ?
@@ -70,13 +70,13 @@ public class StandardRERunner extends AbstractOBIERunner {
 							if (epochsTrainedWithObjective.contains(epoch)) {
 								log.info("Use Objective Score for sampling...");
 								trainWithObjective = true;
-								sampler.setTrainSamplingStrategy(OBIERunParameter.trainSamplingStrategyObjectiveScore);
-								sampler.setTrainAcceptStrategy(OBIERunParameter.trainAcceptanceStrategyObjectiveScore);
+								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyObjectiveScore);
+								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyObjectiveScore);
 							} else {
 								trainWithObjective = false;
 								log.info("Use Model Score for sampling...");
-								sampler.setTrainSamplingStrategy(OBIERunParameter.trainSamplingStrategyModelScore);
-								sampler.setTrainAcceptStrategy(OBIERunParameter.trainAcceptanceStrategyModelScore);
+								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyModelScore);
+								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 							}
 						} catch (Exception e) {
 							e.printStackTrace();

@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.reflect.Reflection;
 
 import de.hterhors.obie.core.evaluation.PRF1;
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
@@ -22,7 +22,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramInternalCorpus;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -45,11 +45,11 @@ public class UpperBound {
 
 	private static final int MAX_CARDINALITY = 100;
 
-	final private OBIERunParameter parameter;
+	final private RunParameter parameter;
 
 	public static Logger log = LogManager.getLogger(UpperBound.class);
 
-	public UpperBound(OBIERunParameter parameter, BigramInternalCorpus corpus) {
+	public UpperBound(RunParameter parameter, BigramInternalCorpus corpus) {
 
 		/**
 		 * Read test data
@@ -73,7 +73,7 @@ public class UpperBound {
 			for (Class<? extends IOBIEThing> clazz : doc.getNamedEntityLinkingAnnotations().getAvailableClassTypes()) {
 				log.debug(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
 			}
-			for (AbstractOBIEIndividual individual : doc.getNamedEntityLinkingAnnotations()
+			for (AbstractIndividual individual : doc.getNamedEntityLinkingAnnotations()
 					.getAvailableIndividualTypes()) {
 				log.debug(doc.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual));
 			}
@@ -220,7 +220,7 @@ public class UpperBound {
 
 							Class<? extends IOBIEThing> clazz = thing.getClass();
 
-							AbstractOBIEIndividual individual = thing.getIndividual();
+							AbstractIndividual individual = thing.getIndividual();
 
 							/*
 							 * If the mention annotation data contains evidence for that requested class.
@@ -307,7 +307,7 @@ public class UpperBound {
 						 */
 						final Class<? extends IOBIEThing> slotType = goldSlotValue.getClass();
 
-						AbstractOBIEIndividual individual = goldSlotValue.getIndividual();
+						AbstractIndividual individual = goldSlotValue.getIndividual();
 						/*
 						 * Search for data in the mention annotation data.
 						 */
@@ -409,7 +409,7 @@ public class UpperBound {
 	}
 
 	private IOBIEThing newClassWithIndividual(final Class<? extends IOBIEThing> slotType,
-			AbstractOBIEIndividual individual) {
+			AbstractIndividual individual) {
 		try {
 			IOBIEThing property = (IOBIEThing) slotType.newInstance();
 			if (individual != null) {

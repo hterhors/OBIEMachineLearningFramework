@@ -19,7 +19,7 @@ public class InstanceTemplateAnnotations implements Serializable {
 	 * Since Entities only hold weak pointer via references to one another, using a
 	 * Map is sensible to enable an efficient access to the entities.
 	 */
-	private final Map<String, TemplateAnnotation> entities = new HashMap<>();
+	private final Map<Long, TemplateAnnotation> entities = new HashMap<>();
 
 	public InstanceTemplateAnnotations() {
 	}
@@ -35,7 +35,7 @@ public class InstanceTemplateAnnotations implements Serializable {
 		}
 	}
 
-	public TemplateAnnotation getEntity(String entityID) {
+	public TemplateAnnotation getEntity(long entityID) {
 		return entities.get(entityID);
 	}
 

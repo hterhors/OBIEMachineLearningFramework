@@ -14,7 +14,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.PropertyEvidenceForClassTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -32,7 +32,7 @@ import learning.Vector;
  */
 public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope> {
 
-	public PropertyEvidenceForClassTemplate(OBIERunParameter parameter) {
+	public PropertyEvidenceForClassTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ import de.hterhors.obie.ml.exceptions.NotSupportedException;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.run.eval.EvaluatePrediction;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.scorer.IExternalScorer;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
 import de.hterhors.obie.ml.scorer.LibLinearScorer;
@@ -60,14 +61,14 @@ import templates.AbstractTemplate;
 import templates.TemplateFactory;
 import variables.AbstractState;
 
-public abstract class AbstractOBIERunner {
+public abstract class AbstractRunner {
 
-	public static Logger log = LogManager.getFormatterLogger(AbstractOBIERunner.class);
+	public static Logger log = LogManager.getFormatterLogger(AbstractRunner.class);
 
 	/**
 	 * Final set of parameter that are shared across the system.
 	 */
-	private OBIERunParameter parameter;
+	private RunParameter parameter;
 
 	/**
 	 * Objective function specified by the implementing runner class. E.g. in the
@@ -104,7 +105,7 @@ public abstract class AbstractOBIERunner {
 
 	public DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler;
 
-	public AbstractOBIERunner(OBIERunParameter parameter) {
+	public AbstractRunner(RunParameter parameter) {
 		log.info("Initialize OBIE runner...");
 		this.parameter = parameter;
 		log.debug("Parameter: " + this.parameter.toInfoString());
@@ -131,11 +132,11 @@ public abstract class AbstractOBIERunner {
 		}
 	}
 
-	public OBIERunParameter getParameter() {
+	public RunParameter getParameter() {
 		return parameter;
 	}
 
-	public void clean(OBIERunParameter cleanParameter) {
+	public void clean(RunParameter cleanParameter) {
 		this.parameter = cleanParameter;
 		try {
 			this.templates = newTemplates();
@@ -268,8 +269,8 @@ public abstract class AbstractOBIERunner {
 		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = new DefaultSampler<>(model,
 				objectiveFunction, explorers, maxObjectiveScore);
 
-		sampler.setTrainSamplingStrategy(OBIERunParameter.trainSamplingStrategyModelScore);
-		sampler.setTrainAcceptStrategy(OBIERunParameter.trainAcceptanceStrategyModelScore);
+		sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyModelScore);
+		sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 
 		if (scorer instanceof IExternalScorer) {
 
@@ -334,7 +335,7 @@ public abstract class AbstractOBIERunner {
 		 */
 		try {
 			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName())
-					.getConstructor(OBIERunParameter.class).newInstance(this.parameter);
+					.getConstructor(RunParameter.class).newInstance(this.parameter);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -443,12 +444,20 @@ public abstract class AbstractOBIERunner {
 
 	}
 
+	public Map<OBIEInstance, List<OBIEState>> collectBestNStates(final List<OBIEInstance> instances, final int N) {
+
+		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = buildTestDefaultSampler(model);
+
+		return trainer.collectBestNStates(sampler, initializer, instances, N);
+
+	}
+
 	private DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> buildTestDefaultSampler(
 			Model<OBIEInstance, OBIEState> model) {
 		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = new DefaultSampler<>(model,
 				objectiveFunction, explorers, maxModelScoreStoppingCriteria);
-		sampler.setTestSamplingStrategy(OBIERunParameter.testSamplingStrategy);
-		sampler.setTestAcceptStrategy(OBIERunParameter.testAcceptanceStrategy);
+		sampler.setTestSamplingStrategy(RunParameter.testSamplingStrategy);
+		sampler.setTestAcceptStrategy(RunParameter.testAcceptanceStrategy);
 		return sampler;
 	}
 
@@ -503,6 +512,7 @@ public abstract class AbstractOBIERunner {
 				try {
 					PRF1 s = parameter.evaluator.prf1(gold, predictions);
 					log.info("PFR1 : " + s);
+					parameter.evaluator.clearCache();
 				} catch (NotSupportedException e) {
 					double s = parameter.evaluator.f1(gold, predictions);
 					log.info("F1 (purity): " + s);
@@ -570,7 +580,7 @@ public abstract class AbstractOBIERunner {
 
 		for (Class<? extends Explorer<OBIEState>> explorerType : parameter.explorers) {
 			try {
-				explorers.add(explorerType.getConstructor(OBIERunParameter.class).newInstance(parameter));
+				explorers.add(explorerType.getConstructor(RunParameter.class).newInstance(parameter));
 			} catch (Exception e) {
 			}
 		}
@@ -622,6 +632,10 @@ public abstract class AbstractOBIERunner {
 
 	public void scoreWithModel(List<OBIEState> states) {
 		model.score(states);
+	}
+
+	public void scoreWithObjectiveFunction(OBIEState state) {
+		objectiveFunction.score(state, state.getInstance().getGoldAnnotation());
 	}
 
 }

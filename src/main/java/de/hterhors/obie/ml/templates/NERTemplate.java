@@ -12,7 +12,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.NERTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -33,7 +33,7 @@ import learning.Vector;
  * @date Nov 15, 2017
  */
 public class NERTemplate extends AbstractOBIETemplate<Scope> {
-	public NERTemplate(OBIERunParameter parameter) {
+	public NERTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

@@ -13,7 +13,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.RootClassCardinalityTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -32,7 +32,7 @@ import learning.Vector;
  */
 public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public RootClassCardinalityTemplate(OBIERunParameter parameter) {
+	public RootClassCardinalityTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

@@ -2,7 +2,6 @@ package de.hterhors.obie.ml.evaluation.evaluator;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,8 @@ import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 
 public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
+
+	private static final int CLEAN_UP_PERIOD_IN_SEC = 5;
 
 	private final PRF1 zeroScore = new PRF1();
 
@@ -46,6 +47,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 	protected final int maxEvaluationDepth;
 
 	protected Map<CacheKey, PRF1> cache = new ConcurrentHashMap<>(1000000);
+//	protected Map<CacheKey, SoftReference<PRF1>> cache = new ConcurrentHashMap<>(1000000);
 
 	protected final boolean enableCaching;
 
@@ -118,6 +120,21 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		this.maxNumberOfAnnotations = maxNumberOfAnnotations;
 		this.ignoreEmptyInstancesOnEvaluation = ignoreEmptyInstancesOnEvaluation;
 
+//		Thread cleanerThread = new Thread(() -> {
+//			while (!Thread.currentThread().isInterrupted()) {
+//				try {
+//					Thread.sleep(CLEAN_UP_PERIOD_IN_SEC * 1000);
+//					System.out.println("Autoremove Cache..");
+//					cache.entrySet().removeIf(entry -> entry.getValue() == null);
+//					System.out.println("done");
+//				} catch (InterruptedException e) {
+//					Thread.currentThread().interrupt();
+//				}
+//			}
+//		});
+//		cleanerThread.setDaemon(true);
+//		cleanerThread.start();
+
 	}
 
 	public void clearCache() {
@@ -181,16 +198,28 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 //		System.out.println("Compare: " + goldInstance);
 //		System.out.println("With: " + predictedInstance);
 
-		CacheKey ck = null;
+		CacheKey ck;
+		PRF1 score;
 		if (enableCaching) {
 			ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
 
-			if (cache.containsKey(ck)) {
-				return cache.get(ck);
+			if ((score = cache.get(ck)) != null) {
+				return score;
 			}
+		} else {
+			ck = null;
 		}
-
-		final PRF1 score = new PRF1();
+//		if (enableCaching) {
+//			ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
+//			
+//			SoftReference<PRF1> o;
+//			if ((o = cache.get(ck)) != null && (score = o.get()) != null) {
+//				return score;
+//			}
+//		} else {
+//			ck = null;
+//		}
+		score = new PRF1();
 
 		if (goldInstance == null && predictedInstance != null) {
 			/*
@@ -390,8 +419,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 		}
 
-		if (enableCaching)
+		if (enableCaching) {
 			cache.put(ck, score);
+//			cache.put(ck, new SoftReference<PRF1>(score));
+		}
 
 		return score;
 	}

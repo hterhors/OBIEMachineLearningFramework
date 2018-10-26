@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -49,7 +49,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 	 * @throws ClassNotFoundException
 	 */
 
-	public TemplateCardinalityExplorer(OBIERunParameter param) {
+	public TemplateCardinalityExplorer(RunParameter param) {
 		/*
 		 * Get implementation class if input is interface.
 		 */

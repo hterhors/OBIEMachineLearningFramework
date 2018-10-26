@@ -2,7 +2,7 @@ package de.hterhors.obie.ml.ner;
 
 import java.io.Serializable;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 
 public class NERLIndividualAnnotation implements INERLAnnotation {
 
@@ -19,9 +19,9 @@ public class NERLIndividualAnnotation implements INERLAnnotation {
 
 	final public int onset;
 
-	final public AbstractOBIEIndividual relatedIndividual;
+	final public AbstractIndividual relatedIndividual;
 
-	public NERLIndividualAnnotation(String text, int offset, AbstractOBIEIndividual relatedIndividual) {
+	public NERLIndividualAnnotation(String text, int offset, AbstractIndividual relatedIndividual) {
 
 		this.text = text;
 		this.onset = offset;

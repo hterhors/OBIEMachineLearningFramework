@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 
 public class NamedEntityLinkingAnnotations implements Serializable {
@@ -25,12 +25,12 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 	private final Map<Class<? extends IOBIEThing>, Map<String, Set<NERLClassAnnotation>>> classRetrievalsByDistinctSemanticValues;
 
-	private final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> individualRetrievals;
+	private final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> individualRetrievals;
 
-	private final Map<AbstractOBIEIndividual, Map<String, Set<NERLIndividualAnnotation>>> individualRetrievalsByTextMention;
+	private final Map<AbstractIndividual, Map<String, Set<NERLIndividualAnnotation>>> individualRetrievalsByTextMention;
 
 	private NamedEntityLinkingAnnotations(Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals,
-			Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> individualRetrievals) {
+			Map<AbstractIndividual, Set<NERLIndividualAnnotation>> individualRetrievals) {
 
 		/*
 		 * 
@@ -70,10 +70,10 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 		return Collections.unmodifiableMap(rbtm);
 	}
 
-	private Map<AbstractOBIEIndividual, Map<String, Set<NERLIndividualAnnotation>>> indexIndividualAnnotationsByText(
-			Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> retrievals) {
-		final Map<AbstractOBIEIndividual, Map<String, Set<NERLIndividualAnnotation>>> rbtm = new HashMap<>();
-		for (Entry<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> retrieval : retrievals.entrySet()) {
+	private Map<AbstractIndividual, Map<String, Set<NERLIndividualAnnotation>>> indexIndividualAnnotationsByText(
+			Map<AbstractIndividual, Set<NERLIndividualAnnotation>> retrievals) {
+		final Map<AbstractIndividual, Map<String, Set<NERLIndividualAnnotation>>> rbtm = new HashMap<>();
+		for (Entry<AbstractIndividual, Set<NERLIndividualAnnotation>> retrieval : retrievals.entrySet()) {
 
 			rbtm.put(retrieval.getKey(), new HashMap<>());
 			for (NERLIndividualAnnotation nera : retrieval.getValue()) {
@@ -104,7 +104,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	public static class Builder {
 
 		private final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals = new HashMap<>();
-		private final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> individualRetrievals = new HashMap<>();
+		private final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> individualRetrievals = new HashMap<>();
 
 		public Builder() {
 		}
@@ -125,9 +125,9 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 		}
 
 		public Builder addIndividualAnnotations(
-				Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> namedEntityLinkingAnnotations) {
+				Map<AbstractIndividual, Set<NERLIndividualAnnotation>> namedEntityLinkingAnnotations) {
 
-			for (Entry<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> annotationEntry : namedEntityLinkingAnnotations
+			for (Entry<AbstractIndividual, Set<NERLIndividualAnnotation>> annotationEntry : namedEntityLinkingAnnotations
 					.entrySet()) {
 
 				final Set<NERLIndividualAnnotation> annotations = individualRetrievals
@@ -151,7 +151,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param individual
 	 * @return
 	 */
-	public Set<NERLIndividualAnnotation> getIndividualAnnotationsByTextMention(AbstractOBIEIndividual individual,
+	public Set<NERLIndividualAnnotation> getIndividualAnnotationsByTextMention(AbstractIndividual individual,
 			String surfaceForm) {
 
 		if (!individualRetrievalsByTextMention.containsKey(individual))
@@ -203,7 +203,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classOrIndividualname
 	 * @return
 	 */
-	public Set<NERLIndividualAnnotation> getIndividualAnnotations(AbstractOBIEIndividual individual) {
+	public Set<NERLIndividualAnnotation> getIndividualAnnotations(AbstractIndividual individual) {
 		return individualRetrievals.get(individual);
 	}
 
@@ -225,7 +225,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * @param classOrIndividualname
 	 * @return true if data is available, else false.
 	 */
-	public boolean containsIndividualAnnotations(AbstractOBIEIndividual individual) {
+	public boolean containsIndividualAnnotations(AbstractIndividual individual) {
 		return individual != null && individualRetrievals.containsKey(individual)
 				&& !individualRetrievals.get(individual).isEmpty();
 	}
@@ -244,7 +244,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 	 * 
 	 * @return Unmodifiable set of all class types.
 	 */
-	public Set<AbstractOBIEIndividual> getAvailableIndividualTypes() {
+	public Set<AbstractIndividual> getAvailableIndividualTypes() {
 		return individualRetrievals.keySet();
 	}
 

@@ -19,7 +19,7 @@ import javax.swing.plaf.synth.SynthSpinnerUI;
 import com.google.j2objc.annotations.ReflectionSupport;
 
 import de.hterhors.obie.core.evaluation.PRF1Container;
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyFieldNames;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
@@ -83,15 +83,13 @@ public class ExplorationUtils {
 		final Class<? extends IOBIEThing> implClass = ReflectionUtils.getImplementationClass(propertyInterface);
 
 		/*
-		 * No NamedIndividual
+		 * No DataType
 		 */
 		if (ReflectionUtils.isAnnotationPresent(implClass, DatatypeProperty.class))
 			return false;
-		/*
-		 * No DataType
-		 */
+
 		try {
-			if (!((IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
+			if (!((IndividualFactory<AbstractIndividual>) ReflectionUtils
 					.getAccessibleFieldByName(implClass, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null))
 							.getIndividuals().isEmpty())
 				return false;
@@ -100,11 +98,6 @@ public class ExplorationUtils {
 			e.printStackTrace();
 		}
 
-		/**
-		 * TODO: not just the first interface... or get interfaces by annotation... if a
-		 * class if subclass of multiple classes then we need to iterate over all super
-		 * classes.
-		 */
 		final Set<Class<? extends IOBIEThing>> rootImplClasses = ReflectionUtils.getSuperRootClasses(implClass);
 		/*
 		 * No siblings, grand siblings...
@@ -200,12 +193,12 @@ public class ExplorationUtils {
 			/*
 			 * Add candidates for individuals of root class type
 			 */
-			final Collection<AbstractOBIEIndividual> rootTypeIndividuals = getPossibleIndividuals(slotType);
+			final Collection<AbstractIndividual> rootTypeIndividuals = getPossibleIndividuals(slotType);
 
 			/*
 			 * Get all possible individual candidates.
 			 */
-			for (AbstractOBIEIndividual individual : rootTypeIndividuals) {
+			for (AbstractIndividual individual : rootTypeIndividuals) {
 
 				if (typeCandidates) {
 					addSlotTypeIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotType),
@@ -220,12 +213,12 @@ public class ExplorationUtils {
 
 			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils.getAssignableSubInterfaces(slotType)) {
 
-				final Collection<AbstractOBIEIndividual> subTypeIndividuals = getPossibleIndividuals(slotFillerType);
+				final Collection<AbstractIndividual> subTypeIndividuals = getPossibleIndividuals(slotFillerType);
 
 				/*
 				 * Get all possible individual candidates.
 				 */
-				for (AbstractOBIEIndividual individual : subTypeIndividuals) {
+				for (AbstractIndividual individual : subTypeIndividuals) {
 
 					if (typeCandidates) {
 						addSlotTypeIndividualCandidates(instance,
@@ -286,13 +279,13 @@ public class ExplorationUtils {
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	private static Collection<AbstractOBIEIndividual> getPossibleIndividuals(
+	private static Collection<AbstractIndividual> getPossibleIndividuals(
 			Class<? extends IOBIEThing> slotSuperType_interface) {
 		try {
 			final Class<? extends IOBIEThing> clazz = ReflectionUtils.getImplementationClass(slotSuperType_interface);
 
-			IndividualFactory<AbstractOBIEIndividual> individualFactory;
-			individualFactory = (IndividualFactory<AbstractOBIEIndividual>) ReflectionUtils
+			IndividualFactory<AbstractIndividual> individualFactory;
+			individualFactory = (IndividualFactory<AbstractIndividual>) ReflectionUtils
 					.getAccessibleFieldByName(clazz, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME).get(null);
 
 			return individualFactory.getIndividuals();
@@ -376,13 +369,12 @@ public class ExplorationUtils {
 			} else {
 
 				/*
-				 * NOT: This should never happen!
 				 * 
 				 * Else create exactly one instance without textual reference.
 				 */
 //				IOBIEThing newInstance = newClassInstance(slotFillerType, UUID.randomUUID().toString());
 //				candidates.add(newInstance);
-				throw new IllegalStateException("This code should not be reached.");
+//				throw new IllegalStateException("This code should not be reached.");
 			}
 
 		}
@@ -460,7 +452,7 @@ public class ExplorationUtils {
 
 	private static void addSlotTypeIndividualCandidates(OBIEInstance instance,
 			Class<? extends IOBIEThing> slotSuperType, Set<IOBIEThing> candidates,
-			AbstractOBIEIndividual individualCandidate,
+			AbstractIndividual individualCandidate,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence,
 			final boolean restrictExplorationOnConceptsInInstance) {
 
@@ -496,8 +488,8 @@ public class ExplorationUtils {
 	}
 
 	private static void addFillerIndividualCandidates(OBIEInstance instance,
-			Class<? extends IOBIEThing> baseClassType_class, Set<IOBIEThing> candidates,
-			AbstractOBIEIndividual individual, Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
+			Class<? extends IOBIEThing> baseClassType_class, Set<IOBIEThing> candidates, AbstractIndividual individual,
+			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence) {
 
 		if (individual == null)
 			return;
@@ -590,7 +582,7 @@ public class ExplorationUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	private static IOBIEThing newClassForIndividual(Class<? extends IOBIEThing> baseClassType_class,
-			AbstractOBIEIndividual individual) {
+			AbstractIndividual individual) {
 
 		try {
 			IOBIEThing newInstance = (IOBIEThing) baseClassType_class.newInstance();
@@ -760,7 +752,7 @@ public class ExplorationUtils {
 		return true;
 	}
 
-	private static boolean includeIndividualForSampling(AbstractOBIEIndividual individualCandidate) {
+	private static boolean includeIndividualForSampling(AbstractIndividual individualCandidate) {
 		// TODO Auto-generated method stub
 		return true;
 	}

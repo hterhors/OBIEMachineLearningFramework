@@ -11,11 +11,20 @@ import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 
-public class FullDocumentModelScoreRanker implements IActiveLearningDocumentRanker {
+/**
+ * Ranks the remaining instances according to the oracles objective score.
+ * 
+ * This ranker is just used for analyzing, can not be used in a productive
+ * session.
+ * 
+ * @author hterhors
+ *
+ */
+public class FullDocumentObjectiveScoreRanker implements IActiveLearningDocumentRanker {
 
 	final private AbstractRunner runner;
 
-	public FullDocumentModelScoreRanker(AbstractRunner runner) {
+	public FullDocumentObjectiveScoreRanker(AbstractRunner runner) {
 		this.runner = runner;
 	}
 
@@ -27,16 +36,20 @@ public class FullDocumentModelScoreRanker implements IActiveLearningDocumentRank
 		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = runner
 				.test(remainingInstances);
 
+		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> sampledInstance : predictions) {
+			runner.scoreWithObjectiveFunction(sampledInstance.getState());
+		}
+
+		/*
+		 * Smallest first.
+		 */
 		Collections.sort(predictions,
 				new Comparator<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>>() {
 
-					/*
-					 * Smallest first.
-					 */
 					@Override
 					public int compare(SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> o1,
 							SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> o2) {
-						return -Double.compare(o1.getState().getModelScore(), o2.getState().getModelScore());
+						return Double.compare(o1.getState().getObjectiveScore(), o2.getState().getObjectiveScore());
 					}
 				});
 

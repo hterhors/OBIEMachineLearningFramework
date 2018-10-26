@@ -19,7 +19,7 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.Word2VecClusterTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -35,7 +35,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 
 	final private Map<String, List<Integer>> clusters = new HashMap<>();
 
-	public Word2VecClusterTemplate(OBIERunParameter parameter) {
+	public Word2VecClusterTemplate(RunParameter parameter) {
 		super(parameter);
 		try {
 			BufferedReader br = new BufferedReader(

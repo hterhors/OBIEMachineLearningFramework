@@ -3,7 +3,7 @@ package de.hterhors.obie.ml.ner;
 import java.util.Map;
 import java.util.Set;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 
 public interface INamedEntitityLinker {
@@ -16,6 +16,6 @@ public interface INamedEntitityLinker {
 	 */
 	public Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> annotateClasses(final String content);
 
-	public Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> annotateIndividuals(final String content);
+	public Map<AbstractIndividual, Set<NERLIndividualAnnotation>> annotateIndividuals(final String content);
 
 }

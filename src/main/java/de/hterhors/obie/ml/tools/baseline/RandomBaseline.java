@@ -19,7 +19,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramInternalCorpus;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
@@ -36,11 +36,11 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
  */
 public class RandomBaseline {
 
-	private final OBIERunParameter param;
+	private final RunParameter param;
 
 	private final Random random;
 
-	public RandomBaseline(OBIERunParameter param, final long randomSeed) {
+	public RandomBaseline(RunParameter param, final long randomSeed) {
 		this.param = param;
 		this.random = new Random(randomSeed);
 	}

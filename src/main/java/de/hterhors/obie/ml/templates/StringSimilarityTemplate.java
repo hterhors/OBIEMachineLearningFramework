@@ -16,7 +16,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.ContentCleaner;
 import de.hterhors.obie.core.tools.metric.LevenShteinSimilarity;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.StringSimilarityTemplate.Scope;
 import de.hterhors.obie.ml.templates.utils.BinningUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
@@ -36,7 +36,7 @@ import learning.Vector;
  */
 public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public StringSimilarityTemplate(OBIERunParameter parameter) {
+	public StringSimilarityTemplate(RunParameter parameter) {
 		super(parameter);
 		// TODO Auto-generated constructor stub
 	}

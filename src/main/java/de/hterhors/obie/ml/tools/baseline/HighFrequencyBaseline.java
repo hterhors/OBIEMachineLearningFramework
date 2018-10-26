@@ -15,7 +15,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramInternalCorpus;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
@@ -34,9 +34,9 @@ import de.hterhors.obie.ml.variables.TemplateAnnotation;
 public class HighFrequencyBaseline {
 
 	private static final int MAX_PREDICTIONS_TO_ADD = 1;
-	private final OBIERunParameter param;
+	private final RunParameter param;
 
-	public HighFrequencyBaseline(OBIERunParameter param) {
+	public HighFrequencyBaseline(RunParameter param) {
 		this.param = param;
 	}
 

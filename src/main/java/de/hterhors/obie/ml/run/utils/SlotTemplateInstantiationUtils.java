@@ -8,13 +8,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 
 import org.apache.commons.lang3.NotImplementedException;
 
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
@@ -171,8 +169,7 @@ public class SlotTemplateInstantiationUtils {
 			dtValue = DEFAULT_WRONG_DT_VALUE;
 		}
 
-		IOBIEThing value = slotSuperType.getConstructor(String.class, String.class, String.class)
-				.newInstance(UUID.randomUUID().toString(), textValue, dtValue);
+		IOBIEThing value = slotSuperType.getConstructor(String.class, String.class).newInstance(textValue, dtValue);
 		return value;
 	}
 

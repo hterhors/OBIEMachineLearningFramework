@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.ObjectiveFunction;
@@ -29,7 +29,7 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTe
 	private static Logger log = LogManager.getFormatterLogger(REObjectiveFunction.class.getName());
 	private IOBIEEvaluator evaluator;
 
-	public REObjectiveFunction(OBIERunParameter parameter) {
+	public REObjectiveFunction(RunParameter parameter) {
 		this.evaluator = parameter.evaluator;
 	}
 

@@ -3,7 +3,7 @@ package de.hterhors.obie.ml.utils;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
@@ -67,7 +67,7 @@ public class OBIEClassFormatter {
 			sb.append(getDepth(depth) + ReflectionUtils.simpleName(c.getClass()) + ": \"" + c.getTextMention() + "\" ("
 					+ ((IDatatype) c).getSemanticValue() + ")");
 		else {
-			AbstractOBIEIndividual individual = ((AbstractOBIEIndividual) c.getClass()
+			AbstractIndividual individual = ((AbstractIndividual) c.getClass()
 					.getField(OntologyInitializer.INDIVIDUAL_FIELD_NAME).get(c));
 			sb.append(getDepth(depth) + ReflectionUtils.simpleName(c.getClass()));
 			sb.append(individual == null ? " " : (" " + (printAll ? individual.nameSpace : "") + individual.name));

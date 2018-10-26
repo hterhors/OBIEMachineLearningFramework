@@ -38,7 +38,7 @@ import sampling.samplingstrategies.AcceptStrategy;
 import sampling.samplingstrategies.SamplingStrategies;
 import sampling.samplingstrategies.SamplingStrategy;
 
-public class OBIERunParameter implements Serializable {
+public class RunParameter implements Serializable {
 
 	/**
 	 * TODO: via parameter greedy vs linear.
@@ -48,6 +48,12 @@ public class OBIERunParameter implements Serializable {
 //
 //	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
 //			.linearModelSamplingStrategy();
+
+//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
+//			.softmaxObjectiveSamplingStrategy();
+//	
+//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
+//			.softmaxModelSamplingStrategy();
 
 	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
 			.greedyObjectiveStrategy();
@@ -82,7 +88,7 @@ public class OBIERunParameter implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public static Logger log = LogManager.getFormatterLogger(OBIERunParameter.class);
+	public static Logger log = LogManager.getFormatterLogger(RunParameter.class);
 
 	/**
 	 * A manually predefined set of class types which should be explored even though
@@ -291,7 +297,7 @@ public class OBIERunParameter implements Serializable {
 
 	public final AbstractCorpusDistributor corpusDistributor;
 
-	private OBIERunParameter(String corpusNamePrefix, boolean excludeEmptyInstancesFromCorpus,
+	private RunParameter(String corpusNamePrefix, boolean excludeEmptyInstancesFromCorpus,
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
 			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, String runID,
@@ -525,13 +531,13 @@ public class OBIERunParameter implements Serializable {
 
 		private IOBIEEvaluator evaluator = null;
 
+		private EScorerType scorerType = EScorerType.EXP;
+
 		private boolean enableDiscourseProgression = false;
 
 		private boolean exploreExistingTemplates = false;
 
-		private EScorerType scorerType = EScorerType.EXP;
-
-		private boolean exploreOnOntologyLevel = false;
+		private boolean exploreOnOntologyLevel = true;
 
 		private boolean restrictExplorationToFoundConcepts = true;
 
@@ -895,9 +901,9 @@ public class OBIERunParameter implements Serializable {
 			return this;
 		}
 
-		public OBIERunParameter build() {
+		public RunParameter build() {
 
-			return new OBIERunParameter(corpusNamePrefix, excludeEmptyInstancesFromCorpus, templates, rootDirectory,
+			return new RunParameter(corpusNamePrefix, excludeEmptyInstancesFromCorpus, templates, rootDirectory,
 					epochs, optimizer, scorerType, personalNotes, rootSearchTypes, initializer, runID, multiThreading,
 					projectEnvironment, manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
 					investigationRestriction, initializationObjects, exploreExistingTemplates, exploreOnOntologyLevel,

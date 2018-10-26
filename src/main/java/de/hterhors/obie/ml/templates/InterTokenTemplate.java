@@ -10,12 +10,12 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.InterTokenTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -58,7 +58,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 	private final AbstractOBIETemplate<?> thisTemplate;
 
-	public InterTokenTemplate(OBIERunParameter parameter) {
+	public InterTokenTemplate(RunParameter parameter) {
 		super(parameter);
 		this.thisTemplate = this;
 		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
@@ -67,12 +67,12 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 	class Scope extends FactorScope {
 
 		public Class<? extends IOBIEThing> classType;
-		public final AbstractOBIEIndividual individual;
+		public final AbstractIndividual individual;
 		public final String surfaceForm;
 		public OBIEInstance instance;
 
 		public Scope(OBIEInstance internalInstance, Class<? extends IOBIEThing> entityRootClassType,
-				Class<? extends IOBIEThing> classType, AbstractOBIEIndividual individual, String surfaceForm) {
+				Class<? extends IOBIEThing> classType, AbstractIndividual individual, String surfaceForm) {
 			super(thisTemplate, internalInstance, entityRootClassType, classType, individual, surfaceForm);
 			this.classType = classType;
 			this.individual = individual;
@@ -140,7 +140,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 	 * @return null if there are no annotations for that class
 	 */
 	private Set<String> getSurfaceForms(OBIEInstance internalInstance, final Class<? extends IOBIEThing> classType,
-			AbstractOBIEIndividual individual, final String surfaceForm) {
+			AbstractIndividual individual, final String surfaceForm) {
 
 		if (classType == null)
 			return null;

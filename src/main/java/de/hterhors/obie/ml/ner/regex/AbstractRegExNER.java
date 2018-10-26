@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,7 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.OntologyAnalyzer;
-import de.hterhors.obie.core.ontology.AbstractOBIEIndividual;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
@@ -53,7 +54,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 //	private final static Map<Class<? extends IOBIEThing>, Set<Pattern>> trainingPattern = new HashMap<>();
 
 	final private Map<Class<? extends R>, Set<Pattern>> regExPatternForClasses = new HashMap<>();
-	final private Map<AbstractOBIEIndividual, Set<Pattern>> regExPatternForIndividuals = new HashMap<>();
+	final private Map<AbstractIndividual, Set<Pattern>> regExPatternForIndividuals = new HashMap<>();
 
 	protected AbstractRegExNER(Set<Class<? extends IOBIEThing>> rootClasses) {
 //
@@ -163,7 +164,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 	}
 
-	public Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> annotateIndividuals(final String content) {
+	public Map<AbstractIndividual, Set<NERLIndividualAnnotation>> annotateIndividuals(final String content) {
 
 //		Map<Class<? extends R>, Set<Pattern>> regExPattern = new HashMap<>();
 //
@@ -183,9 +184,9 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 //		for (Class<? extends IOBIEThing> rootClassType : regExPattern) {
 //			addOrMergePatterns(regExPattern, collectRegexPattern(rootClassType));
 //		}
-		final Map<AbstractOBIEIndividual, Set<NERLIndividualAnnotation>> docSpeceficRetrieval = new HashMap<>();
+		final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> docSpeceficRetrieval = new HashMap<>();
 
-		for (AbstractOBIEIndividual individual : regExPatternForIndividuals.keySet()) {
+		for (AbstractIndividual individual : regExPatternForIndividuals.keySet()) {
 
 			docSpeceficRetrieval.putIfAbsent(individual, new HashSet<>());
 
@@ -220,20 +221,20 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 	protected abstract IDatatypeInterpretation getSemanticInterpretation(Class<? extends R> dataTypeClass,
 			Matcher matcher);
 
-	private Map<AbstractOBIEIndividual, Set<Pattern>> collectRegexPatternForIndividuals(
+	private Map<AbstractIndividual, Set<Pattern>> collectRegexPatternForIndividuals(
 			Class<? extends IOBIEThing> rootClassType) {
 
-		Map<AbstractOBIEIndividual, Set<Pattern>> regExPattern = new HashMap<>();
+		Map<AbstractIndividual, Set<Pattern>> regExPattern = new HashMap<>();
 		/*
 		 * Auto generated pattern from class names.
 		 */
 		addOrMergePatterns(regExPattern, addPlainRegExPatternForIndividuals(rootClassType));
 
-		Map<AbstractOBIEIndividual, Set<Pattern>> handMadePattern = addHandMadePatternForIndividuals(rootClassType);
+		Map<AbstractIndividual, Set<Pattern>> handMadePattern = addHandMadePatternForIndividuals(rootClassType);
 
 		addOrMergePatterns(regExPattern, handMadePattern);
 
-		Map<AbstractOBIEIndividual, Set<Pattern>> crossReferencePattern = generateCrossReferencePatternForIndividuals(
+		Map<AbstractIndividual, Set<Pattern>> crossReferencePattern = generateCrossReferencePatternForIndividuals(
 				rootClassType);
 		addOrMergePatterns(regExPattern, crossReferencePattern);
 
@@ -243,7 +244,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 		 * This should be added last as we use regular expression patterns that were
 		 * generated before.
 		 */
-		Map<AbstractOBIEIndividual, Set<Pattern>> patternDependendCrossReferencePattern = generateHandMadeCrossReferencesForIndividuals(
+		Map<AbstractIndividual, Set<Pattern>> patternDependendCrossReferencePattern = generateHandMadeCrossReferencesForIndividuals(
 				regExPattern, rootClassType);
 
 		addOrMergePatterns(regExPattern, patternDependendCrossReferencePattern);
@@ -253,6 +254,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 	private Map<Class<? extends R>, Set<Pattern>> collectRegexPatternForClasses(
 			Class<? extends IOBIEThing> rootClassType) {
+
 		Map<Class<? extends R>, Set<Pattern>> regExPattern = new HashMap<>();
 		/*
 		 * Auto generated pattern from class names.
@@ -261,6 +263,14 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 		Map<Class<? extends R>, Set<Pattern>> handMadePattern = addHandMadePatternForClasses(rootClassType);
 		addOrMergePatterns(regExPattern, handMadePattern);
+
+//		for (Entry<Class<? extends R>, Set<Pattern>> e : regExPattern.entrySet()) {
+//			if (e.getKey().getSimpleName().equals("SurgeryTreatment")) {
+//				e.getValue().forEach(System.out::println);
+//
+//			}
+//		}
+//		System.out.println("______");
 
 		Map<Class<? extends R>, Set<Pattern>> extendedAuxiliaryClassPattern = generateExtendedAuxiliaryClassPattern(
 				rootClassType);
@@ -301,7 +311,7 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 		/*
 		 * Do not extend root class. This would be to much and it is not important as
-		 * the root class cardinality is sampled differently.
+		 * the root class cardinality is explored differently.
 		 */
 		relatedRootClasses.remove(rootClassType);
 
@@ -311,7 +321,6 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 					.getDirectInterfaces(relatedRootClass);
 
 			if (ExplorationUtils.isAuxiliary(interfaceOfRelatedClasstype)) {
-
 				Map<Class<? extends R>, Set<Pattern>> relatedClasses = addPlainRegExPatternForClasses(
 						interfaceOfRelatedClasstype);
 
@@ -368,9 +377,9 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 		/*
 		 * Add factors for object type properties.
 		 */
-		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class) )
+		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
 			Arrays.stream(scioClass.getClass().getDeclaredFields())
-					.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class) ).forEach(field -> {
+					.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)).forEach(field -> {
 						field.setAccessible(true);
 						try {
 							if (field.isAnnotationPresent(RelationTypeCollection.class)) {
@@ -407,19 +416,18 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 	protected abstract Map<Class<? extends R>, Set<Pattern>> addPlainRegExPatternForClasses(
 			Class<? extends IOBIEThing> rootClassType);
 
-	protected abstract Map<AbstractOBIEIndividual, Set<Pattern>> addHandMadePatternForIndividuals(
+	protected abstract Map<AbstractIndividual, Set<Pattern>> addHandMadePatternForIndividuals(
 			Class<? extends IOBIEThing> rootClassType);
 
-	protected abstract Map<AbstractOBIEIndividual, Set<Pattern>> addFurtherPatternForIndividuals();
+	protected abstract Map<AbstractIndividual, Set<Pattern>> addFurtherPatternForIndividuals();
 
-	protected abstract Map<AbstractOBIEIndividual, Set<Pattern>> generateHandMadeCrossReferencesForIndividuals(
-			Map<AbstractOBIEIndividual, Set<Pattern>> regularExpressionPattern,
+	protected abstract Map<AbstractIndividual, Set<Pattern>> generateHandMadeCrossReferencesForIndividuals(
+			Map<AbstractIndividual, Set<Pattern>> regularExpressionPattern, Class<? extends IOBIEThing> rootClassType);
+
+	protected abstract Map<AbstractIndividual, Set<Pattern>> generateCrossReferencePatternForIndividuals(
 			Class<? extends IOBIEThing> rootClassType);
 
-	protected abstract Map<AbstractOBIEIndividual, Set<Pattern>> generateCrossReferencePatternForIndividuals(
-			Class<? extends IOBIEThing> rootClassType);
-
-	protected abstract Map<AbstractOBIEIndividual, Set<Pattern>> addPlainRegExPatternForIndividuals(
+	protected abstract Map<AbstractIndividual, Set<Pattern>> addPlainRegExPatternForIndividuals(
 			Class<? extends IOBIEThing> rootClassType);
 
 }

@@ -9,7 +9,7 @@ import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.InvestigationRestriction.RestrictedField;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 
 public class ModelFileNameUtils {
 
@@ -63,7 +63,7 @@ public class ModelFileNameUtils {
 		return s.substring(0, s.length() - 1);
 	}
 
-	private static File buildModelDirectory(final OBIERunParameter parameter) {
+	private static File buildModelDirectory(final RunParameter parameter) {
 
 		final StringBuffer modelDir = new StringBuffer();
 
@@ -76,7 +76,7 @@ public class ModelFileNameUtils {
 		return new File(parameter.rootDirectory, modelDir.toString());
 	}
 
-	private static String buildModelName(final OBIERunParameter parameter, final BigramCorpusProvider corpusProvider,
+	private static String buildModelName(final RunParameter parameter, final BigramCorpusProvider corpusProvider,
 			final int epoch) {
 		final StringBuffer modelName = new StringBuffer();
 		modelName.append(parameter.runID);
@@ -87,7 +87,7 @@ public class ModelFileNameUtils {
 		return modelName.toString();
 	}
 
-	public static File getModelInfoFile(final OBIERunParameter parameter) {
+	public static File getModelInfoFile(final RunParameter parameter) {
 
 		final File modelDir = buildModelDirectory(parameter);
 
@@ -98,7 +98,7 @@ public class ModelFileNameUtils {
 		return new File(modelDir, parameter.runID + ".info");
 	}
 
-	private static String getConfigurationTypePrefix(OBIERunParameter parameter, BigramCorpusProvider corpusProvider) {
+	private static String getConfigurationTypePrefix(RunParameter parameter, BigramCorpusProvider corpusProvider) {
 
 		if (parameter.corpusDistributor instanceof FoldCrossCorpusDistributor) {
 			return parameter.corpusDistributor.getDistributorID() + corpusProvider.getCurrentFoldIndex();
@@ -109,7 +109,7 @@ public class ModelFileNameUtils {
 		}
 	}
 
-	public static File getModelFile(OBIERunParameter parameter, BigramCorpusProvider corpusProvider, final int epoch) {
+	public static File getModelFile(RunParameter parameter, BigramCorpusProvider corpusProvider, final int epoch) {
 		return new File(buildModelDirectory(parameter), buildModelName(parameter, corpusProvider, epoch));
 	}
 }

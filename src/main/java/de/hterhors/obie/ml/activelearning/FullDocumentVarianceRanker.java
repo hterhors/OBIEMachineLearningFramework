@@ -12,7 +12,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 
 import corpus.SampledInstance;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
-import de.hterhors.obie.ml.run.AbstractOBIERunner;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -22,24 +22,19 @@ import sampling.Explorer;
 public class FullDocumentVarianceRanker implements IActiveLearningDocumentRanker {
 
 	final Logger log = LogManager.getRootLogger();
+	final private AbstractRunner runner;
+
+	public FullDocumentVarianceRanker(AbstractRunner runner) {
+		this.runner = runner;
+	}
 
 	@Override
-	public List<OBIEInstance> rank(ActiveLearningDistributor distributor, AbstractOBIERunner runner,
-			List<OBIEInstance> remainingInstances) {
+	public List<OBIEInstance> rank(List<OBIEInstance> remainingInstances) {
 
 		List<RankedInstance> entropyInstances = new ArrayList<>();
 
-		Level trainerLevel = LogManager.getFormatterLogger(Trainer.class.getName()).getLevel();
-		Level runnerLevel = LogManager.getFormatterLogger(AbstractOBIERunner.class).getLevel();
-
-		Configurator.setLevel(Trainer.class.getName(), Level.FATAL);
-		Configurator.setLevel(AbstractOBIERunner.class.getName(), Level.FATAL);
-
 		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> results = runner
 				.test(remainingInstances);
-
-		Configurator.setLevel(Trainer.class.getName(), trainerLevel);
-		Configurator.setLevel(AbstractOBIERunner.class.getName(), runnerLevel);
 
 		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> predictedInstance : results) {
 //			Fred_Beardsley,Packie_Bonner
@@ -85,7 +80,7 @@ public class FullDocumentVarianceRanker implements IActiveLearningDocumentRanker
 	private void logStats(List<RankedInstance> entropyInstances) {
 
 		log.info("Next " + n + " entropies:");
-		entropyInstances.stream().limit(n).forEach(i -> log.info(i + ":" + i.entropy));
+		entropyInstances.stream().limit(n).forEach(i -> log.info(i + ":" + i.value));
 
 	}
 

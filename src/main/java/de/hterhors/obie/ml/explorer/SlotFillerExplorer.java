@@ -18,7 +18,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -51,14 +51,14 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	private final boolean restrictExplorationOnConceptsInInstance;
 
-	private String currentTempalateAnnotationID;
+	private long currentTempalateAnnotationID;
 
 	private int currentRootEntitySentenceIndex;
 
 	/**
 	 * NOT THREAD SAFE!
 	 */
-	public SlotFillerExplorer(OBIERunParameter param) {
+	public SlotFillerExplorer(RunParameter param) {
 		this.restrictExplorationOnConceptsInInstance = param.restrictExplorationToFoundConcepts;
 		this.exploreClassesWithoutTextualEvidence = param.exploreClassesWithoutTextualEvidence;
 		if (param.explorationCondition != null)

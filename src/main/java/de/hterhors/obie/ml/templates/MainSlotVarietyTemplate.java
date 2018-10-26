@@ -19,7 +19,7 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.MainSlotVarietyTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -43,7 +43,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public MainSlotVarietyTemplate(OBIERunParameter parameter) {
+	public MainSlotVarietyTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 

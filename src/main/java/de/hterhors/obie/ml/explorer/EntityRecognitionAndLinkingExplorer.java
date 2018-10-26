@@ -8,10 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,7 +20,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -36,7 +36,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 
 	final private Random rnd;
 
-	public EntityRecognitionAndLinkingExplorer(OBIERunParameter param) {
+	public EntityRecognitionAndLinkingExplorer(RunParameter param) {
 
 		this.possibleRootClassTypes = Collections.unmodifiableSet(param.rootSearchTypes.stream()
 				.map(i -> ReflectionUtils.getImplementationClass(i)).collect(Collectors.toSet()));
@@ -133,14 +133,16 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 								/**
 								 * TODO: Test this:
 								 */
-								annotation = classToAnnotate.getConstructor(String.class, String.class, String.class)
-										.newInstance(UUID.randomUUID().toString(), value, originalText);
+								annotation = classToAnnotate.getConstructor(String.class, String.class)
+										.newInstance(value, originalText);
 
 //								}
 
 							} else {
+								String individual = null;
 								annotation = classToAnnotate.getConstructor(String.class, String.class)
-										.newInstance(UUID.randomUUID().toString(), originalText);
+										.newInstance(individual, originalText);
+								throw new NotImplementedException("Search for individuals via candidate selection!");
 							}
 
 							annotation.setCharacterOnset(charStartIndex);

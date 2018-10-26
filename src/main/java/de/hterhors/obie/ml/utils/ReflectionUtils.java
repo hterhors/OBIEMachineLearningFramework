@@ -312,10 +312,11 @@ public class ReflectionUtils {
 
 	public static String simpleName(final Class<?> clazz) {
 
-		final String simpleName;
+		String simpleName;
 
 		if ((simpleName = simpleNameChaching.get(clazz)) == null) {
-			simpleNameChaching.put(clazz, clazz.getSimpleName());
+			simpleName = clazz.getSimpleName();
+			simpleNameChaching.put(clazz, simpleName);
 		}
 
 		return simpleName;

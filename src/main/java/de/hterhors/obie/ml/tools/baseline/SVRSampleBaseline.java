@@ -24,7 +24,7 @@ import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.explorer.SlotFillerExplorer;
 import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
 import de.hterhors.obie.ml.run.eval.EvaluatePrediction;
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.scorer.IExternalScorer;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
 import de.hterhors.obie.ml.scorer.LibSVMRegressionScorer;
@@ -100,7 +100,7 @@ public class SVRSampleBaseline {
 	/**
 	 * The parameter that includes the templates and further information.
 	 */
-	private OBIERunParameter parameter;
+	private RunParameter parameter;
 
 	/**
 	 * The exploration strategy. TODO: incorporate multiple strategies like
@@ -189,7 +189,7 @@ public class SVRSampleBaseline {
 	 * @throws SecurityException
 	 * @throws IOException
 	 */
-	public SVRSampleBaseline(OBIERunParameter parameter) throws Exception {
+	public SVRSampleBaseline(RunParameter parameter) throws Exception {
 
 		this.parameter = parameter;
 		/*
@@ -341,7 +341,7 @@ public class SVRSampleBaseline {
 //					.newInstance(parameter, corpusProvider.getTrainingCorpus().getInternalInstances());
 //		} else {
 		t = (AbstractTemplate<OBIEInstance, OBIEState, ? extends FactorScope>) Class.forName(abstractTemplate.getName())
-				.getConstructor(OBIERunParameter.class).newInstance(parameter);
+				.getConstructor(RunParameter.class).newInstance(parameter);
 //		}
 		return t;
 	}

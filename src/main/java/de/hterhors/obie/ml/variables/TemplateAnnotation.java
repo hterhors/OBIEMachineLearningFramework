@@ -2,6 +2,7 @@ package de.hterhors.obie.ml.variables;
 
 import java.io.Serializable;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
@@ -29,7 +30,8 @@ public class TemplateAnnotation implements Serializable {
 	final public Class<? extends IOBIEThing> rootClassType;
 
 	private IOBIEThing templateAnnotation;
-	final String annotationID;
+
+	final long annotationID;
 
 	public IOBIEThing getInitializationThing() {
 		return initClass;
@@ -40,11 +42,13 @@ public class TemplateAnnotation implements Serializable {
 	 */
 	private final IOBIEThing initClass;
 
+	private static final AtomicLong annotationCounter = new AtomicLong();
+
 	public TemplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass) {
 		this.rootClassType = rootClassType;
 		this.templateAnnotation = obieClass;
+		this.annotationID = annotationCounter.addAndGet(1);
 		this.initClass = OBIEUtils.deepClone(obieClass);
-		this.annotationID = UUID.randomUUID().toString();
 
 	}
 
@@ -56,7 +60,7 @@ public class TemplateAnnotation implements Serializable {
 		return templateAnnotation;
 	}
 
-	public String getAnnotationID() {
+	public long getAnnotationID() {
 		return annotationID;
 	}
 
@@ -64,7 +68,7 @@ public class TemplateAnnotation implements Serializable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((annotationID == null) ? 0 : annotationID.hashCode());
+		result = prime * result + (int) (annotationID ^ (annotationID >>> 32));
 		result = prime * result + ((initClass == null) ? 0 : initClass.hashCode());
 		result = prime * result + ((rootClassType == null) ? 0 : rootClassType.hashCode());
 		result = prime * result + ((templateAnnotation == null) ? 0 : templateAnnotation.hashCode());
@@ -80,10 +84,7 @@ public class TemplateAnnotation implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		TemplateAnnotation other = (TemplateAnnotation) obj;
-		if (annotationID == null) {
-			if (other.annotationID != null)
-				return false;
-		} else if (!annotationID.equals(other.annotationID))
+		if (annotationID != other.annotationID)
 			return false;
 		if (initClass == null) {
 			if (other.initClass != null)

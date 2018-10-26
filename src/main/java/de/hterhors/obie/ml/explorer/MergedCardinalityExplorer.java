@@ -3,7 +3,7 @@ package de.hterhors.obie.ml.explorer;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.hterhors.obie.ml.run.param.OBIERunParameter;
+import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.OBIEState;
 import sampling.Explorer;
 
@@ -20,7 +20,7 @@ public class MergedCardinalityExplorer extends AbstractOBIEExplorer {
 	final private Explorer<OBIEState> templateCardinalityExplorer;
 	final private Explorer<OBIEState> slotCardinalityExplorer;
 
-	public MergedCardinalityExplorer(OBIERunParameter parameter) {
+	public MergedCardinalityExplorer(RunParameter parameter) {
 		this.templateCardinalityExplorer = new TemplateCardinalityExplorer(parameter);
 
 		this.slotCardinalityExplorer = new SlotCardinalityExplorer(parameter);
