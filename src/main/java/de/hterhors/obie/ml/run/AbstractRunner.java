@@ -334,8 +334,8 @@ public abstract class AbstractRunner {
 		 * 
 		 */
 		try {
-			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName())
-					.getConstructor(RunParameter.class).newInstance(this.parameter);
+			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName()).getConstructor(RunParameter.class)
+					.newInstance(this.parameter);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -444,6 +444,13 @@ public abstract class AbstractRunner {
 
 	}
 
+	/**
+	 * Set N <= 0 to collect all generated states.
+	 * 
+	 * @param instances
+	 * @param N
+	 * @return
+	 */
 	public Map<OBIEInstance, List<OBIEState>> collectBestNStates(final List<OBIEInstance> instances, final int N) {
 
 		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = buildTestDefaultSampler(model);

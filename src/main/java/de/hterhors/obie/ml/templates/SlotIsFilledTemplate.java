@@ -21,6 +21,11 @@ import learning.Vector;
 
 public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
+	/*
+	 * Commented out code because they are always distinct (based on exploration
+	 * strategy)
+	 */
+
 	/**
 	 * 
 	 */
@@ -35,17 +40,20 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 		final String templateAnnotationName;
 		final int numberOfSlotFiller;
-		final int numberOfDistinctSlotFiller;
+//		final int numberOfDistinctSlotFiller;
 		final String slotChain;
 
 		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
-				String templateName, int numberOfSlotFiller, String propertyNameChain, int numberOfDistinctSlotFiller) {
-			super(template, templateName, numberOfSlotFiller, numberOfDistinctSlotFiller, propertyNameChain,
-					entityRootClassType);
+				String templateName, int numberOfSlotFiller, String propertyNameChain
+//				, int numberOfDistinctSlotFiller
+		) {
+			super(template, templateName, numberOfSlotFiller
+//					, numberOfDistinctSlotFiller
+					, propertyNameChain, entityRootClassType);
 			this.numberOfSlotFiller = numberOfSlotFiller;
 			this.templateAnnotationName = templateName;
 			this.slotChain = propertyNameChain;
-			this.numberOfDistinctSlotFiller = numberOfDistinctSlotFiller;
+//			this.numberOfDistinctSlotFiller = numberOfDistinctSlotFiller;
 		}
 	}
 
@@ -63,19 +71,25 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 	private List<Scope> addFactorRecursive(final Class<? extends IOBIEThing> entityRootClassType,
 			IOBIEThing scioClass) {
-		return addFactorRecursive(entityRootClassType, null, scioClass, "", 1, 1);
+		return addFactorRecursive(entityRootClassType, null, scioClass, "", 1
+//				, 1
+		);
 	}
 
 	@SuppressWarnings("unchecked")
 	private List<Scope> addFactorRecursive(final Class<? extends IOBIEThing> templateRootClassType,
 			final Class<? extends IOBIEThing> parentClassType, IOBIEThing obieThing, String propertyNameChain,
-			int numberOfSlotFiller, int numberOfDistinctSlotFiller) {
+			int numberOfSlotFiller
+//			, int numberOfDistinctSlotFiller
+	) {
 		List<Scope> factors = new ArrayList<>();
 
 		if (parentClassType != null) {
 			for (Class<? extends IOBIEThing> parentClass : ReflectionUtils.getSuperRootClasses(parentClassType)) {
 				factors.add(new Scope(templateRootClassType, this, ReflectionUtils.simpleName(parentClass),
-						numberOfSlotFiller, propertyNameChain, numberOfDistinctSlotFiller));
+						numberOfSlotFiller, propertyNameChain
+//						, numberOfDistinctSlotFiller
+				));
 			}
 		}
 		if (obieThing == null)
@@ -92,17 +106,21 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));
 
 					final int num = data.size();
-					final int distinctNum = distinctSize(data,
-							ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class));
+//					final int distinctNum = distinctSize(data,
+//							ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class));
 
 					for (IOBIEThing listObject : data) {
 						factors.addAll(addFactorRecursive(templateRootClassType, obieThing.getClass(), listObject,
-								propertyNameChain + "->" + field.getName(), num, distinctNum));
+								propertyNameChain + "->" + field.getName(), num
+//								, distinctNum
+						));
 					}
 				} else {
 					factors.addAll(addFactorRecursive(templateRootClassType, obieThing.getClass(),
 							(IOBIEThing) field.get(obieThing), propertyNameChain + "->" + field.getName(),
-							field.get(obieThing) == null ? 0 : 1, 1));
+							field.get(obieThing) == null ? 0 : 1
+//									, 1
+					));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -112,16 +130,16 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		return factors;
 	}
 
-	private int distinctSize(List<IOBIEThing> data, boolean isDatatype) {
-
-		if (isDatatype) {
-			return (int) data.stream().filter(d -> d != null).map(d -> ((IDatatype) d).getSemanticValue()).unordered()
-					.distinct().count();
-		} else {
-			return (int) data.stream().filter(d -> d != null && d.getIndividual() != null)
-					.map(d -> d.getIndividual().name).unordered().distinct().count();
-		}
-	}
+//	private int distinctSize(List<IOBIEThing> data, boolean isDatatype) {
+//
+//		if (isDatatype) {
+//			return (int) data.stream().filter(d -> d != null).map(d -> ((IDatatype) d).getSemanticValue()).unordered()
+//					.distinct().count();
+//		} else {
+//			return (int) data.stream().filter(d -> d != null && d.getIndividual() != null)
+//					.map(d -> d.getIndividual().name).unordered().distinct().count();
+//		}
+//	}
 
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
@@ -139,21 +157,21 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >4 element",
 				factor.getFactorScope().numberOfSlotFiller >= 4);
 
-		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >2 distinct element",
-				factor.getFactorScope().numberOfDistinctSlotFiller >= 2
-						&& factor.getFactorScope().numberOfSlotFiller >= 2);
-		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >3 distinct element",
-				factor.getFactorScope().numberOfDistinctSlotFiller >= 3
-						&& factor.getFactorScope().numberOfSlotFiller <= 3);
-		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >4 distinct element",
-				factor.getFactorScope().numberOfDistinctSlotFiller >= 4
-						&& factor.getFactorScope().numberOfSlotFiller >= 4);
-
-		if (factor.getFactorScope().numberOfSlotFiller > 1) {
-			final boolean allDistinct = factor.getFactorScope().numberOfSlotFiller == factor
-					.getFactorScope().numberOfDistinctSlotFiller;
-			featureVector.set("[" + parentClassName + "]" + propertyNameChain + " all distinct", allDistinct);
-		}
+//		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >2 distinct element",
+//				factor.getFactorScope().numberOfDistinctSlotFiller >= 2
+//						&& factor.getFactorScope().numberOfSlotFiller >= 2);
+//		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >3 distinct element",
+//				factor.getFactorScope().numberOfDistinctSlotFiller >= 3
+//						&& factor.getFactorScope().numberOfSlotFiller <= 3);
+//		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains >4 distinct element",
+//				factor.getFactorScope().numberOfDistinctSlotFiller >= 4
+//						&& factor.getFactorScope().numberOfSlotFiller >= 4);
+//
+//		if (factor.getFactorScope().numberOfSlotFiller > 1) {
+//			final boolean allDistinct = factor.getFactorScope().numberOfSlotFiller == factor
+//					.getFactorScope().numberOfDistinctSlotFiller;
+//			featureVector.set("[" + parentClassName + "]" + propertyNameChain + " all distinct", allDistinct);
+//		}
 
 		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " contains elements", slotIsFilled);
 		featureVector.set("[" + parentClassName + "]" + propertyNameChain + " is empty", !slotIsFilled);

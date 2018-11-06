@@ -297,7 +297,7 @@ public class RunParameter implements Serializable {
 
 	public final AbstractCorpusDistributor corpusDistributor;
 
-	private RunParameter(String corpusNamePrefix, boolean excludeEmptyInstancesFromCorpus,
+	private RunParameter(boolean excludeEmptyInstancesFromCorpus,
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
 			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, String runID,
@@ -353,7 +353,7 @@ public class RunParameter implements Serializable {
 			throw new IllegalStateException("System does not support multiple root search types: " + rootSearchTypes);
 		}
 
-		Objects.requireNonNull(corpusNamePrefix);
+		Objects.requireNonNull(projectEnvironment.getCorpusPrefix());
 		Objects.requireNonNull(numberOfInitializedObjects);
 		Objects.requireNonNull(evaluator);
 
@@ -361,9 +361,9 @@ public class RunParameter implements Serializable {
 		requireGreaterThanZero(maxNumberOfDataTypeElements);
 		requireGreaterThanZero(maxNumberOfSamplingSteps);
 
+		this.corpusNamePrefix = projectEnvironment.getCorpusPrefix();
 		this.restrictExplorationToFoundConcepts = restrictExplorationOnConceptsInInstance;
 		this.corpusDistributor = corpusConfiguration;
-		this.corpusNamePrefix = corpusNamePrefix;
 		this.excludeEmptyInstancesFromCorpus = excludeEmptyInstancesFromCorpus;
 		this.rndForSampling = rndForSampling;
 		this.regularizer = regularizer;
@@ -576,8 +576,6 @@ public class RunParameter implements Serializable {
 		 */
 		private boolean excludeEmptyInstancesFromCorpus = true;
 
-		private String corpusNamePrefix = "";
-
 		private AbstractCorpusDistributor corpusConfiguration = null;
 
 		public Builder() {
@@ -589,15 +587,6 @@ public class RunParameter implements Serializable {
 
 		public Builder setCorpusDistributor(AbstractCorpusDistributor corpusConfiguration) {
 			this.corpusConfiguration = corpusConfiguration;
-			return this;
-		}
-
-		public String getCorpusNamePrefix() {
-			return corpusNamePrefix;
-		}
-
-		public Builder setCorpusNamePrefix(String corpusNamePrefix) {
-			this.corpusNamePrefix = corpusNamePrefix;
 			return this;
 		}
 
@@ -903,9 +892,9 @@ public class RunParameter implements Serializable {
 
 		public RunParameter build() {
 
-			return new RunParameter(corpusNamePrefix, excludeEmptyInstancesFromCorpus, templates, rootDirectory,
-					epochs, optimizer, scorerType, personalNotes, rootSearchTypes, initializer, runID, multiThreading,
-					projectEnvironment, manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
+			return new RunParameter(excludeEmptyInstancesFromCorpus, templates, rootDirectory, epochs, optimizer,
+					scorerType, personalNotes, rootSearchTypes, initializer, runID, multiThreading, projectEnvironment,
+					manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
 					investigationRestriction, initializationObjects, exploreExistingTemplates, exploreOnOntologyLevel,
 					enableDiscourseProgression, numberOfInitializedObjects, evaluator, maxNumberOfEntityElements,
 					maxNumberOfDataTypeElements, regularizer, maxNumberOfSamplingSteps, rndForSampling,

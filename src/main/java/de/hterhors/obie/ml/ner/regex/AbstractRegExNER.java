@@ -7,24 +7,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.jena.sparql.function.library.leviathan.root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.OntologyAnalyzer;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.dtinterpreter.IDatatypeInterpretation;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.ner.INERLAnnotation;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
@@ -55,8 +51,10 @@ public abstract class AbstractRegExNER<R extends IOBIEThing> implements INamedEn
 
 	final private Map<Class<? extends R>, Set<Pattern>> regExPatternForClasses = new HashMap<>();
 	final private Map<AbstractIndividual, Set<Pattern>> regExPatternForIndividuals = new HashMap<>();
+	protected final BasicRegExPattern<?> basicAbstractPattern;
 
-	protected AbstractRegExNER(Set<Class<? extends IOBIEThing>> rootClasses) {
+	protected AbstractRegExNER(Set<Class<? extends IOBIEThing>> rootClasses, BasicRegExPattern<?> mangaRegExPattern) {
+		this.basicAbstractPattern = mangaRegExPattern;
 //
 //		for (Entry<Class<? extends IOBIEThing>, Set<String>> tp : priorKnowledgeWordMap.entrySet()) {
 //			regExPattern

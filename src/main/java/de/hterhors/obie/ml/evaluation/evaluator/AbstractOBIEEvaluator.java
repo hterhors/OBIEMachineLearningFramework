@@ -24,11 +24,6 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 	private final PRF1 zeroScore = new PRF1();
 
-	/**
-	 * Is needed to compare lists of data types efficiently.
-	 */
-	private final NamedEntityLinkingEvaluator listOfDataTypesEvaluator = new NamedEntityLinkingEvaluator();;
-
 	protected final boolean penalizeCardinality;
 
 	protected final InvestigationRestriction investigationRestrictions;
@@ -223,7 +218,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 		if (goldInstance == null && predictedInstance != null) {
 			/*
-			 * If the gold instance does not has the specific field but the
+			 * If the gold instance does not have the specific field but the
 			 * predictedInstance has!
 			 */
 			score.fp++;
@@ -344,8 +339,16 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 						score.fp++;
 					// }
 				} else if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
-					score.fp++;
-					score.fn++;
+
+					if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() != null) {
+						score.fp++;
+					} else if (goldInstance.getIndividual() != null && predictedInstance.getIndividual() == null) {
+						score.fn++;
+					} else if (!goldInstance.getIndividual().equals(predictedInstance.getIndividual())) {
+						score.fn++;
+						score.fp++;
+					}
+
 				}
 			}
 		}
@@ -542,7 +545,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			adderScore = compareObjectWise(gold, pred, depth);
 		}
 
-//		System.out.println(adderScore);
+//		System.out.println("adderScore = " + adderScore);
 
 		score.add(adderScore);
 
@@ -608,20 +611,39 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		return bestPermutationScore;
 	}
 
-	// long totalTime = 0;
 	/**
-	 * Approx 0.1ms per call.
-	 * 
 	 * @param goldList
 	 * @param predictionList
 	 * @return
 	 */
 	private PRF1 standardSimilarity(List<IOBIEThing> goldList, List<IOBIEThing> predictionList) {
 
-		// long t = System.nanoTime();
-		PRF1 c = listOfDataTypesEvaluator.prf1(goldList, predictionList);
-		// totalTime += System.nanoTime() - t;
-		return c;
+		final List<String> semanticGoldValues = new ArrayList<>();
+		final List<String> semanticPredictedValues = new ArrayList<>();
+
+		for (IOBIEThing gV : goldList) {
+			semanticGoldValues.add(((IDatatype) gV).getSemanticValue());
+		}
+		for (IOBIEThing pV : predictionList) {
+			semanticPredictedValues.add(((IDatatype) pV).getSemanticValue());
+		}
+
+		int tp;
+		int fp;
+		int fn;
+
+		int intersectionSize = 0;
+
+		for (String goldThing : semanticGoldValues) {
+			intersectionSize += semanticPredictedValues.contains(goldThing) ? 1 : 0;
+		}
+
+		tp = intersectionSize;
+		fp = semanticPredictedValues.size() - intersectionSize;
+		fn = semanticGoldValues.size() - intersectionSize;
+
+		return new PRF1(tp, fp, fn);
+
 	}
 
 }

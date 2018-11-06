@@ -18,7 +18,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 
-public abstract class BasicRegExPattern {
+public abstract class BasicRegExPattern<T> {
 
 	/**
 	 * Standard set of stop words.
@@ -234,5 +234,9 @@ public abstract class BasicRegExPattern {
 	}
 
 	public abstract int getMinTokenlength();
+
+	public abstract Map<AbstractIndividual, Set<Pattern>> getHandMadePatternForIndividuals();
+
+	public abstract <T> Map<Class<? extends T>, Set<Pattern>> getHandMadePatternForClasses();
 
 }

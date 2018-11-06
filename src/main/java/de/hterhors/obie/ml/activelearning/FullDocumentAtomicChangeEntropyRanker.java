@@ -38,7 +38,6 @@ public class FullDocumentAtomicChangeEntropyRanker implements IActiveLearningDoc
 		log.info("Compute variations for entropy...");
 		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> predictedInstance : results) {
 			OBIEState initialState = new OBIEState(predictedInstance.getState());
-
 			List<OBIEState> nextStates = new ArrayList<>();
 
 			/*
@@ -75,6 +74,17 @@ public class FullDocumentAtomicChangeEntropyRanker implements IActiveLearningDoc
 			 * Normalize by length
 			 */
 			entropy /= maxEntropy;
+
+//			log.info("####FINAL STATE####");
+//			log.info(initialState);
+//			log.info("########");
+//			nextStates.forEach(log::info);
+//			log.info(initialState.getInstance().getName() + "\t" + nextStates.size() + "\t" + entropy);
+
+//			log.info("___");
+//			if(initialState.getInstance().getName().equals("Arvo_Kraam")) {
+//				log.info("__");
+//			}
 
 			entropyInstances.add(new RankedInstance(entropy, predictedInstance.getInstance()));
 //			final double inverseObjectiveRank = 1 - predictedInstance.getState().getObjectiveScore();

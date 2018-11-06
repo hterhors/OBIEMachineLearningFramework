@@ -33,7 +33,7 @@ public class FullDocumentLengthRanker implements IActiveLearningDocumentRanker {
 	public static final Comparator<OBIEInstance> COMPARE_BY_LENGTH = new Comparator<OBIEInstance>() {
 		@Override
 		public int compare(OBIEInstance o1, OBIEInstance o2) {
-			return -Integer.compare(o1.getContent().length(), o2.getContent().length());
+			return Integer.compare(o1.getContent().length(), o2.getContent().length());
 		}
 	};
 

@@ -22,8 +22,9 @@ public class BigramCorpusBuilder {
 	public static boolean overrideCorpusFileIfExists = false;
 
 	public BigramCorpusBuilder(AbstractProjectEnvironment env, Set<Class<? extends INamedEntitityLinker>> linker,
-			final String corpusPrefix, final AbstractOntologyEnvironment ontologyEnvironment) throws Exception {
+			final AbstractOntologyEnvironment ontologyEnvironment) throws Exception {
 
+		final String corpusPrefix = env.getCorpusPrefix();
 		log.info("Override-flag was set to: " + overrideCorpusFileIfExists + ", "
 				+ (overrideCorpusFileIfExists ? "existing corpus might be overriden!" : "corpus might not be saved."));
 

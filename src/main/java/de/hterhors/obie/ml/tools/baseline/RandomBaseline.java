@@ -55,8 +55,8 @@ public class RandomBaseline {
 
 			System.out.println("_____________" + doc.getName() + "_______________");
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.getThing()).collect(Collectors.toList());
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream().map(e -> e.getThing())
+					.collect(Collectors.toList());
 			List<IOBIEThing> predictions = predictFillerByRandom(doc);
 
 			System.out.println("___________GOLD___________");
@@ -91,7 +91,7 @@ public class RandomBaseline {
 
 	}
 
-	private List<IOBIEThing> predictFillerByRandom(OBIEInstance instance) {
+	public List<IOBIEThing> predictFillerByRandom(OBIEInstance instance) {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
 		int randomNumberOfRootSlotTemplates = getRandomIndexBetween(1, 1);
@@ -112,9 +112,8 @@ public class RandomBaseline {
 				 */
 				for (IndividualFrequencyPair individual : individualFreqList) {
 
-					predictionClass = individual.belongingClazz.getConstructor(String.class, String.class, String.class)
-							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
-									individual.textMention);
+					predictionClass = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
+							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
 					break;
 				}
 
@@ -170,8 +169,8 @@ public class RandomBaseline {
 								if (cfp.datatypeValue == null)
 									elements.add(cfp.clazz.newInstance());
 								else
-									elements.add(cfp.clazz.getConstructor(String.class, String.class, String.class)
-											.newInstance(null, cfp.textMention, cfp.datatypeValue));
+									elements.add(cfp.clazz.getConstructor(String.class, String.class)
+											.newInstance(cfp.textMention, cfp.datatypeValue));
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -271,8 +270,8 @@ public class RandomBaseline {
 									if (cfp.datatypeValue == null)
 										property = cfp.clazz.newInstance();
 									else
-										property = cfp.clazz.getConstructor(String.class, String.class, String.class)
-												.newInstance(null, cfp.textMention, cfp.datatypeValue);
+										property = cfp.clazz.getConstructor(String.class, String.class)
+												.newInstance(cfp.textMention, cfp.datatypeValue);
 								}
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -331,9 +330,8 @@ public class RandomBaseline {
 					/**
 					 * TODO: pass individual instead of string!
 					 */
-					property = individual.belongingClazz.getConstructor(String.class, String.class, String.class)
-							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
-									individual.textMention);
+					property = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
+							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
 				}
 			} else {
 				property = null;

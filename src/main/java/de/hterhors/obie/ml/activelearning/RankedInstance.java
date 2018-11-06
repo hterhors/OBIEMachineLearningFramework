@@ -15,7 +15,7 @@ public class RankedInstance implements Comparable<RankedInstance> {
 	@Override
 	public int compareTo(RankedInstance o) {
 		/*
-		 * Highest entropy first
+		 * Highest first
 		 */
 		return -Double.compare(value, o.value);
 	}

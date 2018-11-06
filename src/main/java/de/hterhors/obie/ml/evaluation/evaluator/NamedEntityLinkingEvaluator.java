@@ -118,6 +118,7 @@ public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
 		// predictions.contains(g)).count();
 
 		int intersectionSize = 0;
+		
 		for (IOBIEThing goldThing : gold) {
 			intersectionSize += predictions.contains(goldThing) ? 1 : 0;
 		}

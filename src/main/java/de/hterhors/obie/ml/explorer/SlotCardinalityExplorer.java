@@ -345,6 +345,13 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				if (!wasNOTModByPreFilledTemplate && this.currentState.preFilledObjectWasAlreadyUsed(candidateClass))
 					continue;
 
+				if (oldList.contains(candidateClass)) {
+					/*
+					 * Do not allow multiple equal items.
+					 */
+					continue;
+				}
+
 				try {
 					List<IOBIEThing> newList = new ArrayList<>();
 					for (IOBIEThing thing : oldList) {

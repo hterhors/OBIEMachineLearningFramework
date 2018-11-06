@@ -336,6 +336,12 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement,
 						listBaseClassType)) {
 
+					/*
+					 * Do not allow multiple values that are equal
+					 */
+					if (slotValues.contains(possibleElementValue.instance))
+						continue;
+
 					/**
 					 * Do not add null elements in lists.
 					 */

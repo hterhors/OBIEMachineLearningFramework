@@ -4,13 +4,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.google.common.reflect.Reflection;
 
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
@@ -49,6 +49,16 @@ public class UpperBound {
 
 	public static Logger log = LogManager.getLogger(UpperBound.class);
 
+	private Map<Class<?>, Integer> countFailures = new HashMap<>();
+
+	/**
+	 * TODO: return annotated instances for further investigation like slot-wise
+	 * comparing
+	 * 
+	 * @param parameter
+	 * @param corpus
+	 */
+
 	public UpperBound(RunParameter parameter, BigramInternalCorpus corpus) {
 
 		/**
@@ -67,20 +77,24 @@ public class UpperBound {
 
 			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
 
+			System.out.println(gold);
+			System.out.println(maxRecallPredictions);
+
 			final PRF1 s = parameter.evaluator.prf1(gold, maxRecallPredictions);
 			log.info("score = " + s);
 
 			for (Class<? extends IOBIEThing> clazz : doc.getNamedEntityLinkingAnnotations().getAvailableClassTypes()) {
 				log.debug(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
 			}
-			for (AbstractIndividual individual : doc.getNamedEntityLinkingAnnotations()
-					.getAvailableIndividualTypes()) {
+			for (AbstractIndividual individual : doc.getNamedEntityLinkingAnnotations().getAvailableIndividualTypes()) {
 				log.debug(doc.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual));
 			}
 
 			upperBound.add(s);
 		}
 		log.info("UpperBound = " + upperBound);
+		log.info("Failures:");
+		countFailures.entrySet().forEach(log::info);
 
 	}
 
@@ -185,8 +199,8 @@ public class UpperBound {
 			}
 			if (value != null) {
 				try {
-					predictionModel = value.classType.getDeclaredConstructor(String.class, String.class, String.class)
-							.newInstance(null, value.text, value.getDTValueIfAnyElseTextMention());
+					predictionModel = value.classType.getDeclaredConstructor(String.class, String.class)
+							.newInstance(value.text, value.getDTValueIfAnyElseTextMention());
 				} catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 						| SecurityException e) {
 					e.printStackTrace();
@@ -255,15 +269,16 @@ public class UpperBound {
 												.equals(((IDatatype) thing).getSemanticValue())) {
 											found = true;
 											values.add((IOBIEThing) mentionAnnotation.classType
-													.getDeclaredConstructor(String.class, String.class, String.class)
-													.newInstance(null, mentionAnnotation.text,
+													.getDeclaredConstructor(String.class, String.class)
+													.newInstance(mentionAnnotation.text,
 															mentionAnnotation.getDTValueIfAnyElseTextMention()));
 											break;
 										}
 									}
 									if (!found) {
-										log.info("WARN: Can not fill dt-class: " + slot.getName() + ":"
+										log.warn("Can not fill dt-class: " + slot.getName() + ":"
 												+ ((IDatatype) thing).getSemanticValue());
+										addFailure(slot.getType());
 									}
 								} else if (ner.containsIndividualAnnotations(individual)) {
 
@@ -282,13 +297,13 @@ public class UpperBound {
 
 							} else {
 								if (ReflectionUtils.isAnnotationPresent(clazz, DatatypeProperty.class)) {
-									log.info("WARN: Can not fill field: " + clazz.getSimpleName() + ":"
+									log.warn("Can not fill field: " + clazz.getSimpleName() + ":"
 											+ ((IDatatype) thing).getSemanticValue());
 								} else {
-									log.info("WARN: Can not fill field: " + clazz.getSimpleName() + " for indiviual: "
+									log.warn("Can not fill field: " + clazz.getSimpleName() + " for indiviual: "
 											+ individual);
 								}
-
+								addFailure(clazz);
 							}
 						}
 						/*
@@ -354,13 +369,15 @@ public class UpperBound {
 									Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(),
 											slot.getName());
 
-									f.set(predictionModel, (value.classType
-											.getDeclaredConstructor(String.class, String.class, String.class)
-											.newInstance(null, value.getDTValueIfAnyElseTextMention(), value.text)));
+									f.set(predictionModel,
+											(value.classType.getDeclaredConstructor(String.class, String.class)
+													.newInstance(value.getDTValueIfAnyElseTextMention(), value.text)));
 								} else {
 
-									log.info("WARN: Can not fill dt-field: " + slot.getName() + ":"
+									log.warn("Can not fill dt-field: " + slot.getName() + ":"
 											+ ((IDatatype) goldSlotValue).getSemanticValue());
+
+									addFailure(slot.getType());
 
 								}
 
@@ -387,12 +404,13 @@ public class UpperBound {
 							}
 						} else {
 							if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
-								log.info("WARN: Can not fill field: " + slotType.getSimpleName() + ":"
+								log.warn("Can not fill field: " + slotType.getSimpleName() + ":"
 										+ ((IDatatype) slot.get(goldModel)).getSemanticValue());
 							} else {
-								log.info("WARN: Can not fill field: " + slotType.getSimpleName() + " for individual: "
+								log.warn("Can not fill field: " + slotType.getSimpleName() + " for individual: "
 										+ individual);
 							}
+							addFailure(slot.getType());
 
 						}
 					}
@@ -406,6 +424,12 @@ public class UpperBound {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private void addFailure(Class<?> type) {
+
+		countFailures.put(type, countFailures.getOrDefault(type, 0) + 1);
+
 	}
 
 	private IOBIEThing newClassWithIndividual(final Class<? extends IOBIEThing> slotType,

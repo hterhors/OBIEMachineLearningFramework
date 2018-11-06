@@ -50,8 +50,8 @@ public class HighFrequencyBaseline {
 
 			System.out.println(doc.getName());
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> e.getThing()).collect(Collectors.toList());
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream().map(e -> e.getThing())
+					.collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictFillerByFrequency(doc);
 
@@ -120,9 +120,8 @@ public class HighFrequencyBaseline {
 				 */
 				for (IndividualFrequencyPair individual : individualFreqList) {
 
-					predictionClass = individual.belongingClazz.getConstructor(String.class, String.class, String.class)
-							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
-									individual.textMention);
+					predictionClass = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
+							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
 					break;
 				}
 
@@ -176,8 +175,8 @@ public class HighFrequencyBaseline {
 								if (cfp.datatypeValue == null)
 									elements.add(cfp.clazz.newInstance());
 								else
-									elements.add(cfp.clazz.getConstructor(String.class, String.class, String.class)
-											.newInstance(null, cfp.textMention, cfp.datatypeValue));
+									elements.add(cfp.clazz.getConstructor(String.class, String.class)
+											.newInstance(cfp.textMention, cfp.datatypeValue));
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -270,8 +269,8 @@ public class HighFrequencyBaseline {
 									if (cfp.datatypeValue == null)
 										property = cfp.clazz.newInstance();
 									else
-										property = cfp.clazz.getConstructor(String.class, String.class, String.class)
-												.newInstance(null, cfp.textMention, cfp.datatypeValue);
+										property = cfp.clazz.getConstructor(String.class, String.class)
+												.newInstance(cfp.textMention, cfp.datatypeValue);
 								}
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -333,9 +332,8 @@ public class HighFrequencyBaseline {
 					/**
 					 * TODO: pass individual instead of string!
 					 */
-					property = individual.belongingClazz.getConstructor(String.class, String.class, String.class)
-							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
-									individual.textMention);
+					property = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
+							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
 				}
 			} else {
 				property = null;

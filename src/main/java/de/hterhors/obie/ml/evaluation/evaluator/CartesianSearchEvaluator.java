@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.jena.ext.com.google.common.collect.Collections2;
 import org.apache.logging.log4j.LogManager;
@@ -167,10 +168,6 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 			return singleEntityEvaluation(goldList.get(0), predictionList.get(0));
 
 		PRF1 bestPermutationScore = explore(goldList, predictionList, 0);
-		// bestPermutationScore = orListSimilarity(goldList, predictionList);
-		// System.out.println("Multi : " + bestPermutationScore);
-		// System.out.println("totalTime = " + totalTime / 1000L);
-
 		return bestPermutationScore;
 	}
 
@@ -187,7 +184,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 */
 	@Override
 	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
-			final int maxSize = Math.max(gold.size(), prediction.size());
+		final int maxSize = Math.max(gold.size(), prediction.size());
 
 		if (maxSize > maxNumberOfAnnotations) {
 			log.warn("Skip comparison... to many cases as defined in the parameter!");
@@ -206,25 +203,52 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 		Collection<List<Integer>> indexPermutations = permutationCache.get(maxSize);
 
 		final PRF1 bestPermutationScore = new PRF1();
-		java.util.stream.Stream<List<Integer>> stream = indexPermutations.stream();
+		Stream<List<Integer>> stream = indexPermutations.stream();
 
 		/*
-		 * Remove parallel overhead if list is to small.
+		 * Remove parallelization overhead if list is to small.
 		 */
-		if (maxSize > 2)
-			stream = stream.parallel();
+//		if (maxSize > 2)
+//			stream = stream.parallel();
 
-		stream.forEach(permutation -> {
-			getBestPermutation(gold, prediction, maxSize, bestPermutationScore, permutation, depth);
-		});
+//		stream.forEach(permutation -> {
+//			System.out.println("__________");
+//			getBestPermutation(gold, prediction, maxSize, bestPermutationScore, permutation, depth);
+//			System.out.println("JOPS:" + depth + "---> " + bestPermutationScore);
+//			
+//		});
+		stream.filter(permutation -> {
+//			System.out.println("__________");
+//
+//			System.out.println("Before bestPermutationScore:" + depth + "---> " + bestPermutationScore);
+
+			PRF1 currentPermutationScore = getBestPermutation(gold, prediction, maxSize, permutation, depth);
+
+			synchronized (bestPermutationScore) {
+				if (bestPermutationScore.getF1() <= currentPermutationScore.getF1()) {
+					bestPermutationScore.set(currentPermutationScore);
+				}
+			}
+//			System.out.println("Updated:" + depth + "---> " + bestPermutationScore);
+
+			/*
+			 * Shortcut
+			 */
+			return bestPermutationScore.getF1() == 1;
+
+		}).findFirst();
 
 		return bestPermutationScore;
 	}
 
-	private void getBestPermutation(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int maxSize,
-			final PRF1 bestPermutationScore, List<Integer> permutation, final int depth) {
+	private PRF1 getBestPermutation(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int maxSize,
+			List<Integer> permutation, final int depth) {
+
 		final PRF1 currentPermutationScore = new PRF1();
 
+		/*
+		 * For all pairs based on the permutation...
+		 */
 		for (int goldListIndex = 0; goldListIndex < maxSize; goldListIndex++) {
 			final IOBIEThing o1;
 			final IOBIEThing o2;
@@ -240,19 +264,16 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 				o2 = prediction.get(predictionIndex);
 			else
 				o2 = EmptyOBIEInstance.emptyInstance;
-			currentPermutationScore.add(compareObjectWise(o1, o2, depth));
+
+//			System.out.println("o1" + o1);
+//			System.out.println("o2" + o2);
+			final PRF1 pairScore = compareObjectWise(o1, o2, depth);
+//			System.out.println("MiTTE: " + depth + "---> " + pairScore);
+			currentPermutationScore.add(pairScore);
+//			System.out.println("CurrentPermutation: " + depth + "---> " + currentPermutationScore);
+
 		}
-		synchronized (bestPermutationScore) {
-			if (bestPermutationScore.getF1() <= currentPermutationScore.getF1()) {
-				bestPermutationScore.set(currentPermutationScore);
-			}
-		}
-		/*
-		 * Shortcut
-		 */
-		if ((int) bestPermutationScore.getF1() == 1) {
-			return;
-		}
+		return currentPermutationScore;
 	}
 
 	private static long factorial(int n) {

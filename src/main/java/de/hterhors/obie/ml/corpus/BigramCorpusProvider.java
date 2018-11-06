@@ -137,6 +137,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		log.info("Apply " + linker.size() + " NEL-tools to instances...");
 
 		AtomicInteger countEntities = new AtomicInteger();
+		AtomicInteger progress = new AtomicInteger();
+		final int numOfInstances = rawCorpus.getInstances().size();
 
 		rawCorpus.getInstances().values().parallelStream().forEach(instance -> {
 			try {
@@ -146,12 +148,14 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 				NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
 
+				log.info("Progress " + progress.addAndGet(1) + "/" + numOfInstances);
+
 				for (INamedEntitityLinker l : linker) {
-					log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
 					annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
 					annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
-				}
 
+					log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
+				}
 				internalInstance.setAnnotations(annotationbuilder.build());
 
 				log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations()
@@ -212,7 +216,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			String surfaceForm = annotation.getTextMention();
 			if (surfaceForm == null)
 				log.warn("Text mention of annotation is null!");
-			else if (!content.contains(surfaceForm)) {
+			else if (!content.toLowerCase().contains(surfaceForm.toLowerCase())) {
 				final String error = "Could not find: " + surfaceForm + " in " + instanceName;
 				errors.add(error);
 				log.error(error + "\nContent: " + content + "\n");

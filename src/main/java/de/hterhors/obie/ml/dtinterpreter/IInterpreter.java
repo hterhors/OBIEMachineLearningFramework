@@ -7,7 +7,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 
 public interface IInterpreter<B extends IOBIEThing> {
 
-	public List<IDatatypeInterpretation> interpret(String testMention);
+	public List<IDatatypeInterpretation> getPossibleInterpretations(String testMention);
 
 	public IDatatypeInterpretation interpret(Class<? extends B> classType, String textMention);
 

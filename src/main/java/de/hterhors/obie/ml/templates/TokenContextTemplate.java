@@ -38,7 +38,6 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(TokenContextTemplate.class.getName());
 
-	private final AbstractOBIETemplate<?> thisTemplate;
 	/**
 	 * Whether distant supervision is enabled for this template or not. This effects
 	 * the way of calculating the factors and features!
@@ -47,12 +46,11 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 	public TokenContextTemplate(RunParameter parameter) {
 		super(parameter);
-		this.thisTemplate = this;
 		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
 	}
 
 	static class PositionContainer {
-	
+
 		final public String classOrIndividualName;
 		final public int beginTokenIndex;
 		final public int endTokenIndex;
@@ -107,8 +105,8 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		public Scope(OBIEInstance internalInstance, Class<? extends IOBIEThing> rootClassType,
 				Class<? extends IOBIEThing> obieClass, Integer characterOnset, Integer characterOffset,
 				AbstractIndividual individual) {
-			super(thisTemplate, internalInstance, rootClassType, obieClass, characterOnset, characterOffset,
-					individual);
+			super(TokenContextTemplate.this, internalInstance, rootClassType, obieClass, characterOnset,
+					characterOffset, individual);
 			this.instance = internalInstance;
 			this.obieClass = obieClass;
 			this.characterOnset = characterOnset;
@@ -183,7 +181,8 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 					final Class<? extends IOBIEThing> classType = obieClass;
 					final int beginTokenIndex = internalInstance.charPositionToTokenPosition(onset);
 					final int endTokenIndex = internalInstance.charPositionToTokenPosition(offset);
-					positions.add(new PositionContainer(ReflectionUtils.simpleName(classType), beginTokenIndex, endTokenIndex));
+					positions.add(new PositionContainer(ReflectionUtils.simpleName(classType), beginTokenIndex,
+							endTokenIndex));
 				}
 
 				forIndividual: {
