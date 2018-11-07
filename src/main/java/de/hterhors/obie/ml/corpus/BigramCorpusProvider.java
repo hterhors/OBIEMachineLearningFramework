@@ -101,13 +101,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 	transient public int currentActiveLearningItertion = 0;
 
-	private final Set<Class<? extends INamedEntitityLinker>> entityLinker;
+	private final Set<INamedEntitityLinker> entityLinker;
 
-	public Set<Class<? extends INamedEntitityLinker>> getEntityLinker() {
-		return entityLinker;
-	}
-
-	public BigramCorpusProvider(final File rawCorpusFile, Set<Class<? extends INamedEntitityLinker>> entityLinker) {
+	public BigramCorpusProvider(final File rawCorpusFile, Set<INamedEntitityLinker> entityLinker) {
 		log.info("Start creating corpus...");
 
 		log.info("Read raw corpus from file system: " + rawCorpusFile);
@@ -123,18 +119,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		log.info("Provided Named Enitity Recognition and Linking tools: ");
 		this.entityLinker.forEach(log::info);
 
-		log.info("Apply NEL-tools to " + rawCorpus.getAllInstanceNames().size() + " instances...");
-		log.info("Instantiate NEL-tools...");
-		final Set<INamedEntitityLinker> linker = this.entityLinker.stream().map(linkerClass -> {
-			try {
-				return linkerClass.getConstructor(Set.class).newInstance(this.rawCorpus.getRootClasses());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			throw new RuntimeException("Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
-		}).collect(Collectors.toSet());
-
-		log.info("Apply " + linker.size() + " NEL-tools to instances...");
+		log.info("Apply " + this.entityLinker.size() + " NEL-Tools to  " + rawCorpus.getAllInstanceNames().size()
+				+ " instances...");
 
 		AtomicInteger countEntities = new AtomicInteger();
 		AtomicInteger progress = new AtomicInteger();
@@ -150,7 +136,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 				log.info("Progress " + progress.addAndGet(1) + "/" + numOfInstances);
 
-				for (INamedEntitityLinker l : linker) {
+				for (INamedEntitityLinker l : this.entityLinker) {
 					annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
 					annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
 
@@ -537,13 +523,13 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			List<OBIEInstance> newInstances;
 			List<OBIEInstance> remainingInstances;
 
-			if (remaining <= ((ActiveLearningDistributor) distributer).b) {
+			if (remaining <= ((ActiveLearningDistributor) distributer).getB()) {
 				newInstances = rankedInstances;
 				remainingInstances = Collections.emptyList();
 			} else {
-				newInstances = rankedInstances.subList(0, ((ActiveLearningDistributor) distributer).b);
-				remainingInstances = new ArrayList<>(
-						rankedInstances.subList(((ActiveLearningDistributor) distributer).b, rankedInstances.size()));
+				newInstances = rankedInstances.subList(0, ((ActiveLearningDistributor) distributer).getB());
+				remainingInstances = new ArrayList<>(rankedInstances
+						.subList(((ActiveLearningDistributor) distributer).getB(), rankedInstances.size()));
 			}
 
 			trainingInstances.addAll(newInstances);

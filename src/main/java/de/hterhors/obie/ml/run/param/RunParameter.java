@@ -317,7 +317,7 @@ public class RunParameter implements Serializable {
 			throw new IllegalStateException("The given paramters do not match.");
 		}
 
-//		requireElements(templates);
+		Objects.requireNonNull(templates);
 		requireGreaterThanZero(epochs);
 		Objects.requireNonNull(rootDirectory);
 		requireElements(rootSearchTypes);

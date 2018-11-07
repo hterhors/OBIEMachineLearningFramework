@@ -3,6 +3,8 @@ package de.hterhors.obie.ml.tools;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,18 +23,24 @@ public class BigramCorpusBuilder {
 
 	public static boolean overrideCorpusFileIfExists = false;
 
-	public BigramCorpusBuilder(AbstractProjectEnvironment env, Set<Class<? extends INamedEntitityLinker>> linker,
-			final AbstractOntologyEnvironment ontologyEnvironment) throws Exception {
+	public BigramCorpusBuilder(AbstractProjectEnvironment projectEnvironment,
+			final AbstractOntologyEnvironment ontologyEnvironment, INamedEntitityLinker linker) throws Exception {
+		this(projectEnvironment, ontologyEnvironment, new HashSet<>(Arrays.asList(linker)));
+	}
 
-		final String corpusPrefix = env.getCorpusPrefix();
+	public BigramCorpusBuilder(AbstractProjectEnvironment projectEnvironment,
+			final AbstractOntologyEnvironment ontologyEnvironment, Set<INamedEntitityLinker> linker) throws Exception {
+
+		final String corpusPrefix = projectEnvironment.getCorpusPrefix();
 		log.info("Override-flag was set to: " + overrideCorpusFileIfExists + ", "
 				+ (overrideCorpusFileIfExists ? "existing corpus might be overriden!" : "corpus might not be saved."));
 
 		OntologyInitializer.initializeOntology(ontologyEnvironment);
 
-		final BigramCorpusProvider corpusProvider = new BigramCorpusProvider(env.getRawCorpusFile(), linker);
+		final BigramCorpusProvider corpusProvider = new BigramCorpusProvider(projectEnvironment.getRawCorpusFile(),
+				linker);
 
-		storeCorpusToFile(corpusProvider, env, corpusPrefix, ontologyEnvironment.getOntologyVersion());
+		storeCorpusToFile(corpusProvider, projectEnvironment, corpusPrefix, ontologyEnvironment.getOntologyVersion());
 
 	}
 

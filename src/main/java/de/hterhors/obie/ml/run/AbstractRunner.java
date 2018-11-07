@@ -401,7 +401,7 @@ public abstract class AbstractRunner {
 	}
 
 	public List<OBIEState> predictInstancesBatch(final List<OBIEInstance> instances,
-			Set<Class<? extends INamedEntitityLinker>> entityLinker) {
+			Set<INamedEntitityLinker> entityLinker) {
 
 		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = buildTestDefaultSampler(model);
 
@@ -411,17 +411,17 @@ public abstract class AbstractRunner {
 
 		for (OBIEInstance instance : instances) {
 
-			final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
-				try {
-					return linkerClass.getConstructor(Set.class).newInstance(instance.rootClassTypes);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				throw new RuntimeException(
-						"Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
-			}).collect(Collectors.toSet());
+//			final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
+//				try {
+//					return linkerClass.getConstructor(Set.class).newInstance(instance.rootClassTypes);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//				throw new RuntimeException(
+//						"Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
+//			}).collect(Collectors.toSet());
 
-			for (INamedEntitityLinker l : linker) {
+			for (INamedEntitityLinker l : entityLinker) {
 				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + instance.getName());
 				annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getContent()));
 				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(instance.getContent()));

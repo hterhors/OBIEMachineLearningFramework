@@ -2,12 +2,14 @@ package de.hterhors.obie.ml.corpus.distributor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
+import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor.Builder.EMode;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 
 /**
@@ -64,20 +66,24 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 	 */
 	private final int testProportion;
 
-	/**
-	 * The number of new training data per active learning step.
-	 */
-	public final int b;
+	final private int bAbsolute;
+	final private float bPercentage;
+	final EMode mode;
 
 	private ActiveLearningDistributor(float corpusSizeFraction, long initializationSelectionSeed,
-			float initialTrainingSelectionFraction, int b, final int trainingProportion, final int testProportion) {
+			float initialTrainingSelectionFraction, int bAbsolute, float bPercentage, final int trainingProportion,
+			final int testProportion, final EMode mode) {
 		super(corpusSizeFraction);
+
+		Objects.requireNonNull(mode);
 
 		this.random = new Random(initializationSelectionSeed);
 		this.initialTrainingSelectionFraction = initialTrainingSelectionFraction;
 		this.trainingProportion = trainingProportion;
 		this.testProportion = testProportion;
-		this.b = b;
+		this.mode = mode;
+		this.bPercentage = bPercentage;
+		this.bAbsolute = bAbsolute;
 
 	}
 
@@ -97,6 +103,10 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
 	public static class Builder extends AbstractConfigBuilder<Builder> {
 
+		public static enum EMode {
+			PERCENTAGE, ABSOLUT;
+		}
+
 		/**
 		 * Selection of data sets from the training data.
 		 */
@@ -110,7 +120,12 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		/**
 		 * The number of new training data per active learning step.
 		 */
-		private int b = 1;
+		private int bAbsolute = 1;
+
+		/**
+		 * The number of new training data per active learning step.
+		 */
+		private float bPercentage = 1 / 10;
 
 		/**
 		 * The proportion of the training data.
@@ -121,6 +136,26 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		 * The proportion of the test data.
 		 */
 		private int testProportion = 20;
+
+		private EMode mode;
+
+		/**
+		 */
+		public EMode getMode() {
+			return mode;
+		}
+
+		/**
+		 * The mode of whether the number of training data added in each iteration
+		 * should be based on percentage or absolute.
+		 * 
+		 * @param mode PERCENTAGE or ABSOLUTE
+		 * @return
+		 */
+		public Builder setMode(EMode mode) {
+			this.mode = mode;
+			return this;
+		}
 
 		/**
 		 * @return the initializationSelectionSeed
@@ -160,18 +195,36 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		/**
 		 * @return the b
 		 */
-		public int getB() {
-			return b;
+		public float getBPercentage() {
+			return bPercentage;
+		}
+
+		/**
+		 * Set percentage number of training data that should be drawn in every step
+		 * 
+		 * @param b the absolute value to set
+		 * @return
+		 */
+		public Builder setBPercentage(float bPercentage) {
+			this.bPercentage = bPercentage;
+			return this;
+		}
+
+		/**
+		 * @return the b
+		 */
+		public int getBAbsolute() {
+			return bAbsolute;
 		}
 
 		/**
 		 * Set absolute number of training data that should be drawn in every step
 		 * 
-		 * @param b the b to set
+		 * @param bAbsolute the absolute value to set
 		 * @return
 		 */
-		public Builder setB(int b) {
-			this.b = b;
+		public Builder setBAbsolute(int bAbsolute) {
+			this.bAbsolute = bAbsolute;
 			return this;
 		}
 
@@ -196,7 +249,7 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		@Override
 		public ActiveLearningDistributor build() {
 			return new ActiveLearningDistributor(corpusSizeFraction, initializationSelectionSeed,
-					initialTrainingSelectionFraction, b, trainingProportion, testProportion);
+					initialTrainingSelectionFraction, bAbsolute, bPercentage, trainingProportion, testProportion, mode);
 		};
 
 		@Override
@@ -226,6 +279,8 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 
 		final int trainIndex = Math.max(1, (int) Math.round(initialTrainingSelectionFraction * numberForTraining));
 
+		this.b = mode == EMode.ABSOLUT ? bAbsolute : (int) (bPercentage * (float) numberForTraining);
+
 		return new Distributor() {
 
 			@Override
@@ -253,6 +308,15 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 	@Override
 	public String getDistributorID() {
 		return "ActiveLearning";
+	}
+
+	/**
+	 * The number of new training data per active learning step.
+	 */
+	private int b;
+
+	public int getB() {
+		return b;
 	}
 
 }

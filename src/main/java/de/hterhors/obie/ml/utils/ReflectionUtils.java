@@ -46,8 +46,6 @@ public class ReflectionUtils {
 	private static final Map<Class<? extends IOBIEThing>, Map<Class<? extends Annotation>, Boolean>> isAnnotationPresent = new HashMap<>();
 	private static final Map<Field, Map<Class<? extends Annotation>, Boolean>> isAnnotationPresentField = new HashMap<>();
 
-	private static final Map<Class<? extends IOBIEThing>, Constructor<? extends IOBIEThing>> cloneConstructor = new HashMap<>();
-
 	public static boolean isAnnotationPresent(Field field, Class<? extends Annotation> annotation) {
 
 		Map<Class<? extends Annotation>, Boolean> annotations;
@@ -104,15 +102,18 @@ public class ReflectionUtils {
 
 	public static Class<? extends IOBIEThing> getImplementationClass(Class<? extends IOBIEThing> ontologyClazz) {
 
-		Class<? extends IOBIEThing> value;
+		if (!ontologyClazz.isInterface())
+			return null;
 
+		Class<? extends IOBIEThing> value;
 		if ((value = implementationClass.get(ImplementationClass.class)) == null) {
-			if (ontologyClazz.isAnnotationPresent(ImplementationClass.class))
-				value = ontologyClazz.getAnnotation(ImplementationClass.class).get();
-			else
+			final ImplementationClass a;
+			if ((a = ontologyClazz.getAnnotation(ImplementationClass.class)) != null) {
+				value = a.get();
+				implementationClass.put(ontologyClazz, value);
+			} else
 				value = null;
 
-			implementationClass.put(ontologyClazz, value);
 		}
 
 		return value;
@@ -176,12 +177,12 @@ public class ReflectionUtils {
 		Set<Class<? extends IOBIEThing>> values;
 
 		if ((values = assignableSubInterfacesAnnotationCache.get(AssignableSubInterfaces.class)) == null) {
-			if (ontologyClazz.isAnnotationPresent(AssignableSubInterfaces.class))
+			if (ontologyClazz.isAnnotationPresent(AssignableSubInterfaces.class)) {
 				values = new HashSet<>(Arrays.asList(ontologyClazz.getAnnotation(AssignableSubInterfaces.class).get()));
-			else
+				assignableSubInterfacesAnnotationCache.put(ontologyClazz, values);
+			} else
 				values = null;
 
-			assignableSubInterfacesAnnotationCache.put(ontologyClazz, values);
 		}
 
 		return values;

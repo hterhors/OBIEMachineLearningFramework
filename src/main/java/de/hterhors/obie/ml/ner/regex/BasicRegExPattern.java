@@ -1,5 +1,6 @@
 package de.hterhors.obie.ml.ner.regex;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,7 +19,12 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 
-public abstract class BasicRegExPattern<T> {
+public abstract class BasicRegExPattern<T> implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Standard set of stop words.
@@ -237,6 +243,6 @@ public abstract class BasicRegExPattern<T> {
 
 	public abstract Map<AbstractIndividual, Set<Pattern>> getHandMadePatternForIndividuals();
 
-	public abstract <T> Map<Class<? extends T>, Set<Pattern>> getHandMadePatternForClasses();
+	public abstract Map<Class<? extends T>, Set<Pattern>> getHandMadePatternForClasses();
 
 }
