@@ -135,7 +135,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field
 							.getGenericType()).getActualTypeArguments()[0];
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {

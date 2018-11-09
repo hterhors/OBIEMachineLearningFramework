@@ -8,7 +8,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -16,15 +15,13 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.collections.set.SynchronizedSet;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import corpus.SampledInstance;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -42,7 +39,6 @@ import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import learning.Trainer;
 
@@ -126,32 +122,48 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		AtomicInteger progress = new AtomicInteger();
 		final int numOfInstances = rawCorpus.getInstances().size();
 
-		rawCorpus.getInstances().values().parallelStream().forEach(instance -> {
-			try {
-				OBIEInstance internalInstance = convertToInternalInstances(instance);
+		final long totalLength = rawCorpus.getInstances().values().stream().map(i -> Long.valueOf(i.content.length()))
+				.reduce(0L, Long::sum);
 
-				allExistingInternalInstances.add(internalInstance);
+		AtomicLong timeConsumed = new AtomicLong(0);
+		AtomicLong lengthConsumed = new AtomicLong(0);
 
-				NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
+//		rawCorpus.getInstances().values().parallelStream().forEach(instance -> {
 
-				log.info("Progress " + progress.addAndGet(1) + "/" + numOfInstances);
+		for (Instance instance : rawCorpus.getInstances().values()) {
 
-				for (INamedEntitityLinker l : this.entityLinker) {
-					annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
-					annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
+			OBIEInstance internalInstance = convertToInternalInstances(instance);
 
-					log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
-				}
-				internalInstance.setAnnotations(annotationbuilder.build());
+			allExistingInternalInstances.add(internalInstance);
 
-				log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations()
-						+ " in instance: " + internalInstance.getName());
+			NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
 
-				countEntities.addAndGet(internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations());
-			} catch (Exception e) {
-				e.printStackTrace();
+			log.info("Annotate " + internalInstance.getName() + ", length: " + internalInstance.getContent().length());
+			long t = System.currentTimeMillis();
+			for (INamedEntitityLinker l : this.entityLinker) {
+				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
+				annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
+				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
+
 			}
-		});
+			internalInstance.setAnnotations(annotationbuilder.build());
+
+			final long tc = (System.currentTimeMillis() - t);
+
+			log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations()
+					+ " in instance: " + internalInstance.getName() + " in " + tc + " ms.");
+
+			timeConsumed.addAndGet(tc);
+			lengthConsumed.addAndGet(internalInstance.getContent().length());
+			countEntities.addAndGet(internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations());
+
+			final long estimedRemainignTime = (long) ((((double) totalLength - (double) lengthConsumed.get())
+					/ (double) lengthConsumed.get()) * (double) timeConsumed.get());
+
+			log.info("Progress " + progress.addAndGet(1) + "/" + numOfInstances + ", estimated remaining time: "
+					+ estimedRemainignTime + " ms.");
+			log.info("___");
+		}
 
 		log.info("Sucessfully applied all NEL-tools. Found " + countEntities.get() + " entities in "
 				+ rawCorpus.getAllInstanceNames().size() + " instances");
@@ -366,7 +378,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * @param documents
 	 * 
 	 */
-	private OBIEInstance convertToInternalInstances(Instance instance) throws Exception {
+	private OBIEInstance convertToInternalInstances(Instance instance) {
 
 		final InstanceTemplateAnnotations internalAnnotation = new InstanceTemplateAnnotations();
 

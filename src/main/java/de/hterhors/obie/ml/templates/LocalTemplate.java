@@ -108,7 +108,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		}
 		ReflectionUtils.getAccessibleOntologyFields(child.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(child)) {
 						addFactorRecursive(factors, internalInstance, rootClassType, child, listObject);
 					}

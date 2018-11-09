@@ -271,10 +271,10 @@ public class ActiveLearningDistributor extends AbstractCorpusDistributor {
 		final int numberForTraining = numberOfTotalTrainingData(totalNumberOfDocuments);
 		final int numberForTest = numberOfTestData(totalNumberOfDocuments);
 
-		if (Math.round(corpusSizeFraction * (numberForTraining + numberForTest)) != Math
+		if (numberForTraining + numberForTest != Math
 				.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size()))
 			log.warn("WARN!!! Could not redistribute data accordingly! Change number of documents for data from "
-					+ Math.round(corpusSizeFraction * (numberForTraining + numberForTest)) + " to "
+					+ (numberForTraining + numberForTest) + " to "
 					+ Math.round(corpusSizeFraction * corpusProvider.allExistingInternalInstances.size()) + "!");
 
 		final int trainIndex = Math.max(1, (int) Math.round(initialTrainingSelectionFraction * numberForTraining));

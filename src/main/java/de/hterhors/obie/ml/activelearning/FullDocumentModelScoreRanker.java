@@ -36,7 +36,7 @@ public class FullDocumentModelScoreRanker implements IActiveLearningDocumentRank
 					@Override
 					public int compare(SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> o1,
 							SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> o2) {
-						return -Double.compare(o1.getState().getModelScore(), o2.getState().getModelScore());
+						return Double.compare(o1.getState().getModelScore(), o2.getState().getModelScore());
 					}
 				});
 

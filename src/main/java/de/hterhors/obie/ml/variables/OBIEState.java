@@ -261,7 +261,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		final Map<String, Double> features = new HashMap<>();
 		try {
 			for (Factor<? extends FactorScope> factor : getFactorGraph().getFactors()) {
-				for (Entry<String, Double> f : factor.getFeatureVector().getFeatures().entrySet()) {
+				for (Entry<String, Double> f : factor.getFeatureVector().getNamedFeatures().entrySet()) {
 					features.putIfAbsent(f.getKey(), f.getValue());
 					// features.put(f.getKey(),
 					// features.getOrDefault(f.getKey(), 0d) + f.getValue());

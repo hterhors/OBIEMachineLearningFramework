@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,11 +63,14 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 
 	public Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> annotateClasses(final String content) {
 
-		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> docSpeceficRetrieval = new HashMap<>();
+		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> docSpeceficRetrieval = new ConcurrentHashMap<>();
 
 		for (Class<? extends T> scioDataTypeClass : regExPatternForClasses.keySet()) {
+			docSpeceficRetrieval.put(scioDataTypeClass, new HashSet<>());
+		}
+		regExPatternForClasses.keySet().parallelStream().forEach(scioDataTypeClass -> {
 
-			docSpeceficRetrieval.putIfAbsent(scioDataTypeClass, new HashSet<>());
+			Set<NERLClassAnnotation> annotation = docSpeceficRetrieval.get(scioDataTypeClass);
 
 			for (Pattern pattern : regExPatternForClasses.get(scioDataTypeClass)) {
 
@@ -93,9 +97,12 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 					NERLClassAnnotation mention = new NERLClassAnnotation(text, offset, scioDataTypeClass,
 							semanticInterpretation);
 
-					docSpeceficRetrieval.get(scioDataTypeClass).add(mention);
+					annotation.add(mention);
 				}
 			}
+		});
+
+		for (Class<? extends T> scioDataTypeClass : regExPatternForClasses.keySet()) {
 			if (docSpeceficRetrieval.get(scioDataTypeClass).isEmpty()) {
 				docSpeceficRetrieval.remove(scioDataTypeClass);
 			}
@@ -107,11 +114,16 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 
 	public Map<AbstractIndividual, Set<NERLIndividualAnnotation>> annotateIndividuals(final String content) {
 
-		final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> docSpeceficRetrieval = new HashMap<>();
+		final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> docSpeceficRetrieval = new ConcurrentHashMap<>(
+				regExPatternForIndividuals.keySet().size());
 
 		for (AbstractIndividual individual : regExPatternForIndividuals.keySet()) {
+			docSpeceficRetrieval.put(individual, new HashSet<>());
+		}
 
-			docSpeceficRetrieval.putIfAbsent(individual, new HashSet<>());
+		regExPatternForIndividuals.keySet().parallelStream().forEach(individual -> {
+
+			Set<NERLIndividualAnnotation> annotation = docSpeceficRetrieval.get(individual);
 
 			for (Pattern pattern : regExPatternForIndividuals.get(individual)) {
 				Matcher matcher = pattern.matcher(content);
@@ -127,9 +139,12 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 
 					NERLIndividualAnnotation mention = new NERLIndividualAnnotation(text, offset, individual);
 
-					docSpeceficRetrieval.get(individual).add(mention);
+					annotation.add(mention);
 				}
 			}
+		});
+
+		for (AbstractIndividual individual : regExPatternForIndividuals.keySet()) {
 			if (docSpeceficRetrieval.get(individual).isEmpty()) {
 				docSpeceficRetrieval.remove(individual);
 			}

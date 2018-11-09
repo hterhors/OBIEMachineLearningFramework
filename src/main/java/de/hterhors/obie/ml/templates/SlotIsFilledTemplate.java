@@ -43,11 +43,11 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 //		final int numberOfDistinctSlotFiller;
 		final String slotChain;
 
-		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
-				String templateName, int numberOfSlotFiller, String propertyNameChain
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, String templateName, int numberOfSlotFiller,
+				String propertyNameChain
 //				, int numberOfDistinctSlotFiller
 		) {
-			super(template, templateName, numberOfSlotFiller
+			super(SlotIsFilledTemplate.this, templateName, numberOfSlotFiller
 //					, numberOfDistinctSlotFiller
 					, propertyNameChain, entityRootClassType);
 			this.numberOfSlotFiller = numberOfSlotFiller;
@@ -86,7 +86,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (parentClassType != null) {
 			for (Class<? extends IOBIEThing> parentClass : ReflectionUtils.getSuperRootClasses(parentClassType)) {
-				factors.add(new Scope(templateRootClassType, this, ReflectionUtils.simpleName(parentClass),
+				factors.add(new Scope(templateRootClassType, ReflectionUtils.simpleName(parentClass),
 						numberOfSlotFiller, propertyNameChain
 //						, numberOfDistinctSlotFiller
 				));
@@ -102,7 +102,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 
 		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));
 
 					final int num = data.size();
