@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
@@ -45,7 +45,6 @@ import learning.Vector;
  *       Probably a bad template!
  * 
  */
-@Deprecated
 public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 
 	public CooccurrenceTemplate(RunParameter parameter) {
@@ -65,62 +64,49 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	/**
-	 * The current entity root class type of the investigated annotation.
-	 */
-	private Class<? extends IOBIEThing> entityRootClassType;
-
-	/**
-	 * The current internal instance object where the current annotation comes from.
-	 */
-	private OBIEInstance internalInstance;
-
 	class Scope extends FactorScope {
 
 		/**
 		 * The parent class type of the obie-template in a parent-child relation.
 		 * Otherwise the first child of the pair.
 		 */
-		final Class<? extends IOBIEThing> classType1;
+		final String value1;
 
 		/**
 		 * The class type of the investigated child-property in a parent-child relation.
 		 * Otherwise the second child of the pair.
 		 */
-		final Class<? extends IOBIEThing> classType2;
+		final String value2;
 
-		/**
-		 * The surface forms of the child-property. If distant supervision is enabled
-		 * this set contains surface forms of all annotations that have the class type
-		 * of the child-property. Else the set contains just a single surface form of
-		 * that respective annotation.
-		 */
-		final Set<String> type1SurfaceForms;
-
-		/**
-		 * The surface forms of the parent. If distant supervision is enabled this set
-		 * contains surface forms of all annotations that have the class type of the
-		 * child-property. Else the set contains just a single surface form of that
-		 * respective annotation.
-		 */
-		final Set<String> type2SurfaceForms;
+//		/**
+//		 * The surface forms of the child-property. If distant supervision is enabled
+//		 * this set contains surface forms of all annotations that have the class type
+//		 * of the child-property. Else the set contains just a single surface form of
+//		 * that respective annotation.
+//		 */
+//		final Set<String> type1SurfaceForms;
+//
+//		/**
+//		 * The surface forms of the parent. If distant supervision is enabled this set
+//		 * contains surface forms of all annotations that have the class type of the
+//		 * child-property. Else the set contains just a single surface form of that
+//		 * respective annotation.
+//		 */
+//		final Set<String> type2SurfaceForms;
 
 		/**
 		 * This describes the property chain which connects the parent class with the
 		 * investigated child property. If it is not an parent-child relation this is
 		 * null.
 		 */
-		final String propertyNameChain;
+		final String slotName;
 
-		public Scope(Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
-				Set<String> surfaceFormsType1, Set<String> surfaceFormsType2, String propertyNameChain) {
-			super(CooccurrenceTemplate.this, classType1, classType2, surfaceFormsType1, surfaceFormsType2,
-					propertyNameChain, entityRootClassType);
-			this.classType1 = classType1;
-			this.classType2 = classType2;
-			this.type1SurfaceForms = surfaceFormsType1;
-			this.type2SurfaceForms = surfaceFormsType2;
-			this.propertyNameChain = propertyNameChain;
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, String value1, String propertyChain,
+				String value2) {
+			super(CooccurrenceTemplate.this, entityRootClassType, value1, value2, propertyChain);
+			this.value1 = value1;
+			this.value2 = value2;
+			this.slotName = propertyChain;
 		}
 
 	}
@@ -128,17 +114,22 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		internalInstance = state.getInstance();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			entityRootClassType = entity.rootClassType;
-			addFactorRecursive(factors, entity.getThing());
+			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 
 		return factors;
 	}
 
-	private List<Scope> addFactorRecursive(List<Scope> factors, IOBIEThing obieClass) {
-		return addFactorRecursive(factors, null, obieClass, "");
+	private void addFactorRecursive(List<Scope> factors, Class<? extends IOBIEThing> rootClassType,
+			OBIEInstance obieInstance, IOBIEThing obieClass) {
+		try {
+			addFactorRecursive(factors, obieInstance, rootClassType, obieClass);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
+
 	}
 
 	/**
@@ -147,117 +138,156 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	 * of the child Class is NOT null as we then pass the fields type parameter, to
 	 * allow null-capturing.
 	 * 
+	 * @param rootClassType
+	 * @param obieInstance
 	 * 
-	 * @param parentClass       the parent can only be null in the initial call.
+	 * 
+	 * @param parentThing       the parent can only be null in the initial call.
 	 *                          since the root class does not have a parent.
 	 * @param childClass
 	 * @param propertyNameChain
 	 * @return
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
 	 */
 	@SuppressWarnings("unchecked")
-	private List<Scope> addFactorRecursive(List<Scope> factors, final IOBIEThing parentClass,
-			final IOBIEThing childClass, final String propertyNameChain) {
+	private void addFactorRecursive(List<Scope> factors, OBIEInstance obieInstance,
+			Class<? extends IOBIEThing> rootClassType, final IOBIEThing parentThing)
+			throws IllegalArgumentException, IllegalAccessException {
 
-		Set<String> parentSurfaceForms = getSurfaceForms(parentClass);
-		Set<String> childSurfaceForms = getSurfaceForms(childClass);
+		if (parentThing == null || parentThing.getIndividual() == null)
+			return;
 
-		final Class<? extends IOBIEThing> childClassType = childClass == null ? null : childClass.getClass();
 		/*
-		 * Add factor for parent-child relation.
+		 * template-slot relation
 		 */
-		if (parentClass == null) {
-			// influencedVariables.add(childClassType);
-			factors.add(new Scope(null, childClassType, null, childSurfaceForms, null));
-		} else {
-			// influencedVariables.add(parentClass.getClass());
-			// influencedVariables.add(childClassType);
-			factors.add(new Scope(parentClass.getClass(), childClassType, parentSurfaceForms, childSurfaceForms,
-					propertyNameChain));
+		{
+			final String value1 = parentThing.getIndividual().name;
+			for (Field slot : ReflectionUtils.getSlots(parentThing.getClass())) {
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+					for (IOBIEThing slotValue : (List<? extends IOBIEThing>) slot.get(parentThing)) {
+						addScope(factors, obieInstance, rootClassType, value1, slot, slotValue);
+					}
+				} else {
+					IOBIEThing slotValue = (IOBIEThing) slot.get(parentThing);
+					addScope(factors, obieInstance, rootClassType, value1, slot, slotValue);
+				}
+			}
 		}
-
-		if (childClass == null)
-			return factors;
-
 		/*
-		 * TODO: inefficient as surface forms are multiple times collected.
+		 * slot-slot relation.
 		 * 
-		 * Child-Child relation. if the child property is of type OneToMany we create
-		 * pairwise co-occurrences between all elements.
+		 * For every distinct slot pair do: for every distinct slotValue pair do: add
+		 * factor
 		 */
-		for (int i = 0; i < ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).size(); i++) {
-			final Field f1 = ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).get(i);
+		final List<Field> slots = ReflectionUtils.getSlots(parentThing.getClass());
+		{
 
-			final List<IOBIEThing> child1Fillers = getFillers(childClass, f1);
+			for (int i = 0; i < slots.size(); i++) {
 
-			for (int k = 0; k < child1Fillers.size(); k++) {
-				final Set<String> child1SurfaceForms;
-				/*
-				 * The class type is either the type of the object in the field if any. Else the
-				 * type of the field.
-				 */
-				final Class<? extends IOBIEThing> child1ClassType;
+				final Field slot1 = slots.get(i);
 
-				if (child1Fillers.get(k) == null) {
-					child1SurfaceForms = null;
-					child1ClassType = null;
-				} else {
-					child1SurfaceForms = getSurfaceForms(child1Fillers.get(k));
-					child1ClassType = (Class<IOBIEThing>) child1Fillers.get(k).getClass();
-				}
+				final List<IOBIEThing> slot1Values = getFillers(parentThing, slot1);
 
-				for (int j = i + 1; j < ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).size(); j++) {
-					final Field f2 = ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).get(j);
+				for (int j = i + 1; j < slots.size(); j++) {
 
-					final List<IOBIEThing> child2Fillers = getFillers(childClass, f2);
+					final Field slot2 = ReflectionUtils.getSlots(parentThing.getClass()).get(j);
 
-					for (int l = 0; l < child2Fillers.size(); l++) {
-						final Set<String> child2SurfaceForms;
+					final List<IOBIEThing> slot2Values = getFillers(parentThing, slot2);
 
-						/*
-						 * The class type is either the type of the object in the field if any. Else the
-						 * type of the field.
-						 */
-						final Class<? extends IOBIEThing> child2ClassType;
+					for (int k = 0; k < slot1Values.size(); k++) {
+						final IOBIEThing slotValue1 = slot1Values.get(k);
 
-						if (child2Fillers.get(k) == null) {
-							child2SurfaceForms = null;
-							child2ClassType = null;
-						} else {
-							child2SurfaceForms = getSurfaceForms(child2Fillers.get(l));
-							child2ClassType = (Class<IOBIEThing>) child2Fillers.get(l).getClass();
+						if (slotValue1 == null)
+							continue;
+
+						final String value1 = getSlotValue(slot1, slotValue1);
+
+						for (int l = 0; l < slot2Values.size(); l++) {
+							IOBIEThing slotValue2 = slot2Values.get(l);
+
+							if (slotValue2 == null)
+								continue;
+
+							final String value2 = getSlotValue(slot2, slotValue2);
+
+							factors.add(new Scope(rootClassType, value1,
+									"(" + slot1.getName() + ")<->(" + slot2.getName() + ")", value2));
 						}
+					}
+				}
+			}
+		}
+		/*
+		 * TODO: kinda inefficient
+		 * 
+		 * inter-slot relation.
+		 * 
+		 * For every distinct slot pair do: for every distinct slotValue pair do: add
+		 * factor
+		 */
+		{
 
-						/*
-						 * Add factor for parent-child relation.
-						 */
-						factors.add(new Scope(child1ClassType, child2ClassType, child1SurfaceForms, child2SurfaceForms,
-								propertyNameChain + "->" + "{" + f1.getName() + ", " + f2.getName() + "}"));
+			for (int i = 0; i < slots.size(); i++) {
 
+				final Field slot = slots.get(i);
+
+				final List<IOBIEThing> slotValues = getFillers(parentThing, slot);
+
+				if (slotValues.size() < 2)
+					continue;
+
+				for (int k = 0; k < slotValues.size() - 1; k++) {
+					final IOBIEThing slotValue1 = slotValues.get(k);
+
+					if (slotValue1 == null)
+						continue;
+
+					final String value1 = getSlotValue(slot, slotValue1);
+
+					for (int l = k + 1; l < slotValues.size(); l++) {
+						IOBIEThing slotValue2 = slotValues.get(l);
+
+						if (slotValue2 == null)
+							continue;
+
+						final String value2 = getSlotValue(slot, slotValue2);
+
+						factors.add(new Scope(rootClassType, value1, "<(" + slot.getName() + ")>", value2));
 					}
 				}
 			}
 		}
 
-		/*
-		 * Parent-Child relation
-		 */
-		ReflectionUtils.getAccessibleOntologyFields(childClass.getClass()).forEach(field -> {
-			try {
-				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
-					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(childClass)) {
-						factors.addAll(addFactorRecursive(factors, childClass, listObject,
-								propertyNameChain + "->" + field.getName()));
-					}
-				} else {
-					factors.addAll(addFactorRecursive(factors, childClass, (IOBIEThing) field.get(childClass),
-							propertyNameChain + "->" + field.getName()));
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
+		return;
+	}
 
-		return factors;
+	private String getSlotValue(final Field slot, final IOBIEThing slotValue) {
+		final String value;
+		if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
+			value = ((IDatatype) slotValue).getSemanticValue();
+		} else {
+			value = slotValue.getIndividual().name;
+		}
+		return value;
+	}
+
+	private void addScope(List<Scope> factors, OBIEInstance obieInstance, Class<? extends IOBIEThing> rootClassType,
+			final String value1, Field slot, IOBIEThing slotValue)
+			throws IllegalArgumentException, IllegalAccessException {
+
+		if (slotValue == null)
+			return;
+		final String value2;
+
+		if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
+			value2 = ((IDatatype) slotValue).getSemanticValue();
+
+		} else {
+			value2 = slotValue.getIndividual().name;
+			addFactorRecursive(factors, obieInstance, rootClassType, slotValue);
+		}
+		factors.add(new Scope(rootClassType, value1, "->" + slot.getName() + "->", value2));
 	}
 
 	/**
@@ -267,9 +297,10 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	 * annotated surface form of the given object.
 	 * 
 	 * @param filler
+	 * @param internalInstance
 	 * @return null if there are no annotations for that class
 	 */
-	private Set<String> getSurfaceForms(final IOBIEThing filler) {
+	private Set<String> getSurfaceForms(final IOBIEThing filler, OBIEInstance internalInstance) {
 
 		if (filler == null)
 			return null;
@@ -316,36 +347,17 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		final List<IOBIEThing> fillers;
 
 		try {
-			if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+			if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 				fillers = (List<IOBIEThing>) field.get(childClass);
 			} else {
-				fillers = new ArrayList<>();
-				fillers.add((IOBIEThing) field.get(childClass));
+				fillers = new ArrayList<>(1);
+				IOBIEThing filler = (IOBIEThing) field.get(childClass);
+				if (filler != null) {
+					fillers.add(filler);
+				}
 			}
 			return fillers;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-			throw new RuntimeException(e.getMessage());
-		}
-	}
-
-	/**
-	 * Returns the type of the field. If the field is of type list, the generic type
-	 * is returned.
-	 * 
-	 * @param field
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	private Class<? extends IOBIEThing> getFieldType(final Field field) {
-		try {
-			if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-				return (Class<? extends IOBIEThing>) ((ParameterizedType) field.getGenericType())
-						.getActualTypeArguments()[0];
-			} else {
-				return (Class<? extends IOBIEThing>) field.getType();
-			}
-		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e.getMessage());
 		}
@@ -355,63 +367,16 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
-		final String classType1Name = factor.getFactorScope().classType1 == null ? null
-				: factor.getFactorScope().classType1.getSimpleName();
+		final String value1 = factor.getFactorScope().value1;
 
-		final Set<String> type1SurfaceForms = factor.getFactorScope().type1SurfaceForms;
+		final String value2 = factor.getFactorScope().value2;
 
-		// if (classType1Name != null && type1SurfaceForms != null) {
-		// /*
-		// * Add features for classType1 co-occ with surface form
-		// */
-		// for (String sf : type1SurfaceForms) {
-		// featureVector.set(classType1Name + " (" + sf + ")", true);
-		// }
-		// }
-
-		final String classType2Name = factor.getFactorScope().classType2 == null ? null
-				: factor.getFactorScope().classType2.getSimpleName();
-
-		final Set<String> type2SurfaceForms = factor.getFactorScope().type2SurfaceForms == null ? null
-				: factor.getFactorScope().type2SurfaceForms;
-
-		final String propertyNameChain = factor.getFactorScope().propertyNameChain;
-
-		// if (type2SurfaceForms != null && classType2Name != null) {
-		// for (String sf2 : type2SurfaceForms) {
-		// /*
-		// * 1) Add features for classType2 co-occ with surface form
-		// */
-		// if (propertyNameChain == null)
-		// featureVector.set(classType2Name + " (" + sf2 + ")", true);
-		// }
-		// }
+		final String property = factor.getFactorScope().slotName;
 
 		/*
 		 * Add classType1 co-occ classType2
 		 */
-		if (propertyNameChain != null)
-			featureVector.set(classType1Name + propertyNameChain + "->" + classType2Name, true);
-
-		/*
-		 * TESTME: Features to sparse? Exclude.
-		 */
-		// if (type1SurfaceForms != null) {
-		// for (String sf1 : type1SurfaceForms) {
-		//
-		// /*
-		// * Add features classtype1 co-occ with classType2 incl. surface
-		// * forms if any.
-		// */
-		// if (type2SurfaceForms != null) {
-		// for (String sf2 : type2SurfaceForms) {
-		// featureVector.set(classType1Name + " (" + sf1 + ")" +
-		// propertyNameChain + "->" + classType2Name
-		// + " (" + sf2 + ")", true);
-		// }
-		// }
-		// }
-		// }
+		featureVector.set(value1 + property + value2, true);
 
 	}
 

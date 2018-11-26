@@ -33,6 +33,7 @@ import learning.Vector;
  * @date Nov 15, 2017
  */
 public class NERTemplate extends AbstractOBIETemplate<Scope> {
+
 	public NERTemplate(RunParameter parameter) {
 		super(parameter);
 	}
@@ -66,8 +67,7 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			factors.addAll(
-					addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getThing()));
+			factors.addAll(addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getThing()));
 		}
 		return factors;
 	}
@@ -89,23 +89,24 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
-			Arrays.stream(scioClass.getClass().getDeclaredFields())
-					.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
-						field.setAccessible(true);
-						try {
-							if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-								for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
-									factors.addAll(addFactorRecursive(internalInstance, entityRootClassType, element));
-								}
-							} else {
-								factors.addAll(addFactorRecursive(internalInstance, entityRootClassType,
-										(IOBIEThing) field.get(scioClass)));
-							}
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					});
+		if (ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
+			return factors;
+
+		ReflectionUtils.getSlots(scioClass.getClass()).forEach(field -> {
+			try {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
+					for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
+						factors.addAll(addFactorRecursive(internalInstance, entityRootClassType, element));
+					}
+				} else {
+					factors.addAll(addFactorRecursive(internalInstance, entityRootClassType,
+							(IOBIEThing) field.get(scioClass)));
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+
 		return factors;
 
 	}

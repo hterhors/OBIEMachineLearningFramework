@@ -25,6 +25,7 @@ import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.explorer.AbstractOBIEExplorer;
 import de.hterhors.obie.ml.explorer.IExplorationCondition;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
+import de.hterhors.obie.ml.ner.candidateRetrieval.ICandidateRetrieval;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.templates.AbstractOBIETemplate;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
@@ -48,12 +49,6 @@ public class RunParameter implements Serializable {
 //
 //	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
 //			.linearModelSamplingStrategy();
-
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
-//			.softmaxObjectiveSamplingStrategy();
-//	
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
-//			.softmaxModelSamplingStrategy();
 
 	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
 			.greedyObjectiveStrategy();
@@ -168,7 +163,7 @@ public class RunParameter implements Serializable {
 	/**
 	 * The projects environment.
 	 */
-	public final AbstractProjectEnvironment projectEnvironment;
+	public final AbstractProjectEnvironment<?> projectEnvironment;
 
 	/**
 	 * The ontology environment.
@@ -297,11 +292,13 @@ public class RunParameter implements Serializable {
 
 	public final AbstractCorpusDistributor corpusDistributor;
 
+	private final ICandidateRetrieval candidateRetrieval;
+
 	private RunParameter(boolean excludeEmptyInstancesFromCorpus,
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
 			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, String runID,
-			boolean multiThreading, AbstractProjectEnvironment projectEnvironment,
+			boolean multiThreading, AbstractProjectEnvironment<?> projectEnvironment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
 			svm_parameter svmParam, InvestigationRestriction investigationRestriction,
@@ -311,7 +308,7 @@ public class RunParameter implements Serializable {
 			int maxNumberOfEntityElements, int maxNumberOfDataTypeElements, Regularizer regularizer,
 			int maxNumberOfSamplingSteps, Random rndForSampling, boolean ignoreEmptyInstancesonEvaluation,
 			AbstractCorpusDistributor corpusConfiguration, AbstractOntologyEnvironment ontologyEnvironment,
-			boolean restrictExplorationOnConceptsInInstance) {
+			boolean restrictExplorationOnConceptsInInstance, ICandidateRetrieval candidateRetrieval) {
 
 		if (!validate()) {
 			throw new IllegalStateException("The given paramters do not match.");
@@ -361,6 +358,7 @@ public class RunParameter implements Serializable {
 		requireGreaterThanZero(maxNumberOfDataTypeElements);
 		requireGreaterThanZero(maxNumberOfSamplingSteps);
 
+		this.candidateRetrieval = candidateRetrieval;
 		this.corpusNamePrefix = projectEnvironment.getCorpusPrefix();
 		this.restrictExplorationToFoundConcepts = restrictExplorationOnConceptsInInstance;
 		this.corpusDistributor = corpusConfiguration;
@@ -401,6 +399,14 @@ public class RunParameter implements Serializable {
 		this.maxNumberOfEntityElements = maxNumberOfEntityElements;
 		this.maxNumberOfDataTypeElements = maxNumberOfDataTypeElements;
 
+	}
+
+	public boolean hasCandidateRetrieval() {
+		return getCandidateRetrieval() != null;
+	}
+
+	public ICandidateRetrieval getCandidateRetrieval() {
+		return candidateRetrieval;
 	}
 
 	private void requireGreaterThanZero(double number) {
@@ -537,11 +543,11 @@ public class RunParameter implements Serializable {
 
 		private boolean exploreExistingTemplates = false;
 
-		private boolean exploreOnOntologyLevel = true;
+		private boolean exploreOnOntologyLevel = false;
 
 		private boolean restrictExplorationToFoundConcepts = true;
 
-		private AbstractProjectEnvironment projectEnvironment;
+		private AbstractProjectEnvironment<?> projectEnvironment;
 
 		private AbstractOntologyEnvironment ontologyEnvironment;
 
@@ -578,7 +584,18 @@ public class RunParameter implements Serializable {
 
 		private AbstractCorpusDistributor corpusConfiguration = null;
 
+		private ICandidateRetrieval candidateRetrieval = null;
+
 		public Builder() {
+		}
+
+		public ICandidateRetrieval getCandidateRetrieval() {
+			return candidateRetrieval;
+		}
+
+		public Builder setCandidateRetrieval(ICandidateRetrieval candidateRetrieval) {
+			this.candidateRetrieval = candidateRetrieval;
+			return this;
 		}
 
 		public AbstractCorpusDistributor getCorpusConfiguration() {
@@ -899,7 +916,7 @@ public class RunParameter implements Serializable {
 					enableDiscourseProgression, numberOfInitializedObjects, evaluator, maxNumberOfEntityElements,
 					maxNumberOfDataTypeElements, regularizer, maxNumberOfSamplingSteps, rndForSampling,
 					ignoreEmptyInstancesonEvaluation, corpusConfiguration, ontologyEnvironment,
-					restrictExplorationToFoundConcepts);
+					restrictExplorationToFoundConcepts, candidateRetrieval);
 		}
 
 	}

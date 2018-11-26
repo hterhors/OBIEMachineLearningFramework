@@ -63,7 +63,7 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 
 	public Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> annotateClasses(final String content) {
 
-		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> docSpeceficRetrieval = new ConcurrentHashMap<>();
+		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> docSpeceficRetrieval = new HashMap<>();
 
 		for (Class<? extends T> scioDataTypeClass : regExPatternForClasses.keySet()) {
 			docSpeceficRetrieval.put(scioDataTypeClass, new HashSet<>());
@@ -114,7 +114,7 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 
 	public Map<AbstractIndividual, Set<NERLIndividualAnnotation>> annotateIndividuals(final String content) {
 
-		final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> docSpeceficRetrieval = new ConcurrentHashMap<>(
+		final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> docSpeceficRetrieval = new HashMap<>(
 				regExPatternForIndividuals.keySet().size());
 
 		for (AbstractIndividual individual : regExPatternForIndividuals.keySet()) {
@@ -126,6 +126,7 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 			Set<NERLIndividualAnnotation> annotation = docSpeceficRetrieval.get(individual);
 
 			for (Pattern pattern : regExPatternForIndividuals.get(individual)) {
+
 				Matcher matcher = pattern.matcher(content);
 
 				while (matcher.find()) {

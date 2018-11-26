@@ -126,7 +126,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
 								factors.addAll(addFactorRecursive(entityRootClassType, instance, element));
 							}

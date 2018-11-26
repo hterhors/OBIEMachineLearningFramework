@@ -77,7 +77,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return beamEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getRecall();
@@ -88,7 +88,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return beamEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getPrecision();
@@ -171,7 +171,8 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @throws IllegalAccessException
 	 * @throws NoSuchFieldException
 	 */
-	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
+	protected PRF1 explore(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int depth) {
 
 		final List<BeamAssignmentTree> assignments = new ArrayList<>();
 
@@ -259,8 +260,8 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	class BeamAssignmentTree implements Comparable<BeamAssignmentTree> {
 
 		final private List<BeamAssignment> assignments;
-		final private List<IOBIEThing> remainingGold;
-		final private List<IOBIEThing> remainingPrediction;
+		final private List<? extends IOBIEThing> remainingGold;
+		final private List<? extends IOBIEThing> remainingPrediction;
 		final public PRF1 overallSimiliarity;
 
 		/**
@@ -270,7 +271,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 		 * @param gold
 		 * @param prediction
 		 */
-		public BeamAssignmentTree(List<IOBIEThing> gold, List<IOBIEThing> prediction) {
+		public BeamAssignmentTree(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> prediction) {
 			this.assignments = new ArrayList<>();
 			this.remainingGold = gold;
 			this.remainingPrediction = prediction;

@@ -3,23 +3,30 @@ package de.hterhors.obie.ml.explorer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.tokenizer.RegExTokenizer;
 import de.hterhors.obie.core.tokenizer.Token;
+import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
+import de.hterhors.obie.ml.ner.candidateRetrieval.ICandidateRetrieval;
+import de.hterhors.obie.ml.ner.candidateRetrieval.RetrievalCandidate;
+import de.hterhors.obie.ml.ner.dictionary.IDictionary;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
@@ -35,11 +42,19 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 	final private int maxTokenPerAnnotation = 4;
 
 	final private Random rnd;
+	/*
+	 * All individuals
+	 */
+	final private ICandidateRetrieval candidateRetrieval;
+	final private IDictionary dictionary;
 
 	public EntityRecognitionAndLinkingExplorer(RunParameter param) {
+		super(param);
 
-		this.possibleRootClassTypes = Collections.unmodifiableSet(param.rootSearchTypes.stream()
-				.map(i -> ReflectionUtils.getImplementationClass(i)).collect(Collectors.toSet()));
+		this.candidateRetrieval = param.getCandidateRetrieval();
+		this.dictionary = candidateRetrieval.getDictionary();
+
+		this.possibleRootClassTypes = param.rootSearchTypes;
 		log.info("Intialize MultiTokenBoundaryExplorer with: " + possibleRootClassTypes);
 		this.maxNumberOfSampleElements = param.maxNumberOfEntityElements;
 		this.rnd = param.rndForSampling;
@@ -62,7 +77,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 		/*
 		 * Loop over all possible class types.
 		 */
-		for (Class<? extends IOBIEThing> classToAnnotate : possibleRootClassTypes) {
+		for (Class<? extends IOBIEThing> obieThingInterface : possibleRootClassTypes) {
 
 			/*
 			 * For all with size 10 ,9 ,8, 7 ....
@@ -73,6 +88,29 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 				 * In 10 for all tokens in document T0-T9, T1-T10, ...
 				 */
 				for (int i = 0; i <= tokens.size() - tokenPerAnnotation; i++) {
+
+					final String firstToken = tokens.get(i).getText();
+
+					if (tokenPerAnnotation == 1 && firstToken.length() == 1)
+						continue;
+
+					if (firstToken.trim().isEmpty())
+						continue;
+
+					if (!dictionary.containsToken(firstToken))
+						continue;
+
+					if (tokenPerAnnotation > 1) {
+
+						final String lastToken = tokens.get(i + tokenPerAnnotation - 1).getText();
+
+						if (lastToken.isEmpty())
+							continue;
+
+						if (!dictionary.containsToken(lastToken))
+							continue;
+
+					}
 
 					boolean assign = true;
 					/*
@@ -94,68 +132,73 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 							break;
 
 					}
-					if (assign) {
 
-						try {
-							/*
-							 * Add Identity
-							 */
-							OBIEState generatedState = new OBIEState(previousState);
+					if (!assign)
+						continue;
 
-							final int charStartIndex = tokens.get(i).getFromCharPosition();
-							final int charEndIndex = tokens.get(i + tokenPerAnnotation - 1).getToCharPosition();
+					try {
+						/*
+						 * Add Identity
+						 */
 
-							final String originalText = previousState.getInstance().getContent()
-									.substring((int) charStartIndex, (int) charEndIndex);
+						final int charStartIndex = tokens.get(i).getFromCharPosition();
+						final int charEndIndex = tokens.get(i + tokenPerAnnotation - 1).getToCharPosition();
 
-							IOBIEThing annotation;
-							/**
-							 * CHECKME: TODO: add semantic interpretation to data type properties?
-							 * 
-							 * We need at least to add the original value for data type property as it is
-							 * used for comparison.
-							 */
-							if (ReflectionUtils.isAnnotationPresent(classToAnnotate, DatatypeProperty.class)) {
-								final Set<NERLClassAnnotation> ner = previousState.getInstance()
-										.getNamedEntityLinkingAnnotations()
-										.getClassAnnotationsByTextMention(classToAnnotate, originalText);
+						final String originalText = previousState.getInstance().getContent()
+								.substring((int) charStartIndex, (int) charEndIndex);
 
-								final String value;
-								if (ner != null && !ner.isEmpty()) {
-									value = ner.iterator().next().getDTValueIfAnyElseTextMention();
-								} else {
-									value = originalText;
-								}
+						/**
+						 * CHECKME: TODO: add semantic interpretation to data type properties?
+						 * 
+						 * We need at least to add the original value for data type property as it is
+						 * used for comparison.
+						 */
+						final Class<? extends IOBIEThing> obieThingClass = ReflectionUtils
+								.getImplementationClass(obieThingInterface);
 
-//								if (classToAnnotate == GroupName.class) {
-//									annotation = new GroupName(UUID.randomUUID().toString(), value, originalText);
-//								} else {
-								/**
-								 * TODO: Test this:
-								 */
-								annotation = classToAnnotate.getConstructor(String.class, String.class)
-										.newInstance(value, originalText);
+						if (ReflectionUtils.isAnnotationPresent(obieThingClass, DatatypeProperty.class)) {
+							final Set<NERLClassAnnotation> ner = previousState.getInstance()
+									.getNamedEntityLinkingAnnotations()
+									.getClassAnnotationsByTextMention(obieThingClass, originalText);
 
-//								}
-
+							final String value;
+							if (ner != null && !ner.isEmpty()) {
+								value = ner.iterator().next().getDTValueIfAnyElseTextMention();
 							} else {
-								String individual = null;
-								annotation = classToAnnotate.getConstructor(String.class, String.class)
-										.newInstance(individual, originalText);
-								throw new NotImplementedException("Search for individuals via candidate selection!");
+								value = originalText;
 							}
 
+							OBIEState generatedState = new OBIEState(previousState);
+
+							final IOBIEThing annotation = obieThingClass.getConstructor(String.class, String.class)
+									.newInstance(value, originalText);
 							annotation.setCharacterOnset(charStartIndex);
-
-							TemplateAnnotation tokenAnnotation = new TemplateAnnotation(classToAnnotate, annotation);
-
-							generatedState.getCurrentTemplateAnnotations().addAnnotation(tokenAnnotation);
+							generatedState.getCurrentTemplateAnnotations()
+									.addAnnotation(new TemplateAnnotation(obieThingInterface, annotation));
 							generatedStates.add(generatedState);
-						} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-								| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-							e.printStackTrace();
+
+						} else {
+
+							for (RetrievalCandidate individualCandidate : candidateRetrieval
+									.getCandidates(obieThingInterface, originalText)) {
+
+								OBIEState generatedState = new OBIEState(previousState);
+								final IOBIEThing annotation = obieThingClass.getConstructor(String.class, String.class)
+										.newInstance(individualCandidate.individual.nameSpace
+												+ individualCandidate.individual.name, originalText);
+								annotation.setCharacterOnset(charStartIndex);
+								generatedState.getCurrentTemplateAnnotations()
+										.addAnnotation(new TemplateAnnotation(obieThingInterface, annotation));
+								generatedStates.add(generatedState);
+
+							}
 						}
+
+					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+						e.printStackTrace();
 					}
+
 				}
 			}
 		}
@@ -164,6 +207,7 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 		// generatedStates.forEach(System.out::println);
 		// System.out.println("###");
 		return generatedStates;
+
 	}
 
 	public boolean tokenHasAnnotation(Token token, InstanceTemplateAnnotations prediction) {
@@ -198,9 +242,9 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 
 		final AtomicBoolean containsAnnotation = new AtomicBoolean(false);
 
-		ReflectionUtils.getAccessibleOntologyFields(scioClass.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(scioClass.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(scioClass)) {
 						containsAnnotation.set(containsAnnotation.get()
 								|| checkForAnnotationRec(listObject, fromPosition, toPosition));
@@ -219,6 +263,20 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 		});
 		return containsAnnotation.get();
 
+	}
+
+	private static Map<Class<? extends IOBIEThing>, Collection<AbstractIndividual>> individualCache = new HashMap<>();
+
+	private static Collection<AbstractIndividual> getIndividuals(Class<? extends IOBIEThing> slotType) {
+
+		Collection<AbstractIndividual> v;
+
+		if ((v = individualCache.get(slotType)) == null) {
+			v = new HashSet<>(ExplorationUtils.getPossibleIndividuals(slotType));
+			individualCache.put(slotType, v);
+		}
+
+		return v;
 	}
 
 }

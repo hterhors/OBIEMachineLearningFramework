@@ -73,7 +73,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 					field.setAccessible(true);
 					try {
 
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
 								if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 

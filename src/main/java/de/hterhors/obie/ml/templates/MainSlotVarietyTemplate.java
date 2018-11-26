@@ -152,11 +152,9 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			/*
 			 * Add factors for object type properties.
 			 */
-			Arrays.stream(entityScioClass.getClass().getDeclaredFields())
-					.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
-						field.setAccessible(true);
+			ReflectionUtils.getSlots(entityScioClass.getClass()).stream().forEach(field -> {
 						try {
-							if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+							if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 								for (IOBIEThing element : (List<IOBIEThing>) field.get(entityScioClass)) {
 									if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 										childrenOfEntities.get(entityScioClass.getClass())[index]

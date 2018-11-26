@@ -99,7 +99,7 @@ public class SlotTemplateInstantiationUtils {
 				.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)).forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 
 							Class<? extends IOBIEThing> slotSuperType = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
 									.getGenericType()).getActualTypeArguments()[0]);

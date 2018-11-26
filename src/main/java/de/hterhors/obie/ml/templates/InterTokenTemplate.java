@@ -111,7 +111,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {

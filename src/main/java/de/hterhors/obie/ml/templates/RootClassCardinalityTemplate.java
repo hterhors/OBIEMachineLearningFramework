@@ -99,9 +99,9 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 			Map<Class<? extends IOBIEThing>, Integer> countRootClasses, final IOBIEThing rootClass) {
 		List<Scope> factors = new ArrayList<>();
 
-		ReflectionUtils.getAccessibleOntologyFields(rootClass.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(rootClass.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 					final int rootCardinality = countRootClasses.get(rootClass.getClass());
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(rootClass)) {
 

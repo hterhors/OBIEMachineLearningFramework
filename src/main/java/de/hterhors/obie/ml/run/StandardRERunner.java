@@ -25,9 +25,6 @@ public class StandardRERunner extends AbstractRunner {
 
 	public StandardRERunner(RunParameter parameter) {
 		super(parameter);
-		/*
-		 * TODO: parameterize ?
-		 */
 		this.random = new Random(100L);
 		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
 			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))

@@ -18,6 +18,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.SentenceLocalityTemplate.Scope;
+import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -156,26 +157,24 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	 *         ontology instance.
 	 */
 	private List<IOBIEThing> collectValuesFromFields(final IOBIEThing ontologyInstance) {
-		return Arrays.stream(ontologyInstance.getClass().getDeclaredFields())
-				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).map(f -> {
-					try {
-						f.setAccessible(true);
-						if (f.isAnnotationPresent(RelationTypeCollection.class)) {
-							/**
-							 * TODO: Integrate lists.
-							 */
-							throw new NotImplementedException(
-									"SentenceLocalityTemplate can not handle OneToManyRelations for class: "
-											+ ontologyInstance);
-						} else {
-							return (IOBIEThing) f.get(ontologyInstance);
-						}
+		return ReflectionUtils.getSlots(ontologyInstance.getClass()).stream().map(f -> {
+			try {
+				if (ReflectionUtils.isAnnotationPresent(f, RelationTypeCollection.class)) {
+					/**
+					 * TODO: Integrate lists.
+					 */
+					throw new NotImplementedException(
+							"SentenceLocalityTemplate can not handle OneToManyRelations for class: "
+									+ ontologyInstance);
+				} else {
+					return (IOBIEThing) f.get(ontologyInstance);
+				}
 
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					return null;
-				}).filter(e -> e != null).collect(Collectors.toList());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}).filter(e -> e != null).collect(Collectors.toList());
 	}
 
 	/**

@@ -24,7 +24,7 @@ public class FullDocumentRandomRanker implements IActiveLearningDocumentRanker {
 	final AbstractRunner runner;
 
 	public FullDocumentRandomRanker(AbstractRunner runner) {
-		random = new Random();
+		random = new Random(123456L);
 //		random = ((ActiveLearningDistributor) runner.getParameter().corpusDistributor).random;
 		this.runner = runner;
 	}

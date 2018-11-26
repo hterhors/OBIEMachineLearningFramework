@@ -78,7 +78,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
 					try {
 						field.setAccessible(true);
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 
 							if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 							} else {

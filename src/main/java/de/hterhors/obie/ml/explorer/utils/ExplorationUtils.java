@@ -37,6 +37,7 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
 public class ExplorationUtils {
 
 	private static final Map<Class<? extends IOBIEThing>, Map<Class<? extends IOBIEThing>, Boolean>> isDifferentiableToAllSiblingsCache = new ConcurrentHashMap<>();
+	private static Map<OBIEInstance, Map<Class<? extends IOBIEThing>, Collection<AbstractIndividual>>> individualCache = new HashMap<>();
 
 	private ExplorationUtils() {
 
@@ -124,7 +125,7 @@ public class ExplorationUtils {
 	 */
 	public static <B extends IOBIEThing> IOBIEThing copyOntologyModelFields(IOBIEThing copyToClass, B copyFromClass) {
 
-		List<Field> copyToFields = ReflectionUtils.getAccessibleOntologyFields(copyToClass.getClass()).stream()
+		List<Field> copyToFields = ReflectionUtils.getSlots(copyToClass.getClass()).stream()
 				.filter(f -> !Modifier.isStatic(f.getModifiers())).collect(Collectors.toList());
 
 		for (Field toField : copyToFields) {
@@ -139,7 +140,7 @@ public class ExplorationUtils {
 					/*
 					 * CHECKME: Set value to null only if it is not OneToMany
 					 */
-					if (!toField.isAnnotationPresent(RelationTypeCollection.class))
+					if (!ReflectionUtils.isAnnotationPresent(toField, RelationTypeCollection.class))
 						toField.set(copyToClass, null);
 				}
 
@@ -245,8 +246,6 @@ public class ExplorationUtils {
 		return subTypeIndividuals;
 	}
 
-	static Map<OBIEInstance, Map<Class<? extends IOBIEThing>, Collection<AbstractIndividual>>> individualCache = new HashMap<>();
-
 	/**
 	 * Given an ontological class this method returns a collection of all possible
 	 * individuals that are of the class type.
@@ -291,11 +290,8 @@ public class ExplorationUtils {
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	private static Collection<AbstractIndividual> getPossibleIndividuals(Class<? extends IOBIEThing> slotType) {
+	public static Collection<AbstractIndividual> getPossibleIndividuals(Class<? extends IOBIEThing> slotType) {
 
-		/**
-		 * TODO:Maybe cache if this is to slow!
-		 */
 		try {
 			final Class<? extends IOBIEThing> clazz = ReflectionUtils.getImplementationClass(slotType);
 
@@ -497,7 +493,7 @@ public class ExplorationUtils {
 		try {
 			IOBIEThing newInstance = (IOBIEThing) ipsinkThing.newInstance();
 
-			for (Field field : ReflectionUtils.getAccessibleOntologyFields(newInstance.getClass())) {
+			for (Field field : ReflectionUtils.getSlots(newInstance.getClass())) {
 				/*
 				 * NOTE: Pre fill auxiliary fields as default.
 				 */
@@ -506,13 +502,6 @@ public class ExplorationUtils {
 							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
 				}
 			}
-
-			/**
-			 * @Deprectaed AnnotationID is no longer available
-			 */
-//			Field annotationIDField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
-//					OntologyFieldNames.ANNOTATION_ID_FIELD_NAME);
-//			annotationIDField.set(newInstance, annotationID);
 
 			return newInstance;
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -541,7 +530,7 @@ public class ExplorationUtils {
 					OntologyInitializer.INDIVIDUAL_FIELD_NAME);
 			individualField.set(newInstance, individual);
 
-			for (Field field : ReflectionUtils.getAccessibleOntologyFields(newInstance.getClass())) {
+			for (Field field : ReflectionUtils.getSlots(newInstance.getClass())) {
 				/*
 				 * TODO: Remove that !? This could be in a second iteration? Features? NOTE: Pre
 				 * fill auxiliary fields as default.
@@ -647,11 +636,11 @@ public class ExplorationUtils {
 			if (!includeClassForSampling(sibClass))
 				continue;
 
-			final Set<String> sibPropertyNames = ReflectionUtils.getAccessibleOntologyFields(sibClass).stream()
-					.map(f -> f.getName()).collect(Collectors.toSet());
+			final Set<String> sibPropertyNames = ReflectionUtils.getSlots(sibClass).stream().map(f -> f.getName())
+					.collect(Collectors.toSet());
 
-			final Set<String> diffPropertyNames = ReflectionUtils.getAccessibleOntologyFields(classType).stream()
-					.map(f -> f.getName()).filter(n -> !sibPropertyNames.contains(n)).collect(Collectors.toSet());
+			final Set<String> diffPropertyNames = ReflectionUtils.getSlots(classType).stream().map(f -> f.getName())
+					.filter(n -> !sibPropertyNames.contains(n)).collect(Collectors.toSet());
 
 			isDifferentiableToAllSiblings &= !diffPropertyNames.isEmpty();
 

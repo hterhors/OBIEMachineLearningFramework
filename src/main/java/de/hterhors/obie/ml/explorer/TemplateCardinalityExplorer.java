@@ -50,6 +50,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 	 */
 
 	public TemplateCardinalityExplorer(RunParameter param) {
+		super(param);
 		/*
 		 * Get implementation class if input is interface.
 		 */

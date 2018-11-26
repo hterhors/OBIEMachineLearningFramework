@@ -150,11 +150,11 @@ public class HighFrequencyBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(predictionModel.getClass());
+		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass());
 
 		for (Field slot : fields) {
 
-			if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
+			if (ReflectionUtils.isAnnotationPresent(slot,RelationTypeCollection.class)) {
 
 				final List<IOBIEThing> elements = new ArrayList<>();
 				/*

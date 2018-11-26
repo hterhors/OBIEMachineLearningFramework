@@ -64,23 +64,23 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 		this.rnd = new Random(seed);
 	}
 
-	private int proportionsSum() {
+	private int proportionSum() {
 		return trainingProportion + developmentProportion + testProportion;
 	}
 
 	public int numberOfTrainingData(final int totalNumberOfDocuments) {
-		return Math.round(corpusSizeFraction
-				* (((float) trainingProportion / (float) proportionsSum()) * totalNumberOfDocuments));
+		return Math.round(
+				corpusSizeFraction * (((float) trainingProportion / (float) proportionSum()) * totalNumberOfDocuments));
 	}
 
 	public int numberOfDevelopmentData(final int totalNumberOfDocuments) {
 		return Math.round(corpusSizeFraction
-				* (((float) developmentProportion / (float) proportionsSum()) * totalNumberOfDocuments));
+				* (((float) developmentProportion / (float) proportionSum()) * totalNumberOfDocuments));
 	}
 
 	public int numberOfTestData(final int totalNumberOfDocuments) {
 		return Math.round(
-				corpusSizeFraction * (((float) testProportion / (float) proportionsSum()) * totalNumberOfDocuments));
+				corpusSizeFraction * (((float) testProportion / (float) proportionSum()) * totalNumberOfDocuments));
 	}
 
 	@Override
@@ -189,14 +189,17 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 		final int numberForDevelopment = numberOfDevelopmentData(totalNumberOfDocuments);
 		final int numberForTest = numberOfTestData(totalNumberOfDocuments);
 
-		if (numberForTraining + numberForDevelopment + numberForTest != (int) Math
-				.round(corpusProvider.allExistingInternalInstances.size() * corpusSizeFraction))
-			log.warn(
-					"WARN!!! Could not redistribute data accordingly! Change number of documents for data from "
-							+ numberForTest + " to "
-							+ (Math.round(corpusProvider.allExistingInternalInstances.size() * corpusSizeFraction)
-									- Math.round(corpusSizeFraction * (numberForTraining + numberForDevelopment)))
-							+ "!");
+		/*
+		 * TODO:
+		 */
+//		if (numberForTraining + numberForDevelopment + numberForTest != (int) Math
+//				.round(corpusProvider.allExistingInternalInstances.size() * corpusSizeFraction))
+//			log.warn(
+//					"WARN!!! Could not redistribute data accordingly! Change number of documents for data from "
+//							+ numberForTraining + numberForDevelopment + numberForTest + " to "
+//							+ (Math.round(corpusProvider.allExistingInternalInstances.size() * corpusSizeFraction)
+//									- Math.round(corpusSizeFraction * (numberForTraining + numberForDevelopment)))
+//							+ "!");
 
 		return new Distributor() {
 
@@ -215,8 +218,9 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
-				testDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(
-						numberForTraining + numberForDevelopment, corpusProvider.allExistingInternalInstances.size()));
+				testDocuments.addAll(
+						corpusProvider.allExistingInternalInstances.subList(numberForTraining + numberForDevelopment,
+								numberForTraining + numberForDevelopment + numberForTest));
 				return this;
 			}
 		};

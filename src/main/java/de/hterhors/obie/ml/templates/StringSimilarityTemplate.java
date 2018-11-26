@@ -38,7 +38,6 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 
 	public StringSimilarityTemplate(RunParameter parameter) {
 		super(parameter);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -55,7 +54,7 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 	/**
 	 * Similarity bins.
 	 */
-	final private float[] similarities = BinningUtils.getFloatBins(NUMBER_OF_BINS);
+	final private float[] similarityBins = BinningUtils.getFloatBins(NUMBER_OF_BINS);
 
 	/**
 	 * Factor Scope for these variables
@@ -67,12 +66,11 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 	class Scope extends FactorScope {
 
 		final String surfaceForm;
-		final String ontologyURI;
+		final String name;
 
-		public Scope(Class<? extends IOBIEThing> entityRootClassType, AbstractOBIETemplate<?> template,
-				String className, String surfaceForm) {
-			super(template, className, surfaceForm, entityRootClassType);
-			this.ontologyURI = className;
+		public Scope(Class<? extends IOBIEThing> entityRootClassType, String name, String surfaceForm) {
+			super(StringSimilarityTemplate.this, entityRootClassType, name, surfaceForm);
+			this.name = name;
 			this.surfaceForm = surfaceForm;
 		}
 
@@ -83,7 +81,7 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getThing()));
+			addFactorRecursive(factors, entity.rootClassType, entity.getThing());
 
 		}
 		return factors;
@@ -93,72 +91,68 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 	 * Adds factors recursively for each class and fields that are part of the
 	 * ontology model.
 	 * 
+	 * @param factors2
+	 * 
 	 * @param entityRootClassType
 	 * 
 	 * @param scioClass
 	 * @return
 	 */
-	private List<Scope> addFactorRecursive(Class<? extends IOBIEThing> entityRootClassType, IOBIEThing scioClass) {
-		List<Scope> factors = new ArrayList<>();
+	private void addFactorRecursive(List<Scope> factors, Class<? extends IOBIEThing> entityRootClassType,
+			IOBIEThing scioClass) {
 
 		if (scioClass == null)
-			return factors;
+			return;
 
-		final String ontologyURI = scioClass.getONTOLOGY_NAME();
+		if (ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
+			return;
 
 		final String surfaceForm = scioClass.getTextMention();
 
-		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
-			if (surfaceForm != null) {
+		if (surfaceForm != null) {
 
-				final Set<Class<? extends IOBIEThing>> influencedVariables = new HashSet<>();
-				influencedVariables.add(scioClass.getClass());
+			factors.add(new Scope(entityRootClassType, scioClass.getClass().getSimpleName(), surfaceForm));
+			if (scioClass.getIndividual() != null)
+				factors.add(new Scope(entityRootClassType, scioClass.getIndividual().name, surfaceForm));
 
-				factors.add(new Scope(entityRootClassType, this, ontologyURI, surfaceForm));
-			}
+		}
 		/*
 		 * Add factors for object type properties.
 		 */
-		Arrays.stream(scioClass.getClass().getDeclaredFields())
-				.filter(f -> (!ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)
-						&& f.isAnnotationPresent(OntologyModelContent.class)))
-				.forEach(field -> {
-					field.setAccessible(true);
+		ReflectionUtils.getSlots(scioClass.getClass()).stream()
+				.filter(f -> !ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)).forEach(field -> {
 					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
-								factors.addAll(addFactorRecursive(entityRootClassType, element));
+								addFactorRecursive(factors, entityRootClassType, element);
 							}
 						} else {
-							factors.addAll(addFactorRecursive(entityRootClassType, (IOBIEThing) field.get(scioClass)));
+							addFactorRecursive(factors, entityRootClassType, (IOBIEThing) field.get(scioClass));
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				});
-		return factors;
+		return;
 	}
 
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
-		final String className = ContentCleaner.bagOfWordsTokenizer(factor.getFactorScope().ontologyURI
-				.substring(1 + factor.getFactorScope().ontologyURI.lastIndexOf('/')));
+		final String className = factor.getFactorScope().name;
 		final String surfaceForm = factor.getFactorScope().surfaceForm;
-
-		// System.out.println("className = " + className);
-		// System.out.println("surfaceForm = " + surfaceForm);
 
 		final double similarity = LevenShteinSimilarity.levenshteinSimilarity(className, surfaceForm, 0);
 
-		// System.out.println("similarity = " + similarity);
+		for (Float bin : similarityBins) {
 
-		for (Float bin : similarities) {
-			featureVector.set("LevenShtein similarity for [" + className + "] < " + DIGIT_FORMAT.format(bin),
-					similarity < bin);
-			featureVector.set("LevenShtein similarity for [" + className + "] >= " + DIGIT_FORMAT.format(bin),
-					similarity >= bin);
+			if (similarity >= bin) {
+				featureVector.set("LevenShtein sim for [" + className + "] >= " + DIGIT_FORMAT.format(bin),
+						similarity >= bin);
+				break;
+			}
+
 		}
 
 	}

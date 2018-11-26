@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -65,10 +66,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	transient private AbstractCorpusDistributor distributer;
 
-	/**
-	 * The raw corpus that was loaded from binaries.
-	 */
-	public final OBIECorpus rawCorpus;
+	private final Set<String> originalTrainingInstances;
+	private final Set<String> originalDevelopmentInstances;
+	private final Set<String> originalTestInstances;
 
 	/**
 	 * Training, development, test corpus.
@@ -91,44 +91,58 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 	transient private int currentFold = -1;
 
-	public OBIECorpus getRawCorpus() {
-		return rawCorpus;
+	public Set<String> getOriginalTrainingInstances() {
+		return Collections.unmodifiableSet(originalTrainingInstances);
+	}
+
+	public Set<String> getOriginalDevelopInstances() {
+		return Collections.unmodifiableSet(originalDevelopmentInstances);
+	}
+
+	public Set<String> getOriginalTestInstances() {
+		return Collections.unmodifiableSet(originalTestInstances);
 	}
 
 	transient public int currentActiveLearningItertion = 0;
 
-	private final Set<INamedEntitityLinker> entityLinker;
+	private final Set<Class<? extends IOBIEThing>> originalRootClasses;
+
+	public Set<Class<? extends IOBIEThing>> getOriginalRootClasses() {
+		return Collections.unmodifiableSet(originalRootClasses);
+	}
 
 	public BigramCorpusProvider(final File rawCorpusFile, Set<INamedEntitityLinker> entityLinker) {
 		log.info("Start creating corpus...");
 
 		log.info("Read raw corpus from file system: " + rawCorpusFile);
+		OBIECorpus rawCorpus;
 		try {
-			this.rawCorpus = OBIECorpus.readRawCorpusData(rawCorpusFile);
+			rawCorpus = OBIECorpus.readRawCorpusData(rawCorpusFile);
+
+			originalTrainingInstances = new HashSet<>(rawCorpus.getTrainingInstances().keySet());
+			originalDevelopmentInstances = new HashSet<>(rawCorpus.getDevelopInstances().keySet());
+			originalTestInstances = new HashSet<>(rawCorpus.getTestInstances().keySet());
+			originalRootClasses = new HashSet<>(rawCorpus.getRootClasses());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IllegalArgumentException("Could not load corpus: " + e.getMessage());
 		}
 
-		this.entityLinker = Collections.unmodifiableSet(entityLinker);
-
 		log.info("Provided Named Enitity Recognition and Linking tools: ");
-		this.entityLinker.forEach(log::info);
+		entityLinker.forEach(log::info);
 
-		log.info("Apply " + this.entityLinker.size() + " NEL-Tools to  " + rawCorpus.getAllInstanceNames().size()
+		log.info("Apply " + entityLinker.size() + " NEL-Tools to  " + rawCorpus.getAllInstanceNames().size()
 				+ " instances...");
 
 		AtomicInteger countEntities = new AtomicInteger();
 		AtomicInteger progress = new AtomicInteger();
 		final int numOfInstances = rawCorpus.getInstances().size();
 
-		final long totalLength = rawCorpus.getInstances().values().stream().map(i -> Long.valueOf(i.content.length()))
-				.reduce(0L, Long::sum);
+		final Double totalLength = rawCorpus.getInstances().values().stream()
+				.map(i -> Double.valueOf(i.content.length())).reduce(new Double(0), Double::sum);
 
 		AtomicLong timeConsumed = new AtomicLong(0);
 		AtomicLong lengthConsumed = new AtomicLong(0);
-
-//		rawCorpus.getInstances().values().parallelStream().forEach(instance -> {
 
 		for (Instance instance : rawCorpus.getInstances().values()) {
 
@@ -140,7 +154,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			log.info("Annotate " + internalInstance.getName() + ", length: " + internalInstance.getContent().length());
 			long t = System.currentTimeMillis();
-			for (INamedEntitityLinker l : this.entityLinker) {
+			for (INamedEntitityLinker l : entityLinker) {
 				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
 				annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
 				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
@@ -153,11 +167,15 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations()
 					+ " in instance: " + internalInstance.getName() + " in " + tc + " ms.");
 
+			if (log.isDebugEnabled()) {
+				log.debug(internalInstance.getNamedEntityLinkingAnnotations());
+			}
+
 			timeConsumed.addAndGet(tc);
 			lengthConsumed.addAndGet(internalInstance.getContent().length());
 			countEntities.addAndGet(internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations());
 
-			final long estimedRemainignTime = (long) ((((double) totalLength - (double) lengthConsumed.get())
+			final long estimedRemainignTime = (long) (((totalLength.doubleValue() - (double) lengthConsumed.get())
 					/ (double) lengthConsumed.get()) * (double) timeConsumed.get());
 
 			log.info("Progress " + progress.addAndGet(1) + "/" + numOfInstances + ", estimated remaining time: "
@@ -178,7 +196,11 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			log.warn(errors.size() + " erros found:");
 			errors.forEach(log::warn);
 		}
-
+		{
+			entityLinker = null;
+			rawCorpus = null;
+			System.gc();
+		}
 	}
 
 	/**
@@ -224,9 +246,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getAccessibleOntologyFields(annotation.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(annotation.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing t : (List<IOBIEThing>) field.get(annotation)) {
 						checkForTextualAnnotations(t, instanceName, content);
 					}
@@ -252,10 +274,12 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		log.info("\"maximum number of annotations\" was set to: " + parameter.maxNumberOfEntityElements);
 
 		final int totalNumberOfInstances = this.allExistingInternalInstances.size();
-
+		int count = 0;
 		log.info("Apply filter...");
 		for (Iterator<OBIEInstance> it = this.allExistingInternalInstances.iterator(); it.hasNext();) {
 			OBIEInstance internalInstance = (OBIEInstance) it.next();
+
+			count += internalInstance.getTokens().size();
 
 			if (parameter.excludeEmptyInstancesFromCorpus
 					&& internalInstance.getGoldAnnotation().getTemplateAnnotations().isEmpty()) {
@@ -571,16 +595,17 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		if (annotation == null)
 			return true;
 
-		final List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(annotation.getClass());
+		final List<Field> fields = ReflectionUtils.getSlots(annotation.getClass());
 
 		for (Field field : fields) {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 
 					@SuppressWarnings("unchecked")
 					List<IOBIEThing> elements = (List<IOBIEThing>) field.get(annotation);
 
-					if (elements.size() > (field.isAnnotationPresent(DatatypeProperty.class) ? datatypeLimit
+					if (elements.size() > (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)
+							? datatypeLimit
 							: objectLimit)) {
 						log.debug("Found property that elements in field: " + field.getName() + " exceeds given limit: "
 								+ elements.size() + " > " + objectLimit);

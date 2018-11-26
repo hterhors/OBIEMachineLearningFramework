@@ -16,10 +16,11 @@ import org.apache.logging.log4j.Logger;
 import corpus.SampledInstance;
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.evaluation.PRF1Container;
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
-import de.hterhors.obie.ml.evaluation.evaluator.NamedEntityLinkingEvaluator;
+import de.hterhors.obie.ml.evaluation.evaluator.StrictNamedEntityLinkingEvaluator;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
@@ -33,88 +34,202 @@ public class EvaluatePrediction {
 
 	public static Logger log = LogManager.getRootLogger();
 
-	public static void evaluateNERPredictions(IOBIEThing initializingObject,
+	public static void evaluateNERLPredictions(
 			ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> objectiveFunction,
 			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions,
-			InvestigationRestriction investigationRestriction) {
-		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
-		Map<String, Set<EvaluationObject>> result = new HashMap<>();
+			IOBIEEvaluator evaluator) {
+
+//		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
+//		Map<String, Set<EvaluationObject>> result = new HashMap<>();
+		PRF1 mean = new PRF1();
+
+		double p = 0;
+		double r = 0;
+		double f1 = 0;
 
 		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
 
-			OBIEInstance resultState = prediction.getInstance();
-			InstanceTemplateAnnotations goldState = prediction.getGoldResult();
+//			OBIEInstance resultState = prediction.getInstance();
+//			InstanceTemplateAnnotations goldAnnotation = prediction.getGoldResult();
+//
+//			final String key = resultState.getName();
+//
+//			result.putIfAbsent(key, new HashSet<EvaluationObject>());
+//			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
+//					.getTemplateAnnotations()) {
+//				result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+//			}
+//
+//			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
+//			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
+//				gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+//			}
+			double f1Concepts = StrictNamedEntityLinkingEvaluator.f1(
+					prediction.getGoldResult().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing().getIndividual()).collect(Collectors.toSet()),
+					prediction.getState().getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing().getIndividual()).collect(Collectors.toSet()));
+			double pConcepts = StrictNamedEntityLinkingEvaluator.precision(
+					prediction.getGoldResult().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing().getIndividual()).collect(Collectors.toSet()),
+					prediction.getState().getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing().getIndividual()).collect(Collectors.toSet()));
+			double rConcepts = StrictNamedEntityLinkingEvaluator.recall(
+					prediction.getGoldResult().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing().getIndividual()).collect(Collectors.toSet()),
+					prediction.getState().getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing().getIndividual()).collect(Collectors.toSet()));
 
-			final String key = resultState.getName();
+			p += pConcepts;
+			r += rConcepts;
+			f1 += f1Concepts;
 
-			result.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
-					.getTemplateAnnotations()) {
-				if (!resultEntity.getThing().equals(initializingObject))
-					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
-			}
+			PRF1 prf1 = evaluator.prf1(
+					prediction.getGoldResult().getTemplateAnnotations().stream().map(ta -> ta.getThing())
+							.collect(Collectors.toList()),
+					prediction.getState().getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+							.map(ta -> ta.getThing()).collect(Collectors.toList()));
 
-			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
-				gold.get(key).add(new EvaluationObject(goldEntity, investigationRestriction));
-			}
-
-		}
-
-		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
-			OBIEState state = prediction.getState();
-			InstanceTemplateAnnotations goldState = state.getInstance().getGoldAnnotation();
-			objectiveFunction.score(state, goldState);
-		}
-		EvaluationUtil
-				.printPredictionPerformance(predictions.stream().map(p -> p.getState()).collect(Collectors.toList()));
-
-		Set<OnlyTextEvaluationObject> goldSet = new HashSet<>();
-		Set<OnlyTextEvaluationObject> predictionSet = new HashSet<>();
-
-		int docIndex = 0;
-		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
-			log.info("_____________" + state.getKey() + "______________");
-			log.info(state.getKey());
+			log.info("_____________" + prediction.getState().getInstance().getName() + "______________");
 			log.info("Gold:\t");
-			log.info(gold.get(state.getKey()));
-			log.info("Result:\t");
-			log.info(result.get(state.getKey()));
-			final int i = docIndex;
-			Set<OnlyTextEvaluationObject> goldList = gold.get(state.getKey()).stream()
-					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
-					.collect(Collectors.toSet());
-
-			Set<OnlyTextEvaluationObject> predictionList = result.get(state.getKey()).stream()
-					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
-					.collect(Collectors.toSet());
-
-			final double p = NamedEntityLinkingEvaluator.precision(goldList, predictionList);
-			final double r = NamedEntityLinkingEvaluator.recall(goldList, predictionList);
-			final double f1 = NamedEntityLinkingEvaluator.f1(goldList, predictionList);
-			log.info("Doc-Precisiion = " + p);
-			log.info("Doc-Recall = " + r);
-			log.info("Doc-F1 = " + f1);
-
-			goldSet.addAll(goldList);
-			predictionSet.addAll(predictionList);
-			docIndex++;
+			log.info(prediction.getGoldResult().getTemplateAnnotations().stream().map(ta -> ta.getThing())
+					.collect(Collectors.toList()));
+			log.info("Predictions:\t");
+			log.info(prediction.getState().getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+					.map(ta -> ta.getThing()).collect(Collectors.toList()));
+			log.info(prf1);
+			log.info("ConceptLevel F1: " + f1Concepts + " Precision: " + pConcepts + " Recall: " + rConcepts);
+			mean.add(prf1);
 		}
+		log.info("MICRO: Mean-Precisiion = " + mean.getPrecision());
+		log.info("MICRO: Mean-Recall = " + mean.getRecall());
+		log.info("MICRO: Mean-F1 = " + mean.getF1());
 
-		final double p = NamedEntityLinkingEvaluator.precision(goldSet, predictionSet);
-		final double r = NamedEntityLinkingEvaluator.recall(goldSet, predictionSet);
-		final double f1 = NamedEntityLinkingEvaluator.f1(goldSet, predictionSet);
+		log.info("MICRO: Mean-Concept-Precisiion = " + p / predictions.size());
+		log.info("MICRO: Mean-Concept-Recall = " + r / predictions.size());
+		log.info("MICRO: Mean-Concept-F1 = " + f1 / predictions.size());
 
-		log.info("Micro-Precisiion = " + p);
-		log.info("Micro-Recall = " + r);
-		log.info("Micro-F1 = " + f1);
+//		Set<OnlyTextEvaluationObject> goldSet = new HashSet<>();
+//		Set<OnlyTextEvaluationObject> predictionSet = new HashSet<>();
+//
+//		int docIndex = 0;
+//		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
+//			log.info("_____________" + state.getKey() + "______________");
+//			log.info(state.getKey());
+//			log.info("Gold:\t");
+//			log.info(gold.get(state.getKey()));
+//			log.info("Result:\t");
+//			log.info(gold.get(state.getKey()));
+//			final int i = docIndex;
+//
+//			Set<OnlyTextEvaluationObject> goldList = gold.get(state.getKey()).stream()
+//					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
+//					.collect(Collectors.toSet());
+//
+//			Set<OnlyTextEvaluationObject> predictionList = result.get(state.getKey()).stream()
+//					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
+//					.collect(Collectors.toSet());
+//
+//			final double p = StrictNamedEntityLinkingEvaluator.precision(goldList, predictionList);
+//			final double r = StrictNamedEntityLinkingEvaluator.recall(goldList, predictionList);
+//			final double f1 = StrictNamedEntityLinkingEvaluator.f1(goldList, predictionList);
+//			log.info("Doc-Precisiion = " + p);
+//			log.info("Doc-Recall = " + r);
+//			log.info("Doc-F1 = " + f1);
+//
+//			goldSet.addAll(goldList);
+//			predictionSet.addAll(predictionList);
+//			docIndex++;
+//		}
+//
+//		final double p = StrictNamedEntityLinkingEvaluator.precision(goldSet, predictionSet);
+//		final double r = StrictNamedEntityLinkingEvaluator.recall(goldSet, predictionSet);
+//		final double f1 = StrictNamedEntityLinkingEvaluator.f1(goldSet, predictionSet);
 
 	}
+//	public static void evaluateNERPredictions(IOBIEThing initializingObject,
+//			ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> objectiveFunction,
+//			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions,
+//			InvestigationRestriction investigationRestriction) {
+//		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
+//		Map<String, Set<EvaluationObject>> result = new HashMap<>();
+//		
+//		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+//			
+//			OBIEInstance resultState = prediction.getInstance();
+//			InstanceTemplateAnnotations goldState = prediction.getGoldResult();
+//			
+//			final String key = resultState.getName();
+//			
+//			result.putIfAbsent(key, new HashSet<EvaluationObject>());
+//			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
+//					.getTemplateAnnotations()) {
+//				if (!resultEntity.getThing().equals(initializingObject))
+//					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
+//			}
+//			
+//			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
+//			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
+//				gold.get(key).add(new EvaluationObject(goldEntity, investigationRestriction));
+//			}
+//			
+//		}
+//		
+//		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+//			OBIEState state = prediction.getState();
+//			InstanceTemplateAnnotations goldState = state.getInstance().getGoldAnnotation();
+//			objectiveFunction.score(state, goldState);
+//		}
+//		EvaluationUtil
+//		.printPredictionPerformance(predictions.stream().map(p -> p.getState()).collect(Collectors.toList()));
+//		
+//		Set<OnlyTextEvaluationObject> goldSet = new HashSet<>();
+//		Set<OnlyTextEvaluationObject> predictionSet = new HashSet<>();
+//		
+//		int docIndex = 0;
+//		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
+//			log.info("_____________" + state.getKey() + "______________");
+//			log.info(state.getKey());
+//			log.info("Gold:\t");
+//			log.info(gold.get(state.getKey()));
+//			log.info("Result:\t");
+//			log.info(result.get(state.getKey()));
+//			final int i = docIndex;
+//			Set<OnlyTextEvaluationObject> goldList = gold.get(state.getKey()).stream()
+//					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
+//					.collect(Collectors.toSet());
+//			
+//			Set<OnlyTextEvaluationObject> predictionList = result.get(state.getKey()).stream()
+//					.map(s -> new OnlyTextEvaluationObject(s.scioClass.getTextMention(), i))
+//					.collect(Collectors.toSet());
+//			
+//			final double p = StrictNamedEntityLinkingEvaluator.precision(goldList, predictionList);
+//			final double r = StrictNamedEntityLinkingEvaluator.recall(goldList, predictionList);
+//			final double f1 = StrictNamedEntityLinkingEvaluator.f1(goldList, predictionList);
+//			log.info("Doc-Precisiion = " + p);
+//			log.info("Doc-Recall = " + r);
+//			log.info("Doc-F1 = " + f1);
+//			
+//			goldSet.addAll(goldList);
+//			predictionSet.addAll(predictionList);
+//			docIndex++;
+//		}
+//		
+//		final double p = StrictNamedEntityLinkingEvaluator.precision(goldSet, predictionSet);
+//		final double r = StrictNamedEntityLinkingEvaluator.recall(goldSet, predictionSet);
+//		final double f1 = StrictNamedEntityLinkingEvaluator.f1(goldSet, predictionSet);
+//		
+//		log.info("Micro-Precisiion = " + p);
+//		log.info("Micro-Recall = " + r);
+//		log.info("Micro-F1 = " + f1);
+//		
+//	}
 
 	public static PRF1Container evaluateREPredictions(
 			ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> objectiveFunction,
 			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions,
 			IOBIEEvaluator evaluator) {
+
 		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
 		Map<String, Set<EvaluationObject>> result = new HashMap<>();
 
@@ -204,76 +319,113 @@ public class EvaluatePrediction {
 		return new PRF1Container(meanP, meanR, (2 * meanP * meanR) / (meanP + meanR));
 	}
 
-	public static double evaluatePurityPredictions(
+	public static Map<AbstractIndividual, PRF1> evaluatePerTypePredictions(
 			ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> objectiveFunction,
 			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions,
-			IOBIEEvaluator evaluator, InvestigationRestriction investigationRestriction) {
-		Map<String, Set<EvaluationObject>> gold = new HashMap<>();
-		Map<String, Set<EvaluationObject>> result = new HashMap<>();
+			IOBIEEvaluator evaluator) {
+
+		Map<AbstractIndividual, PRF1> results = new HashMap<>();
+
+		Set<AbstractIndividual> existingIndividuals = new HashSet<>();
 
 		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
 
-			OBIEInstance resultState = prediction.getInstance();
-			InstanceTemplateAnnotations goldState = prediction.getGoldResult();
-
-			final String key = resultState.getName();
-
-			result.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 					.getTemplateAnnotations()) {
-				if (!resultEntity.getThing().equals(resultEntity.getInitializationThing()))
-					result.get(key).add(new EvaluationObject(resultEntity, investigationRestriction));
+				existingIndividuals.add(resultEntity.getThing().getIndividual());
 			}
 
-			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
-				gold.get(key).add(new EvaluationObject(goldEntity, investigationRestriction));
+			for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
+				existingIndividuals.add(goldEntity.getThing().getIndividual());
 			}
 
 		}
 
-		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
-			OBIEState state = prediction.getState();
-			InstanceTemplateAnnotations goldState = state.getInstance().getGoldAnnotation();
-			objectiveFunction.score(state, goldState);
+		for (AbstractIndividual individualType : existingIndividuals) {
+			log.info(individualType.name);
+			Map<String, Set<EvaluationObject>> gold = new HashMap<>();
+			Map<String, Set<EvaluationObject>> result = new HashMap<>();
+
+			for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+
+				final String key = prediction.getInstance().getName();
+
+				boolean add = false;
+				for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
+					if (add |= individualType.equals(goldEntity.getThing().getIndividual())) {
+						gold.putIfAbsent(key, new HashSet<EvaluationObject>());
+						gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+					}
+				}
+
+				if (add) {
+					result.putIfAbsent(key, new HashSet<EvaluationObject>());
+					for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
+							.getTemplateAnnotations()) {
+						result.get(key)
+								.add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+					}
+				}
+			}
+
+			double meanP = 0;
+			double meanR = 0;
+			// double meanF1 = 0;
+
+			int TP = 0;
+			int FP = 0;
+			int FN = 0;
+
+			for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
+				log.debug("_____________" + state.getKey() + "______________");
+				log.debug("Gold:\t");
+				log.debug(gold.get(state.getKey()));
+				log.debug("Result:\t");
+				log.debug(result.get(state.getKey()));
+
+				List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
+						.collect(Collectors.toList());
+
+				List<IOBIEThing> predictionList = result.get(state.getKey()).stream().map(s -> s.scioClass)
+						.collect(Collectors.toList());
+
+				FP += evaluator.prf1(goldList, predictionList).fp;
+				TP += evaluator.prf1(goldList, predictionList).tp;
+				FN += evaluator.prf1(goldList, predictionList).fn;
+
+				final double p = evaluator.precision(goldList, predictionList);
+				final double r = evaluator.recall(goldList, predictionList);
+				final double f1 = evaluator.f1(goldList, predictionList);
+				log.debug("Doc-Precisiion = " + p);
+				log.debug("Doc-Recall = " + r);
+				log.debug("Doc-F1 = " + f1);
+
+				meanP += p;
+				meanR += r;
+				// meanF1 += f1;
+
+			}
+
+			log.debug("");
+			log.debug("");
+
+			PRF1 x = new PRF1(TP, FP, FN);
+
+			meanP /= gold.entrySet().size();
+			meanR /= gold.entrySet().size();
+			// meanF1 /= gold.entrySet().size();
+
+			log.info("MICRO: Mean-Precisiion = " + x.getPrecision());
+			log.info("MICRO: Mean-Recall = " + x.getRecall());
+			log.info("MICRO: Mean-F1 = " + x.getF1());
+
+			log.info("MACRO: Mean-Precisiion = " + meanP);
+			log.info("MACRO: Mean-Recall = " + meanR);
+			// log.info("MACRO: Mean-F1 = " + meanF1);
+			log.info("MACRO: Mean-F1 = " + (2 * meanP * meanR) / (meanP + meanR));
+			results.put(individualType, x);
 		}
-		EvaluationUtil
-				.printPredictionPerformance(predictions.stream().map(p -> p.getState()).collect(Collectors.toList()));
-
-		double meanF1 = 0;
-
-		for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
-			log.info("_____________" + state.getKey() + "______________");
-			log.info(state.getKey());
-			log.info("Gold:\t");
-			log.info(gold.get(state.getKey()));
-			log.info("Result:\t");
-			log.info(result.get(state.getKey()));
-
-			List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
-					.collect(Collectors.toList());
-
-			List<IOBIEThing> predictionList = result.get(state.getKey()).stream().map(s -> s.scioClass)
-					.collect(Collectors.toList());
-
-			final double f1 = evaluator.f1(goldList, predictionList);
-			log.info("Doc-F1 = " + f1);
-
-			meanF1 += f1;
-
-		}
-		log.info("");
-		log.info("");
-
-		// PRF1ScoreContainer x = new PRF1ScoreContainer(TP, FP, FN);
-
-		// meanP /= gold.entrySet().size();
-		// meanR /= gold.entrySet().size();
-		meanF1 /= gold.entrySet().size();
-
-		log.info("Purity-InversePurity F_Rij = " + meanF1);
-
-		return meanF1;
+		return results;
 	}
 
 	public static void evaluatePerSlotPredictions(
@@ -310,8 +462,9 @@ public class EvaluatePrediction {
 			InstanceTemplateAnnotations goldState = state.getInstance().getGoldAnnotation();
 			objectiveFunction.score(state, goldState);
 		}
-		EvaluationUtil
-				.printPredictionPerformance(predictions.stream().map(p -> p.getState()).collect(Collectors.toList()));
+
+//		EvaluationUtil
+//				.printPredictionPerformance(predictions.stream().map(p -> p.getState()).collect(Collectors.toList()));
 
 		/*
 		 * WE ASSUME ALL ELEMENTS IN SET HAVE THE SAME TYPE!
@@ -322,10 +475,9 @@ public class EvaluatePrediction {
 		List<Set<RestrictedField>> restrictFieldsList = InvestigationRestriction
 				.getFieldRestrictionCombinations(classType, InvestigationRestriction.getMainSingleFields(classType));
 
-		
 		List<InvestigationRestriction> restrictions = new ArrayList<>();
 		restrictions.add(new InvestigationRestriction(classType, Collections.emptySet(), true));
-	
+
 		for (Set<RestrictedField> set : restrictFieldsList) {
 			if (set.size() > 1) {
 				/**

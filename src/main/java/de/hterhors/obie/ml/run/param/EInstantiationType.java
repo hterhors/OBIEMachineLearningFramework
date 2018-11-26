@@ -3,6 +3,11 @@ package de.hterhors.obie.ml.run.param;
 public enum EInstantiationType {
 
 	/**
+	 * Do not create any initial objects.
+	 */
+	NONE,
+
+	/**
 	 * Initialize with an entity which is provided.
 	 */
 	SPECIFIED,

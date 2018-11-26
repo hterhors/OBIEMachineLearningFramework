@@ -133,7 +133,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factors for object type properties.
 		 */
 
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field

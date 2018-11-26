@@ -82,7 +82,7 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 				.forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 							/**
 							 * TODO: Integrate lists.
 							 */

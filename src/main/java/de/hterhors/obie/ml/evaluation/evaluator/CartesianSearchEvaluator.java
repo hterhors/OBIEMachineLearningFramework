@@ -92,7 +92,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return cartesianEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getRecall();
@@ -103,7 +103,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return cartesianEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getPrecision();
@@ -161,7 +161,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 		return s;
 	}
 
-	private PRF1 cartesianEvaluation(List<IOBIEThing> goldList, List<IOBIEThing> predictionList)
+	private PRF1 cartesianEvaluation(List<? extends IOBIEThing> goldList, List<? extends IOBIEThing> predictionList)
 			throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
 
 		if (goldList.size() == 1 && predictionList.size() == 1)
@@ -183,7 +183,8 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @throws NoSuchFieldException
 	 */
 	@Override
-	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
+	protected PRF1 explore(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int depth) {
 		final int maxSize = Math.max(gold.size(), prediction.size());
 
 		if (maxSize > maxNumberOfAnnotations) {
@@ -241,8 +242,8 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 		return bestPermutationScore;
 	}
 
-	private PRF1 getBestPermutation(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int maxSize,
-			List<Integer> permutation, final int depth) {
+	private PRF1 getBestPermutation(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int maxSize, List<Integer> permutation, final int depth) {
 
 		final PRF1 currentPermutationScore = new PRF1();
 

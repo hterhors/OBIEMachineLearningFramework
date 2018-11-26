@@ -100,7 +100,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		 * Parent-Child relation
 		 */
 
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));

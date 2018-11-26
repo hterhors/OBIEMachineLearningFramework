@@ -32,9 +32,9 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final String SPLITTER = " ";
-	private static final String RIGHT = ">";
-	private static final String LEFT = "<";
+	private static final char SPLITTER = ' ';
+	private static final char RIGHT = '>';
+	private static final char LEFT = '<';
 
 	private static Logger log = LogManager.getFormatterLogger(TokenContextTemplate.class.getName());
 
@@ -126,6 +126,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		return factors;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void addFactorRecursive(List<Scope> factors, OBIEInstance internalInstance,
 			Class<? extends IOBIEThing> rootClassType, IOBIEThing obieThing) {
 
@@ -138,9 +139,9 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
 						addFactorRecursive(factors, internalInstance, rootClassType, element);
 					}
@@ -169,6 +170,11 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 			if (internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(individual)) {
 				for (NERLIndividualAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
 						.getIndividualAnnotations(individual)) {
+
+					positions.add(new PositionContainer(ReflectionUtils.simpleName(obieClass),
+							internalInstance.charPositionToTokenPosition(nera.onset),
+							internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+
 					positions.add(new PositionContainer(nera.relatedIndividual.name,
 							internalInstance.charPositionToTokenPosition(nera.onset),
 							internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
@@ -263,15 +269,17 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 
 		final StringBuffer lCs = new StringBuffer();
 		final StringBuffer rCs = new StringBuffer();
-
 		for (int i = 0; i < leftContext.length; i++) {
 			rCs.setLength(0);
 			lCs.insert(0, leftContext[i] + SPLITTER);
-			featureVector.set((lCs + LEFT + contextClass + RIGHT + rCs).trim(), true);
+			featureVector.set(
+					new StringBuffer(lCs).append(LEFT).append(contextClass).append(RIGHT).append(rCs).toString().trim(),
+					true);
 
 			for (int j = 0; j < rightContext.length; j++) {
 				rCs.append(SPLITTER).append(rightContext[j]);
-				featureVector.set((lCs + LEFT + contextClass + RIGHT + rCs).trim(), true);
+				featureVector.set(new StringBuffer(lCs).append(LEFT).append(contextClass).append(RIGHT).append(rCs)
+						.toString().trim(), true);
 
 			}
 		}
@@ -282,11 +290,14 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		for (int i = 0; i < rightContext.length; i++) {
 			lCs.setLength(0);
 			rCs.append(SPLITTER).append(rightContext[i]);
-			featureVector.set((lCs + LEFT + contextClass + RIGHT + rCs).trim(), true);
+			featureVector.set(
+					new StringBuffer(lCs).append(LEFT).append(contextClass).append(RIGHT).append(rCs).toString().trim(),
+					true);
 
 			for (int j = 0; j < leftContext.length; j++) {
 				lCs.insert(0, leftContext[j] + SPLITTER);
-				featureVector.set((lCs + LEFT + contextClass + RIGHT + rCs).trim(), true);
+				featureVector.set(new StringBuffer(lCs).append(LEFT).append(contextClass).append(RIGHT).append(rCs)
+						.toString().trim(), true);
 
 			}
 

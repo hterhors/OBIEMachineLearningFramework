@@ -1,8 +1,8 @@
 package de.hterhors.obie.ml.utils;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.hterhors.obie.core.OntologyAnalyzer;
 import de.hterhors.obie.core.ontology.annotations.AssignableSubClasses;
 import de.hterhors.obie.core.ontology.annotations.AssignableSubInterfaces;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
@@ -21,6 +20,7 @@ import de.hterhors.obie.core.ontology.annotations.DirectInterface;
 import de.hterhors.obie.core.ontology.annotations.DirectSiblings;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
+import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.annotations.SuperRootClasses;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.InvestigationRestriction;
@@ -189,11 +189,11 @@ public class ReflectionUtils {
 
 	}
 
-	public static List<Field> getAccessibleOntologyFields(Class<? extends IOBIEThing> clazz) {
+	public static List<Field> getSlots(Class<? extends IOBIEThing> clazz) {
 
 		Objects.requireNonNull(clazz);
 
-		if (clazz.isAnnotationPresent(DatatypeProperty.class))
+		if (isAnnotationPresent(clazz, DatatypeProperty.class))
 			return Collections.emptyList();
 
 		List<Field> declaredFields;
@@ -201,7 +201,7 @@ public class ReflectionUtils {
 		if ((declaredFields = chachedFields.get(clazz)) == null) {
 			declaredFields = new ArrayList<>();
 			for (Field f : clazz.getDeclaredFields()) {
-				if (!f.isAnnotationPresent(OntologyModelContent.class))
+				if (!isAnnotationPresent(f, OntologyModelContent.class))
 					continue;
 
 				f.setAccessible(true);
@@ -212,12 +212,12 @@ public class ReflectionUtils {
 		return declaredFields;
 	}
 
-	public static List<Field> getDeclaredOntologyFields(Class<? extends IOBIEThing> clazz,
+	public static List<Field> getSlots(Class<? extends IOBIEThing> clazz,
 			InvestigationRestriction investigationRestrictionRestrictions) {
 
 		Objects.requireNonNull(clazz);
 
-		if (clazz.isAnnotationPresent(DatatypeProperty.class))
+		if (isAnnotationPresent(clazz, DatatypeProperty.class))
 			return Collections.emptyList();
 
 		List<Field> declaredFields;
@@ -231,9 +231,10 @@ public class ReflectionUtils {
 
 		if ((declaredFields = pntr.get(investigationRestrictionRestrictions)) == null) {
 			declaredFields = new ArrayList<>();
+
 			for (Field f : clazz.getDeclaredFields()) {
 
-				if (!f.isAnnotationPresent(OntologyModelContent.class))
+				if (!isAnnotationPresent(f, OntologyModelContent.class))
 					continue;
 
 				if (!investigationRestrictionRestrictions.investigateField(f.getName()))
@@ -247,12 +248,12 @@ public class ReflectionUtils {
 		return declaredFields;
 	}
 
-	public static Set<String> getDeclaredOntologyFieldNames(Class<? extends IOBIEThing> clazz,
+	public static Set<String> getSlotNames(Class<? extends IOBIEThing> clazz,
 			InvestigationRestriction investigationRestrictionRestrictions) {
 
 		Objects.requireNonNull(clazz);
 
-		if (clazz.isAnnotationPresent(DatatypeProperty.class))
+		if (isAnnotationPresent(clazz, DatatypeProperty.class))
 			return Collections.emptySet();
 
 		Set<String> declaredFieldNames;
@@ -268,7 +269,7 @@ public class ReflectionUtils {
 			declaredFieldNames = new HashSet<>();
 			for (Field f : clazz.getDeclaredFields()) {
 
-				if (!f.isAnnotationPresent(OntologyModelContent.class))
+				if (!isAnnotationPresent(f, OntologyModelContent.class))
 					continue;
 
 				if (!investigationRestrictionRestrictions.investigateField(f.getName()))
@@ -321,6 +322,28 @@ public class ReflectionUtils {
 		}
 
 		return simpleName;
+	}
+
+	/**
+	 * Returns the type of the field. If the field is of type list, the generic type
+	 * is returned.
+	 * 
+	 * @param field
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static Class<? extends IOBIEThing> getFieldType(final Field field) {
+		try {
+			if (isAnnotationPresent(field, RelationTypeCollection.class)) {
+				return (Class<? extends IOBIEThing>) ((ParameterizedType) field.getGenericType())
+						.getActualTypeArguments()[0];
+			} else {
+				return (Class<? extends IOBIEThing>) field.getType();
+			}
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 }

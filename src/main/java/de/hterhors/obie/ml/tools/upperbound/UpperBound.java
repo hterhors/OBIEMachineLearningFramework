@@ -217,12 +217,12 @@ public class UpperBound {
 		 * Add factors for object type properties.
 		 */
 
-		List<Field> slots = ReflectionUtils.getAccessibleOntologyFields(goldModel.getClass());
+		List<Field> slots = ReflectionUtils.getSlots(goldModel.getClass());
 
 		for (Field slot : slots) {
 			try {
 				if (slot.get(goldModel) != null) {
-					if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
+					if (ReflectionUtils.isAnnotationPresent(slot,RelationTypeCollection.class)) {
 						List<IOBIEThing> values = new ArrayList<>();
 
 						Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(), slot.getName());

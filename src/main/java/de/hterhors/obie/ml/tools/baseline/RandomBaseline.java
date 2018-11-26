@@ -84,9 +84,9 @@ public class RandomBaseline {
 		meanPrecision /= corpus.getInternalInstances().size();
 		meanRecall /= corpus.getInternalInstances().size();
 		meanF1 /= corpus.getInternalInstances().size();
-		System.out.println("Most frequent baseline mean-P = " + meanPrecision);
-		System.out.println("Most frequent baseline mean-R = " + meanRecall);
-		System.out.println("Most frequent baseline mean-F1 = " + meanF1);
+		System.out.println("Random baseline mean-P = " + meanPrecision);
+		System.out.println("Random baseline mean-R = " + meanRecall);
+		System.out.println("Random baseline mean-F1 = " + meanF1);
 		return new PRF1Container(meanPrecision, meanRecall, meanF1);
 
 	}
@@ -139,11 +139,11 @@ public class RandomBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(predictionModel.getClass());
+		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass());
 
 		for (Field slot : fields) {
 
-			if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
+			if (ReflectionUtils.isAnnotationPresent(slot,RelationTypeCollection.class)) {
 
 				final List<IOBIEThing> elements = new ArrayList<>();
 				/*

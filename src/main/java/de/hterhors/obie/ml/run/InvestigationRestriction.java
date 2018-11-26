@@ -3,14 +3,12 @@ package de.hterhors.obie.ml.run;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -324,7 +322,7 @@ public class InvestigationRestriction implements Serializable {
 	 */
 	private static List<RestrictedField> getMainSingleFieldsRec(Class<? extends IOBIEThing> m) {
 
-		List<RestrictedField> fields = ReflectionUtils.getAccessibleOntologyFields(m).stream()
+		List<RestrictedField> fields = ReflectionUtils.getSlots(m).stream()
 				.map(f -> new RestrictedField(f.getName(), true)).collect(Collectors.toList());
 
 		return fields;
@@ -343,12 +341,12 @@ public class InvestigationRestriction implements Serializable {
 	private static Set<RestrictedField> getAllSingleFieldsRec(Set<RestrictedField> fieldNames,
 			Class<? extends IOBIEThing> m) {
 
-		ReflectionUtils.getAccessibleOntologyFields(m).forEach(field -> {
+		ReflectionUtils.getSlots(m).forEach(field -> {
 			field.setAccessible(true);
 			fieldNames.add(new RestrictedField(field.getName(), false));
 
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> ct = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
 							.getGenericType()).getActualTypeArguments()[0]);
 					if (ct.isAnnotationPresent(ImplementationClass.class))

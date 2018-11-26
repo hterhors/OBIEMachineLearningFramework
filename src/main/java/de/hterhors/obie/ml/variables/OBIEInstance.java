@@ -85,8 +85,8 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 				.flatMap(t -> t.tokens.stream()).collect(Collectors.toList());
 
 		for (Token token : tokens) {
-			fromPositionTokens.put(token.getFromCharPosition(), token);
-			toPositionTokens.put(token.getToCharPosition(), token);
+			fromPositionTokens.put(new Integer(token.getFromCharPosition()), token);
+			toPositionTokens.put(new Integer(token.getToCharPosition()), token);
 		}
 		this.rootClassTypes = Collections.unmodifiableSet(new HashSet<>(rootClassTypes));
 	}
@@ -122,7 +122,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		this.namedEntityLinkingAnnotations = namedEntityLinkingAnnotations;
 	}
 
-	public int charPositionToTokenPosition(int characterPosition) {
+	public int charPositionToTokenPosition(Integer characterPosition) {
 
 		if (fromPositionTokens.containsKey(characterPosition))
 			return fromPositionTokens.get(characterPosition).getIndex();
@@ -133,11 +133,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		log.warn("____CONTENT_____");
 		log.warn(content);
 		log.warn("_____FROM____");
-		fromPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		fromPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("____TO_____");
-		toPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		toPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
 		log.warn("_________");
 
@@ -147,7 +147,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 
 	}
 
-	public Token charPositionToToken(int characterPosition) {
+	public Token charPositionToToken(Integer characterPosition) {
 
 		if (fromPositionTokens.containsKey(characterPosition))
 			return fromPositionTokens.get(characterPosition);
@@ -156,11 +156,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 			return toPositionTokens.get(characterPosition);
 
 		log.warn("_________");
-		toPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		toPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
-		fromPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		fromPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
 		log.warn("characterPosition = " + characterPosition);
 

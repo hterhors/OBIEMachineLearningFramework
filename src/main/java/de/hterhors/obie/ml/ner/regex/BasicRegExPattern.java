@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hterhors.obie.core.OntologyAnalyzer;
@@ -29,13 +30,14 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 	/**
 	 * Standard set of stop words.
 	 */
-	public static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList("a", "an", "and", "are", "as", "at", "be",
-			"but", "by", "for", "if", "in", "into", "is", "it", "no", "not", "of", "on", "or", "such", "that", "the",
-			"their", "then", "there", "these", "they", "this", "to", "was", "will", "with"));
+	public static final Set<String> STOP_WORDS = new HashSet<>(
+			Arrays.asList("a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it",
+					"no", "not", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these", "they",
+					"this", "to", "was", "will", "with", "his", "her", "from", "who", "whom"));
 
 	public abstract Set<String> getAdditionalStopWords();
 
-	private static final String SPECIAL_CHARS = "\\W|_";
+	public static final String SPECIAL_CHARS = "\\W|_";
 
 	public static final String CAMEL_CASE_SPLIT_PATTERN = "(?<!(^|[A-Z" + SPECIAL_CHARS + "]))(?=[A-Z" + SPECIAL_CHARS
 			+ "])|(?<!^)(?=[A-Z" + SPECIAL_CHARS + "][a-z" + SPECIAL_CHARS + "])";
@@ -55,15 +57,15 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 		if (param2 != null && param2.length > 0) {
 			for (int i = 0; i < param2.length; i++) {
 				param2Builer.append("(");
-				param2Builer.append(".?" + param2[i]);
+				param2Builer.append(".?" + Pattern.quote(param2[i]));
 				if (i + 1 != param2.length)
 					param2Builer.append("(-)?");
 				param2Builer.append(")?");
 			}
 		}
 
-		return Pattern.quote(param1) + "(" + (param2Builer.length() == 0 ? "" : Pattern.quote(param2Builer.toString()))
-				+ ")?" + (param3 == null || param3.isEmpty() ? "" : "(.?" + Pattern.quote(param3) + ")?");
+		return Pattern.quote(param1) + "(" + (param2Builer.length() == 0 ? "" : param2Builer.toString()) + ")?"
+				+ (param3 == null || param3.isEmpty() ? "" : "(.?" + Pattern.quote(param3) + ")?");
 	}
 
 	protected static String buildRegExpr(final String param1, final String param2, final String[] param3,
@@ -73,14 +75,14 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 
 		if (param3 != null && param3.length > 0) {
 			for (int i = 0; i < param3.length - 1; i++) {
-				param3Builer.append(".?" + param3[i]);
+				param3Builer.append(".?" + Pattern.quote(param3[i]));
 				param3Builer.append("|");
 			}
-			param3Builer.append(".?" + param3[param3.length - 1]);
+			param3Builer.append(".?" + Pattern.quote(param3[param3.length - 1]));
 		}
 
 		return "(" + Pattern.quote(param1) + "(.?" + Pattern.quote(param2) + ")?|" + Pattern.quote(param2) + ")("
-				+ (param3Builer.length() == 0 ? "" : "(" + Pattern.quote(param3Builer.toString()) + ")?")
+				+ (param3Builer.length() == 0 ? "" : "(" + param3Builer.toString() + ")?")
 				+ (param4 == null || param4.isEmpty() ? "" : "(.?" + Pattern.quote(param4) + ")?") + ")?";
 	}
 
@@ -182,10 +184,11 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 
 					for (String w : individual.name.split(CAMEL_CASE_SPLIT_PATTERN)) {
 						w = w.replaceAll(SPECIAL_CHARS, "");
-						if (STOP_WORDS.contains(w.toLowerCase()) || getAdditionalStopWords().contains(w.toLowerCase()))
-							continue;
 
 						if (w.length() < getMinTokenlength())
+							continue;
+
+						if (STOP_WORDS.contains(w.toLowerCase()) || getAdditionalStopWords().contains(w.toLowerCase()))
 							continue;
 
 						names.add(w);

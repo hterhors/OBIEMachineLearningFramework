@@ -68,12 +68,12 @@ public class PurityEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		throw new NotSupportedException("Recall is not supported for purity measurement.");
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		throw new NotSupportedException("Precision is not supported for purity measurement.");
 	}
 
@@ -146,7 +146,8 @@ public class PurityEvaluator extends AbstractOBIEEvaluator {
 		throw new NotSupportedException("PRF1 is not supported for purity measurement.");
 	}
 
-	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
+	protected PRF1 explore(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int depth) {
 
 		PRF1 purityScore = new PRF1();
 

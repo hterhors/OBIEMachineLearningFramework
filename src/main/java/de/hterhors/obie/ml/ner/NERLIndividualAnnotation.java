@@ -1,7 +1,5 @@
 package de.hterhors.obie.ml.ner;
 
-import java.io.Serializable;
-
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 
 public class NERLIndividualAnnotation implements INERLAnnotation {
@@ -10,10 +8,6 @@ public class NERLIndividualAnnotation implements INERLAnnotation {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
-//	private static final String NAMED_ENTITY_ANNOTATION_PREFIX = "NERL_Individual_Annotation:";
-
-//	final public String annotationID;
 
 	final public String text;
 
@@ -26,7 +20,6 @@ public class NERLIndividualAnnotation implements INERLAnnotation {
 		this.text = text;
 		this.onset = offset;
 		this.relatedIndividual = relatedIndividual;
-//		this.annotationID = NAMED_ENTITY_ANNOTATION_PREFIX + relatedIndividual.name + offset + text;
 	}
 
 	@Override
