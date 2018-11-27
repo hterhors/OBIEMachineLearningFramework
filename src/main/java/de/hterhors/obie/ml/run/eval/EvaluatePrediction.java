@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
 import de.hterhors.obie.core.evaluation.PRF1;
-import de.hterhors.obie.core.evaluation.PRF1Container;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
@@ -225,7 +224,7 @@ public class EvaluatePrediction {
 //		
 //	}
 
-	public static PRF1Container evaluateREPredictions(
+	public static PRF1 evaluateREPredictions(
 			ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> objectiveFunction,
 			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions,
 			IOBIEEvaluator evaluator) {
@@ -306,7 +305,6 @@ public class EvaluatePrediction {
 
 		meanP /= gold.entrySet().size();
 		meanR /= gold.entrySet().size();
-		// meanF1 /= gold.entrySet().size();
 
 		log.info("MICRO: Mean-Precisiion = " + x.getPrecision());
 		log.info("MICRO: Mean-Recall = " + x.getRecall());
@@ -314,9 +312,8 @@ public class EvaluatePrediction {
 
 		log.info("MACRO: Mean-Precisiion = " + meanP);
 		log.info("MACRO: Mean-Recall = " + meanR);
-		// log.info("MACRO: Mean-F1 = " + meanF1);
 		log.info("MACRO: Mean-F1 = " + (2 * meanP * meanR) / (meanP + meanR));
-		return new PRF1Container(meanP, meanR, (2 * meanP * meanR) / (meanP + meanR));
+		return x;
 	}
 
 	public static Map<AbstractIndividual, PRF1> evaluatePerTypePredictions(

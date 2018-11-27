@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
 import de.hterhors.obie.core.evaluation.PRF1;
-import de.hterhors.obie.core.evaluation.PRF1Container;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
@@ -597,7 +596,7 @@ public abstract class AbstractRunner {
 
 	public abstract ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> getObjectiveFunction();
 
-	public PRF1Container evaluateOnTest() throws Exception {
+	public PRF1 evaluateOnTest() throws Exception {
 
 		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = testOnTest();
 

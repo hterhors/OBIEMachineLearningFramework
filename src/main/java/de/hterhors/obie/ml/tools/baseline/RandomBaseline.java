@@ -4,16 +4,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections.set.SynchronizedSet;
-
 import de.hterhors.obie.core.evaluation.PRF1;
-import de.hterhors.obie.core.evaluation.PRF1Container;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -45,11 +41,9 @@ public class RandomBaseline {
 		this.random = new Random(randomSeed);
 	}
 
-	public PRF1Container run(BigramInternalCorpus corpus) {
+	public PRF1 run(BigramInternalCorpus corpus) {
 
-		double meanPrecision = 0;
-		double meanRecall = 0;
-		double meanF1 = 0;
+		PRF1 mean = new PRF1();
 
 		for (OBIEInstance doc : corpus.getInternalInstances()) {
 
@@ -74,20 +68,17 @@ public class RandomBaseline {
 			System.out.println("precision = " + precision);
 			System.out.println("recall = " + recall);
 			System.out.println("f1 = " + f1);
-			meanPrecision += precision;
-			meanRecall += recall;
-			meanF1 += f1;
+			mean.add(score);
 			System.out.println("");
 			System.out.println("");
 			System.out.println("");
 		}
-		meanPrecision /= corpus.getInternalInstances().size();
-		meanRecall /= corpus.getInternalInstances().size();
-		meanF1 /= corpus.getInternalInstances().size();
-		System.out.println("Random baseline mean-P = " + meanPrecision);
-		System.out.println("Random baseline mean-R = " + meanRecall);
-		System.out.println("Random baseline mean-F1 = " + meanF1);
-		return new PRF1Container(meanPrecision, meanRecall, meanF1);
+
+		System.out.println("Random baseline mean-P = " + mean.getPrecision());
+		System.out.println("Random baseline mean-R = " + mean.getRecall());
+		System.out.println("Random baseline mean-F1 = " + mean.getF1());
+
+		return mean;
 
 	}
 
@@ -143,7 +134,7 @@ public class RandomBaseline {
 
 		for (Field slot : fields) {
 
-			if (ReflectionUtils.isAnnotationPresent(slot,RelationTypeCollection.class)) {
+			if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
 
 				final List<IOBIEThing> elements = new ArrayList<>();
 				/*
