@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +15,7 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 
 public class FullDocumentEntropyRanker implements IActiveLearningDocumentRanker {
+
 
 	public static int N = 20;
 
@@ -111,5 +111,4 @@ public class FullDocumentEntropyRanker implements IActiveLearningDocumentRanker 
 		entropyInstances.stream().limit(n).forEach(i -> log.info(i.instance.getName() + ":" + i.value));
 
 	}
-
 }
