@@ -20,7 +20,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
 import de.hterhors.obie.ml.run.param.RunParameter;
-import de.hterhors.obie.ml.templates.BOWnGramsTemplate.Scope;
+import de.hterhors.obie.ml.templates.BOCharNGramsTemplate.Scope;
 import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -39,7 +39,7 @@ import learning.Vector;
  *
  * @date Nov 3, 2017
  */
-public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Serializable {
+public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements Serializable {
 	/**
 	 * 
 	 */
@@ -59,9 +59,9 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 
 	private static final String RIGHT = ">";
 
-	private static final int MAX_N_GRAM_SIZE = 3;
+	private static final int MAX_N_GRAM_SIZE = 20;
 
-	public BOWnGramsTemplate(RunParameter parameter) {
+	public BOCharNGramsTemplate(RunParameter parameter) {
 		super(parameter);
 	}
 
@@ -73,7 +73,7 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 
 		public Scope(OBIEInstance instance, Class<? extends IOBIEThing> entityRootClassType,
 				Class<? extends IOBIEThing> classType, AbstractIndividual individual) {
-			super(BOWnGramsTemplate.this, instance, entityRootClassType, classType, individual);
+			super(BOCharNGramsTemplate.this, instance, entityRootClassType, classType, individual);
 			this.classType = classType;
 			this.individual = individual;
 			this.instance = instance;
@@ -127,13 +127,13 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 
 		final String context = factor.getFactorScope().individual.name;
 
-		final List<String> tokens = factor.getFactorScope().instance.getTokens().stream().map(t -> t.getText())
+		final List<String> tokens = Arrays.stream(factor.getFactorScope().instance.getContent().split("(?!^)"))
 				.collect(Collectors.toList());
 
 		tokens.add(0, START_SIGN);
 		tokens.add(tokens.size(), END_SIGN);
 
-		for (int n = MAX_N_GRAM_SIZE; n <= MAX_N_GRAM_SIZE; n++) {
+		for (int n = 0; n <= MAX_N_GRAM_SIZE; n++) {
 			for (int offset = 0; offset < tokens.size() - 1; offset++) {
 
 				/*
@@ -153,11 +153,6 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 
 					if (tokens.get(t).isEmpty()) {
 						fBuffer.append("<EMPTY>").append(TOKEN_SPLITTER_SPACE);
-						continue;
-					}
-
-					if (BasicRegExPattern.STOP_WORDS.contains(tokens.get(t).toLowerCase())) {
-						fBuffer.append("<STOP>").append(TOKEN_SPLITTER_SPACE);
 						continue;
 					}
 
@@ -181,89 +176,3 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 	}
 
 }
-//p: 0.765625	r: 0.765625	f1: 0.765625
-//OFF
-//MICRO: Mean-Precisiion = 0.21052631578947367
-//MICRO: Mean-Recall = 0.21052631578947367
-//MICRO: Mean-F1 = 0.21052631578947367
-//MACRO: Mean-Precisiion = 0.21052631578947367
-//MACRO: Mean-Recall = 0.21052631578947367
-//MACRO: Mean-F1 = 0.21052631578947367
-//NOT
-//MICRO: Mean-Precisiion = 1.0
-//MICRO: Mean-Recall = 1.0
-//MICRO: Mean-F1 = 1.0
-//MACRO: Mean-Precisiion = 1.0
-//MACRO: Mean-Recall = 1.0
-//MACRO: Mean-F1 = 1.0
-
-//n=4
-//p: 0.75	r: 0.75	f1: 0.75
-//OFF
-//MICRO: Mean-Precisiion = 0.21052631578947367
-//MICRO: Mean-Recall = 0.21052631578947367
-//MICRO: Mean-F1 = 0.21052631578947367
-//MACRO: Mean-Precisiion = 0.21052631578947367
-//MACRO: Mean-Recall = 0.21052631578947367
-//MACRO: Mean-F1 = 0.21052631578947367
-//NOT
-//MICRO: Mean-Precisiion = 0.9777777777777777
-//MICRO: Mean-Recall = 0.9777777777777777
-//MICRO: Mean-F1 = 0.9777777777777777
-//MACRO: Mean-Precisiion = 0.9777777777777777
-//MACRO: Mean-Recall = 0.9777777777777777
-//MACRO: Mean-F1 = 0.9777777777777777
-
-//n=3
-//p: 0.6875	r: 0.6875	f1: 0.6875
-//OFF
-//MICRO: Mean-Precisiion = 0.2631578947368421
-//MICRO: Mean-Recall = 0.2631578947368421
-//MICRO: Mean-F1 = 0.2631578947368421
-//MACRO: Mean-Precisiion = 0.2631578947368421
-//MACRO: Mean-Recall = 0.2631578947368421
-//MACRO: Mean-F1 = 0.2631578947368421
-//NOT
-//MICRO: Mean-Precisiion = 0.8666666666666667
-//MICRO: Mean-Recall = 0.8666666666666667
-//MICRO: Mean-F1 = 0.8666666666666667
-//MACRO: Mean-Precisiion = 0.8666666666666667
-//MACRO: Mean-Recall = 0.8666666666666667
-//MACRO: Mean-F1 = 0.8666666666666667
-
-//n=2
-//p: 0.75	r: 0.75	f1: 0.75
-//OFF
-//MICRO: Mean-Precisiion = 0.3157894736842105
-//MICRO: Mean-Recall = 0.3157894736842105
-//MICRO: Mean-F1 = 0.3157894736842105
-//MACRO: Mean-Precisiion = 0.3157894736842105
-//MACRO: Mean-Recall = 0.3157894736842105
-//MACRO: Mean-F1 = 0.3157894736842105
-//NOT
-//MICRO: Mean-Precisiion = 0.9333333333333333
-//MICRO: Mean-Recall = 0.9333333333333333
-//MICRO: Mean-F1 = 0.9333333333333333
-//MACRO: Mean-Precisiion = 0.9333333333333333
-//MACRO: Mean-Recall = 0.9333333333333333
-//MACRO: Mean-F1 = 0.9333333333333333
-//--------------randomRun1059004149---------------
-//Total training time: 1305 ms.
-//Total test time: 35 ms.
-//Total time: PT1.34S
-//n=1
-//p: 0.703125	r: 0.703125	f1: 0.703125
-//OFF
-//MICRO: Mean-Precisiion = 0.3684210526315789
-//MICRO: Mean-Recall = 0.3684210526315789
-//MICRO: Mean-F1 = 0.3684210526315789
-//MACRO: Mean-Precisiion = 0.3684210526315789
-//MACRO: Mean-Recall = 0.3684210526315789
-//MACRO: Mean-F1 = 0.3684210526315789
-//NOT
-//MICRO: Mean-Precisiion = 0.8444444444444444
-//MICRO: Mean-Recall = 0.8444444444444444
-//MICRO: Mean-F1 = 0.8444444444444444
-//MACRO: Mean-Precisiion = 0.8444444444444444
-//MACRO: Mean-Recall = 0.8444444444444444
-//MACRO: Mean-F1 = 0.8444444444444444

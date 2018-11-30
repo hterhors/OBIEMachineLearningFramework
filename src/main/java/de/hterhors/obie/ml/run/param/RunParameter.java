@@ -44,16 +44,16 @@ public class RunParameter implements Serializable {
 	/**
 	 * TODO: via parameter greedy vs linear.
 	 */
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
-//			.linearObjectiveSamplingStrategy();
-//
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
-//			.linearModelSamplingStrategy();
+	public final static SamplingStrategy<OBIEState> linearTrainSamplingStrategyObjectiveScore = SamplingStrategies
+			.linearObjectiveSamplingStrategy();
 
-	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
+	public final static SamplingStrategy<OBIEState> linearTrainSamplingStrategyModelScore = SamplingStrategies
+			.linearModelSamplingStrategy();
+
+	public final static SamplingStrategy<OBIEState> greedyTrainSamplingStrategyObjectiveScore = SamplingStrategies
 			.greedyObjectiveStrategy();
 
-	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
+	public final static SamplingStrategy<OBIEState> greedyTrainSamplingStrategyModelScore = SamplingStrategies
 			.greedyModelStrategy();
 
 	/*
@@ -485,8 +485,8 @@ public class RunParameter implements Serializable {
 
 	@Override
 	public String toString() {
-		return "OBIEParameter [trainSamplingStrategyObjectiveScore=" + trainSamplingStrategyObjectiveScore
-				+ ", trainSamplingStrategyModelScore=" + trainSamplingStrategyModelScore
+		return "OBIEParameter [trainSamplingStrategyObjectiveScore=" + linearTrainSamplingStrategyObjectiveScore
+				+ ", trainSamplingStrategyModelScore=" + linearTrainSamplingStrategyModelScore
 				+ ", trainAcceptanceStrategyObjectiveScore=" + trainAcceptanceStrategyObjectiveScore
 				+ ", trainAcceptanceStrategyModelScore=" + trainAcceptanceStrategyModelScore + ", testSamplingStrategy="
 				+ testSamplingStrategy + ", testAcceptanceStrategy=" + testAcceptanceStrategy

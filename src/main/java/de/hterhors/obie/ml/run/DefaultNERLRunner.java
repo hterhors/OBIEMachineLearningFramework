@@ -17,18 +17,18 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class StandardNERLRunner extends AbstractRunner {
+public class DefaultNERLRunner extends AbstractRunner {
 
-	Random random;
-	Set<Integer> epochsTrainedWithObjective = new HashSet<>();
+	private final Random random;
+	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();
 
-	public StandardNERLRunner(RunParameter parameter) {
+	public DefaultNERLRunner(RunParameter parameter) {
 		super(parameter);
 		/*
 		 * SCIONERRunner TODO: parameterize ?
 		 */
 		this.random = new Random(100L);
-		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
+		for (int epoch = 1; epoch <= parameter.epochs; epoch++) {
 			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
 				epochsTrainedWithObjective.add(epoch);
 		}
@@ -69,12 +69,12 @@ public class StandardNERLRunner extends AbstractRunner {
 							if (epochsTrainedWithObjective.contains(epoch)) {
 								log.info("Use Objective Score for sampling...");
 								trainWithObjective = true;
-								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyObjectiveScore);
+								sampler.setTrainSamplingStrategy(RunParameter.linearTrainSamplingStrategyObjectiveScore);
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyObjectiveScore);
 							} else {
 								trainWithObjective = false;
 								log.info("Use Model Score for sampling...");
-								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyModelScore);
+								sampler.setTrainSamplingStrategy(RunParameter.linearTrainSamplingStrategyModelScore);
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 							}
 						} catch (Exception e) {

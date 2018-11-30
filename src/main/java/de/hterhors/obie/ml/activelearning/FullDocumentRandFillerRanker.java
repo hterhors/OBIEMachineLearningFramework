@@ -33,22 +33,27 @@ public class FullDocumentRandFillerRanker implements IActiveLearningDocumentRank
 	public List<OBIEInstance> rank(List<OBIEInstance> remainingInstances) {
 		log.info("Apply random filler...");
 		log.info("Copy...");
-		List<OBIEInstance> randomized = new ArrayList<>(remainingInstances);
+//		List<OBIEInstance> randomized = new ArrayList<>(remainingInstances);
 
-		List<RankedInstance> entropyInstances = new ArrayList<>();
+		List<RankedInstance> scoredInstances = new ArrayList<>();
 
 		log.info("Fill ranomized and evaluate...");
-		for (OBIEInstance obieInstance : randomized) {
+		for (OBIEInstance obieInstance : remainingInstances) {
+			PRF1 score = new PRF1();
+			for (int i = 0; i < 10; i++) {
+				score.add(
+						runner.getParameter().evaluator.prf1(
+								obieInstance.getGoldAnnotation().getTemplateAnnotations().stream()
+										.map(f -> f.getThing()).collect(Collectors.toList()),
+								this.randomFiller.predictFillerByRandom(obieInstance)));
+			}
 
-			PRF1 score = runner.getParameter().evaluator.prf1(obieInstance.getGoldAnnotation().getTemplateAnnotations()
-					.stream().map(f -> f.getThing()).collect(Collectors.toList()),
-					this.randomFiller.predictFillerByRandom(obieInstance));
-			entropyInstances.add(new RankedInstance(1-score.getF1(), obieInstance));
+			scoredInstances.add(new RankedInstance(score.getF1(), obieInstance));
 		}
-		
-		Collections.sort(entropyInstances);
 
-		return entropyInstances.stream().map(e -> e.instance).collect(Collectors.toList());
+		Collections.sort(scoredInstances);
+
+		return scoredInstances.stream().map(e -> e.instance).collect(Collectors.toList());
 	}
 
 }

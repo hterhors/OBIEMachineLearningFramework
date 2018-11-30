@@ -481,17 +481,18 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		if (!(distributer instanceof FoldCrossCorpusDistributor))
 			throw new IllegalStateException("Provided corpus distributor does not support fold cross validation: "
 					+ distributer.getDistributorID());
+		// init with -1
 		this.currentFold++;
 
 		if (((FoldCrossCorpusDistributor) distributer).n == (this.currentFold))
 			return false;
 
-		updateFold();
+		updateFold(((FoldCrossCorpusDistributor) distributer).n == (this.currentFold + 1));
 
 		return true;
 	}
 
-	private void updateFold() {
+	private void updateFold(boolean last) {
 		log.info("Update fold: " + this.currentFold);
 
 		final int foldSize = this.remainingFullCorpus.getInternalInstances().size()
@@ -506,8 +507,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
 
-		this.testCorpus = new BigramInternalCorpus(this.remainingFullCorpus.getInternalInstances()
-				.subList(this.currentFold * foldSize, (this.currentFold + 1) * foldSize));
+		this.testCorpus = new BigramInternalCorpus(this.remainingFullCorpus.getInternalInstances().subList(
+				this.currentFold * foldSize,
+				last ? this.remainingFullCorpus.getInternalInstances().size() : (this.currentFold + 1) * foldSize));
 
 	}
 

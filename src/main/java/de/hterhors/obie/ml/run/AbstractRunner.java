@@ -91,6 +91,7 @@ public abstract class AbstractRunner {
 	private Scorer scorer;
 
 	protected boolean trainWithObjective = false;
+	protected boolean sampleGreedy= false;
 
 	private final InstanceCollection featureMapData = new InstanceCollection();
 
@@ -268,7 +269,7 @@ public abstract class AbstractRunner {
 		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = new DefaultSampler<>(model,
 				objectiveFunction, explorers, maxObjectiveScore);
 
-		sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyModelScore);
+		sampler.setTrainSamplingStrategy(RunParameter.linearTrainSamplingStrategyModelScore);
 		sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 
 		if (scorer instanceof IExternalScorer) {

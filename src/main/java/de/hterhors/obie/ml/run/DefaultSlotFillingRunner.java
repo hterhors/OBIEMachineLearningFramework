@@ -18,19 +18,28 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class StandardRERunner extends AbstractRunner {
+public class DefaultSlotFillingRunner extends AbstractRunner {
 
-	Random random;
-	Set<Integer> epochsTrainedWithObjective = new HashSet<>();
+	private final Random random;
+	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();
+	private final Set<Integer> epochsTrainedGreedily = new HashSet<>();
 
-	public StandardRERunner(RunParameter parameter) {
+	public DefaultSlotFillingRunner(RunParameter parameter) {
 		super(parameter);
+		log.info("Initialize sampling settings...");
+
 		this.random = new Random(100L);
-		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
-			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
+
+		for (int epoch = 1; epoch <= parameter.epochs; epoch++) {
+			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.5))
 				epochsTrainedWithObjective.add(epoch);
 		}
-
+		for (int epoch = 1; epoch <= parameter.epochs; epoch++) {
+			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.5))
+				epochsTrainedGreedily.add(epoch);
+		}
+		log.info("Epochs trained with objective score: " + epochsTrainedWithObjective);
+		log.info("Epochs trained greedily: " + epochsTrainedGreedily);
 	}
 
 	@Override
@@ -64,17 +73,33 @@ public class StandardRERunner extends AbstractRunner {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {
-							if (epochsTrainedWithObjective.contains(epoch)) {
-								log.info("Use Objective Score for sampling...");
-								trainWithObjective = true;
-								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyObjectiveScore);
+							trainWithObjective = epochsTrainedWithObjective.contains(epoch);
+							sampleGreedy =true;// epochsTrainedGreedily.contains(epoch);
+
+							if (trainWithObjective) {
+								if (sampleGreedy) {
+									log.info("Use objective score and greedy sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.greedyTrainSamplingStrategyObjectiveScore);
+								} else {
+									log.info("Use objective score and probability sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.linearTrainSamplingStrategyObjectiveScore);
+								}
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyObjectiveScore);
 							} else {
-								trainWithObjective = false;
-								log.info("Use Model Score for sampling...");
-								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyModelScore);
+								if (sampleGreedy) {
+									log.info("Use model score and greedy sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.greedyTrainSamplingStrategyModelScore);
+								} else {
+									log.info("Use model score and probability sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.linearTrainSamplingStrategyModelScore);
+								}
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 							}
+
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
