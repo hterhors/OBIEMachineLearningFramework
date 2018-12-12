@@ -17,6 +17,7 @@ import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyFieldNames;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.DirectSiblings;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
@@ -25,7 +26,6 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.INERLAnnotation;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 
 /**
@@ -471,7 +471,7 @@ public class ExplorationUtils {
 		try {
 			if (ReflectionUtils.isAnnotationPresent(newInstance.getClass(), DatatypeProperty.class)) {
 				Field scioValueField = ReflectionUtils.getAccessibleFieldByName(newInstance.getClass(),
-						OntologyFieldNames.SEMANTIC_VALUE_FIELD_NAME);
+						OntologyFieldNames.INTERPRETED_VALUE_FIELD_NAME);
 				scioValueField.set(newInstance, dtOrTextValue);
 			}
 		} catch (IllegalArgumentException | IllegalAccessException e) {

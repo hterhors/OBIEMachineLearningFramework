@@ -1,10 +1,10 @@
 package de.hterhors.obie.ml.tests;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.StrictNamedEntityLinkingEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.PurityEvaluator;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 /**
  * TODO Write, maybe create small example eontology for all tests.

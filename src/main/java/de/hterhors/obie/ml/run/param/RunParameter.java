@@ -16,6 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractOntologyEnvironment;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.projects.AbstractProjectEnvironment;
@@ -26,9 +28,7 @@ import de.hterhors.obie.ml.explorer.AbstractOBIEExplorer;
 import de.hterhors.obie.ml.explorer.IExplorationCondition;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.ner.candidateRetrieval.ICandidateRetrieval;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.templates.AbstractOBIETemplate;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.optimizer.Optimizer;
 import learning.optimizer.SGD;
@@ -195,7 +195,7 @@ public class RunParameter implements Serializable {
 	 * The investigation restriction allows to focus only on specific slots. It
 	 * influences the sampling procedure and the evaluation.
 	 */
-	public final InvestigationRestriction investigationRestriction;
+	public  InvestigationRestriction investigationRestriction;
 
 	/**
 	 * A predefined set of initial objects if {@link #initializer} is set

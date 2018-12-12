@@ -14,10 +14,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.instances.EmptyOBIEInstance;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 
@@ -57,6 +57,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
 			IOrListCondition orListCondition, int maxNumberOfAnnotations,
 			final boolean ignoreEmptyInstancesOnEvaluation) {
+
 		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
 				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 

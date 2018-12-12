@@ -60,7 +60,7 @@ public class FullDocumentVarianceRanker implements IActiveLearningDocumentRanker
 					.sqrt(nextStates.stream().map(s -> Math.pow(mean - s.getModelScore(), 2)).reduce(0D, Double::sum)
 							/ nextStates.size());
 
-			entropyInstances.add(new RankedInstance(variance, predictedInstance.getInstance()));
+			entropyInstances.add(new RankedInstance(-variance, predictedInstance.getInstance()));
 
 		}
 

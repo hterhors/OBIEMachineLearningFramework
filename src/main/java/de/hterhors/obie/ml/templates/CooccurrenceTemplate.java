@@ -11,13 +11,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.CooccurrenceTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -181,8 +181,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		 * factor
 		 */
 		final List<Field> slots = ReflectionUtils.getSlots(parentThing.getClass());
-		{
 
+		{
 			for (int i = 0; i < slots.size(); i++) {
 
 				final Field slot1 = slots.get(i);
@@ -265,7 +265,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	private String getSlotValue(final Field slot, final IOBIEThing slotValue) {
 		final String value;
 		if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
-			value = ((IDatatype) slotValue).getSemanticValue();
+			value = ((IDatatype) slotValue).getInterpretedValue();
 		} else {
 			value = slotValue.getIndividual().name;
 		}
@@ -278,10 +278,11 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (slotValue == null)
 			return;
+
 		final String value2;
 
 		if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
-			value2 = ((IDatatype) slotValue).getSemanticValue();
+			value2 = ((IDatatype) slotValue).getInterpretedValue();
 
 		} else {
 			value2 = slotValue.getIndividual().name;
@@ -324,7 +325,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			 */
 			surfaceForms = new HashSet<>();
 			if (ReflectionUtils.isAnnotationPresent(filler.getClass(), DatatypeProperty.class)) {
-				surfaceForms.add(((IDatatype) filler).getSemanticValue());
+				surfaceForms.add(((IDatatype) filler).getInterpretedValue());
 			} else {
 				surfaceForms.add(filler.getTextMention());
 			}

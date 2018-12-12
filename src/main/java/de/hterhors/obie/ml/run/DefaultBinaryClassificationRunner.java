@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
-import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
+import de.hterhors.obie.ml.objfunc.BinaryClassificationObjectiveFunction;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -19,13 +18,13 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class DefaultSlotFillingRunner extends AbstractRunner {
+public class DefaultBinaryClassificationRunner extends AbstractRunner {
 
 	private final Random random;
 	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();
 	private final Set<Integer> epochsTrainedGreedily = new HashSet<>();
 
-	public DefaultSlotFillingRunner(RunParameter parameter) {
+	public DefaultBinaryClassificationRunner(RunParameter parameter) {
 		super(parameter);
 		log.info("Initialize sampling settings...");
 
@@ -45,7 +44,7 @@ public class DefaultSlotFillingRunner extends AbstractRunner {
 
 	@Override
 	public ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> getObjectiveFunction() {
-		return new REObjectiveFunction(getParameter());
+		return new BinaryClassificationObjectiveFunction(getParameter());
 	}
 
 	@Override

@@ -16,18 +16,21 @@ import org.apache.logging.log4j.Logger;
 import corpus.SampledInstance;
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.StrictNamedEntityLinkingEvaluator;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
-import de.hterhors.obie.ml.run.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import evaluation.EvaluationUtil;
+import exceptions.MissingFactorException;
+import factors.Factor;
 import learning.ObjectiveFunction;
+import learning.Vector;
 
 public class EvaluatePrediction {
 
@@ -100,11 +103,11 @@ public class EvaluatePrediction {
 			log.info("ConceptLevel F1: " + f1Concepts + " Precision: " + pConcepts + " Recall: " + rConcepts);
 			mean.add(prf1);
 		}
-		log.info("MICRO: Mean-Precisiion = " + mean.getPrecision());
+		log.info("MICRO: Mean-Precision = " + mean.getPrecision());
 		log.info("MICRO: Mean-Recall = " + mean.getRecall());
 		log.info("MICRO: Mean-F1 = " + mean.getF1());
 
-		log.info("MICRO: Mean-Concept-Precisiion = " + p / predictions.size());
+		log.info("MICRO: Mean-Concept-Precision = " + p / predictions.size());
 		log.info("MICRO: Mean-Concept-Recall = " + r / predictions.size());
 		log.info("MICRO: Mean-Concept-F1 = " + f1 / predictions.size());
 
@@ -289,7 +292,7 @@ public class EvaluatePrediction {
 			final double p = evaluator.precision(goldList, predictionList);
 			final double r = evaluator.recall(goldList, predictionList);
 			final double f1 = evaluator.f1(goldList, predictionList);
-			log.debug("Doc-Precisiion = " + p);
+			log.debug("Doc-Precision = " + p);
 			log.debug("Doc-Recall = " + r);
 			log.debug("Doc-F1 = " + f1);
 
@@ -306,14 +309,62 @@ public class EvaluatePrediction {
 		meanP /= gold.entrySet().size();
 		meanR /= gold.entrySet().size();
 
-		log.info("MICRO: Mean-Precisiion = " + x.getPrecision());
+		log.info("MICRO: Mean-Precision = " + x.getPrecision());
 		log.info("MICRO: Mean-Recall = " + x.getRecall());
 		log.info("MICRO: Mean-F1 = " + x.getF1());
 
-		log.info("MACRO: Mean-Precisiion = " + meanP);
+		log.info("MACRO: Mean-Precision = " + meanP);
 		log.info("MACRO: Mean-Recall = " + meanR);
 		log.info("MACRO: Mean-F1 = " + (2 * meanP * meanR) / (meanP + meanR));
 		return x;
+	}
+
+	public static Map<AbstractIndividual, PRF1> evaluateBinaryClassification(
+			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions) {
+
+		Map<AbstractIndividual, PRF1> results = new HashMap<>();
+
+		Set<AbstractIndividual> existingLabels = new HashSet<>();
+		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
+					.getTemplateAnnotations()) {
+				existingLabels.add(resultEntity.getThing().getIndividual());
+			}
+			for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
+				existingLabels.add(goldEntity.getThing().getIndividual());
+			}
+		}
+
+//		PRF1 accurracy = new PRF1();
+
+		for (AbstractIndividual label : existingLabels) {
+
+			results.put(label, new PRF1());
+
+			for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+
+				AbstractIndividual goldLabel = prediction.getGoldResult().getTemplateAnnotations().iterator().next()
+						.getThing().getIndividual();
+				AbstractIndividual predictedLabel = prediction.getState().getCurrentTemplateAnnotations()
+						.getTemplateAnnotations().iterator().next().getThing().getIndividual();
+
+				if (goldLabel.equals(label)) {
+//					accurracy.tp += goldLabel.equals(predictedLabel) ? 1 : 0;
+//					accurracy.fn += !goldLabel.equals(predictedLabel) ? 1 : 0;
+					results.get(label).tp += goldLabel.equals(predictedLabel) ? 1 : 0;
+					results.get(label).fn += !goldLabel.equals(predictedLabel) ? 1 : 0;
+
+				}
+
+				if (!goldLabel.equals(label)) {
+//					accurracy.fp += !goldLabel.equals(predictedLabel) ? 1 : 0;
+					results.get(label).fp += !goldLabel.equals(predictedLabel) ? 1 : 0;
+				}
+
+			}
+		}
+//		results.put("accurracy", accurracy);
+		return results;
 	}
 
 	public static Map<AbstractIndividual, PRF1> evaluatePerTypePredictions(
@@ -372,6 +423,7 @@ public class EvaluatePrediction {
 			int TP = 0;
 			int FP = 0;
 			int FN = 0;
+			log.info("Number Of Docs:= " + gold.size());
 
 			for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
 				log.debug("_____________" + state.getKey() + "______________");
@@ -393,7 +445,7 @@ public class EvaluatePrediction {
 				final double p = evaluator.precision(goldList, predictionList);
 				final double r = evaluator.recall(goldList, predictionList);
 				final double f1 = evaluator.f1(goldList, predictionList);
-				log.debug("Doc-Precisiion = " + p);
+				log.debug("Doc-Precision = " + p);
 				log.debug("Doc-Recall = " + r);
 				log.debug("Doc-F1 = " + f1);
 
@@ -412,15 +464,161 @@ public class EvaluatePrediction {
 			meanR /= gold.entrySet().size();
 			// meanF1 /= gold.entrySet().size();
 
-			log.info("MICRO: Mean-Precisiion = " + x.getPrecision());
+			log.info("MICRO: Mean-Precision = " + x.getPrecision());
 			log.info("MICRO: Mean-Recall = " + x.getRecall());
 			log.info("MICRO: Mean-F1 = " + x.getF1());
 
-			log.info("MACRO: Mean-Precisiion = " + meanP);
+			log.info("MACRO: Mean-Precision = " + meanP);
 			log.info("MACRO: Mean-Recall = " + meanR);
 			// log.info("MACRO: Mean-F1 = " + meanF1);
 			log.info("MACRO: Mean-F1 = " + (2 * meanP * meanR) / (meanP + meanR));
 			results.put(individualType, x);
+		}
+		return results;
+	}
+
+	public static Map<AbstractIndividual, PRF1> analysePerTypePredictions(
+			ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> objectiveFunction,
+			List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions,
+			IOBIEEvaluator evaluator) {
+
+		Map<AbstractIndividual, PRF1> results = new HashMap<>();
+
+		Set<AbstractIndividual> existingIndividuals = new HashSet<>();
+
+		Map<String, List<String>> factors = new HashMap<>();
+
+		for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+
+			factors.putIfAbsent(prediction.getInstance().getName(), new ArrayList<>());
+			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
+					.getTemplateAnnotations()) {
+				existingIndividuals.add(resultEntity.getThing().getIndividual());
+			}
+
+			for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
+				existingIndividuals.add(goldEntity.getThing().getIndividual());
+			}
+
+			try {
+				double modelScore = 0;
+				double invertLabelModelScore = 0;
+
+				for (Factor<?> factor : prediction.getState().getFactorGraph().getFactors()) {
+					Vector featureVector = factor.getFeatureVector();
+					Vector weights = factor.getTemplate().getWeights();
+					Vector smaller = null;
+					Vector bigger = null;
+
+					if (featureVector.getFeatureNames().size() <= weights.getFeatureNames().size()) {
+						smaller = featureVector;
+						bigger = weights;
+					} else {
+						smaller = weights;
+						bigger = featureVector;
+					}
+
+					if (smaller.getFeatures().size() != 0) {
+						for (Entry<String, Double> e : smaller.getFeatures().entrySet()) {
+							final double d1 = e.getValue() * bigger.getValueOfFeature(e.getKey());
+							final double d2;
+							if (e.getKey().startsWith("<OFF>")) {
+								d2 = e.getValue() * bigger.getValueOfFeature(e.getKey().replaceFirst("<OFF>", "<NOT>"));
+							} else {
+								d2 = e.getValue() * bigger.getValueOfFeature(e.getKey().replaceFirst("<NOT>", "<OFF>"));
+							}
+							modelScore += d1;
+							invertLabelModelScore += d2;
+							if (d1 != 0) {
+								factors.get(prediction.getInstance().getName()).add(e.getKey() + "\t" + (d1 + d2));
+							}
+						}
+					}
+				}
+
+				factors.get(prediction.getInstance().getName()).add("MODEL_SCORE\t" + modelScore);
+				factors.get(prediction.getInstance().getName())
+						.add("INVERT_LABEL_MODEL_SCORE\t" + invertLabelModelScore);
+				factors.get(prediction.getInstance().getName())
+						.add("CONFIDENCE\t" + (modelScore - invertLabelModelScore));
+
+			} catch (MissingFactorException e) {
+				e.printStackTrace();
+			}
+
+		}
+
+		for (AbstractIndividual individualType : existingIndividuals) {
+			log.info(individualType.name);
+			Map<String, Set<EvaluationObject>> gold = new HashMap<>();
+			Map<String, Set<EvaluationObject>> result = new HashMap<>();
+
+			/*
+			 * Name,Content
+			 */
+			Map<String, String> nameContent = new HashMap<>();
+
+			for (SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState> prediction : predictions) {
+
+				final String key = prediction.getInstance().getName();
+
+				nameContent.put(key, prediction.getInstance().getContent());
+
+				boolean add = false;
+
+				for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
+					if (add |= individualType.equals(goldEntity.getThing().getIndividual())) {
+						gold.putIfAbsent(key, new HashSet<EvaluationObject>());
+						gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+					}
+				}
+
+				if (add) {
+					result.putIfAbsent(key, new HashSet<EvaluationObject>());
+					for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
+							.getTemplateAnnotations()) {
+						result.get(key)
+								.add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+					}
+				}
+
+			}
+
+			log.info("Number Of Docs:= " + gold.size());
+
+			for (Entry<String, Set<EvaluationObject>> state : gold.entrySet()) {
+
+				List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
+						.collect(Collectors.toList());
+
+				List<IOBIEThing> predictionList = result.get(state.getKey()).stream().map(s -> s.scioClass)
+						.collect(Collectors.toList());
+
+				final double f1 = evaluator.f1(goldList, predictionList);
+
+				if (f1 != 1) {
+					log.info("_____________" + state.getKey() + "______________");
+					log.info(nameContent.get(state.getKey()));
+
+					log.info("Gold:\t");
+					log.info(gold.get(state.getKey()));
+					log.info("Result:\t");
+					log.info(result.get(state.getKey()));
+
+					Collections.sort(factors.get(state.getKey()), (a, b) -> -Double
+							.compare(Double.parseDouble(a.split("\t")[1]), Double.parseDouble(b.split("\t")[1])));
+
+					for (String factor : factors.get(state.getKey())) {
+//					if (factor.startsWith("CONFIDENCE"))
+						log.info(factor);
+					}
+
+				}
+
+			}
+			log.info("");
+			log.info("");
+
 		}
 		return results;
 	}
@@ -520,7 +718,7 @@ public class EvaluatePrediction {
 				final double r = evaluator.recall(goldList, predictionList);
 				final double f1 = evaluator.f1(goldList, predictionList);
 				if (detailedOutput) {
-					log.info("Doc-Precisiion = " + p);
+					log.info("Doc-Precision = " + p);
 					log.info("Doc-Recall = " + r);
 					log.info("Doc-F1 = " + f1);
 				}
@@ -542,7 +740,7 @@ public class EvaluatePrediction {
 			meanP /= gold.entrySet().size();
 			meanR /= gold.entrySet().size();
 			meanF1 /= gold.entrySet().size();
-			log.info("Mean-Precisiion = " + meanP);
+			log.info("Mean-Precision = " + meanP);
 			log.info("Mean-Recall = " + meanR);
 			log.info("Mean-F1 = " + meanF1);
 			log.info("#############################");

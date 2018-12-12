@@ -16,13 +16,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
@@ -34,7 +34,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	private Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence;
 
-	public final InvestigationRestriction investigationRestriction;
+	private final InvestigationRestriction investigationRestriction;
 
 	private OBIEState currentState = null;
 
@@ -97,14 +97,13 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			this.currentTempalateAnnotationID = templateAnnotation.getAnnotationID();
 
 			for (StateInstancePair stateInstancePair : topDownRecursiveSlotFilling(templateAnnotation.getThing(),
-					templateAnnotation.rootClassType, true)) {
+					templateAnnotation.rootClassType, true, investigationRestriction)) {
 				proposalStates.add(stateInstancePair.state);
 			}
 
 		}
 
 		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
-
 		return proposalStates;
 	}
 
@@ -132,8 +131,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	}
 
 	private List<StateInstancePair> topDownRecursiveSlotFilling(IOBIEThing parentTemplate,
-			Class<? extends IOBIEThing> slotType) {
-		return topDownRecursiveSlotFilling(parentTemplate, slotType, false);
+			Class<? extends IOBIEThing> slotType, InvestigationRestriction investigationRestriction) {
+		return topDownRecursiveSlotFilling(parentTemplate, slotType, false, investigationRestriction);
 	}
 
 	/**
@@ -156,7 +155,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @throws NoSuchFieldException
 	 */
 	private List<StateInstancePair> topDownRecursiveSlotFilling(IOBIEThing parentTemplate,
-			Class<? extends IOBIEThing> slotType, final boolean currentlyExploreRootTemplate) {
+			Class<? extends IOBIEThing> slotType, final boolean currentlyExploreRootTemplate,
+			InvestigationRestriction investigationRestriction) {
 
 		List<StateInstancePair> generatedStates = new LinkedList<>();
 
@@ -268,9 +268,9 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 //			}
 
 			if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
-				slotFillingForListElements(parentTemplate, generatedStates, slot);
+				slotFillingForListElements(parentTemplate, generatedStates, slot, investigationRestriction);
 			} else {
-				slotFillingForSingleElement(parentTemplate, generatedStates, slot);
+				slotFillingForSingleElement(parentTemplate, generatedStates, slot, investigationRestriction);
 			}
 
 		}
@@ -302,7 +302,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @throws NoSuchFieldException
 	 */
 	private void slotFillingForListElements(IOBIEThing parentTemplate, List<StateInstancePair> generatedStates,
-			Field slot) {
+			Field slot, InvestigationRestriction investigationRestriction) {
 		try {
 
 			@SuppressWarnings("unchecked")
@@ -339,7 +339,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				 */
 
 				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement,
-						listBaseClassType)) {
+						listBaseClassType, investigationRestriction)) {
 
 					/**
 					 * Do not add null elements in lists.
@@ -431,7 +431,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void slotFillingForSingleElement(IOBIEThing parentTemplate, List<StateInstancePair> generatedStates,
-			Field slot) {
+			Field slot, InvestigationRestriction investigationRestriction) {
 		try {
 			final String slotName = slot.getName();
 
@@ -439,7 +439,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 			final Class<? extends IOBIEThing> slotType = (Class<? extends IOBIEThing>) slot.getType();
 
-			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType)) {
+			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType,
+					investigationRestriction)) {
 
 //				if (modAtFieldClass.instance == null) {
 //					continue;

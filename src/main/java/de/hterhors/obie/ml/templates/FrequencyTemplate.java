@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
@@ -17,7 +18,6 @@ import de.hterhors.obie.ml.templates.FrequencyTemplate.Scope;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -118,7 +118,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (ReflectionUtils.isAnnotationPresent(obieThing.getClass(), DatatypeProperty.class)) {
 			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
-					((IDatatype) obieThing).getSemanticValue(), propertyClassType.isInterface() ? propertyClassType
+					((IDatatype) obieThing).getInterpretedValue(), propertyClassType.isInterface() ? propertyClassType
 							: ReflectionUtils.getDirectInterfaces(propertyClassType),
 					null));
 		} else {

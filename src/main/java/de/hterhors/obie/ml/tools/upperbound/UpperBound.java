@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
@@ -24,7 +25,6 @@ import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
@@ -192,7 +192,7 @@ public class UpperBound {
 			for (NERLClassAnnotation mentionAnnotation : goldInstance.getNamedEntityLinkingAnnotations()
 					.getClassAnnotations(goldModel.getClass())) {
 				if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-						.equals(((IDatatype) goldModel).getSemanticValue())) {
+						.equals(((IDatatype) goldModel).getInterpretedValue())) {
 					value = mentionAnnotation;
 					break;
 				}
@@ -266,7 +266,7 @@ public class UpperBound {
 									boolean found = false;
 									for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(clazz)) {
 										if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-												.equals(((IDatatype) thing).getSemanticValue())) {
+												.equals(((IDatatype) thing).getInterpretedValue())) {
 											found = true;
 											values.add((IOBIEThing) mentionAnnotation.classType
 													.getDeclaredConstructor(String.class, String.class)
@@ -277,7 +277,7 @@ public class UpperBound {
 									}
 									if (!found) {
 										log.warn("Can not fill dt-class: " + slot.getName() + ":"
-												+ ((IDatatype) thing).getSemanticValue());
+												+ ((IDatatype) thing).getInterpretedValue());
 										addFailure(slot.getType());
 									}
 								} else if (ner.containsIndividualAnnotations(individual)) {
@@ -298,7 +298,7 @@ public class UpperBound {
 							} else {
 								if (ReflectionUtils.isAnnotationPresent(clazz, DatatypeProperty.class)) {
 									log.warn("Can not fill field: " + clazz.getSimpleName() + ":"
-											+ ((IDatatype) thing).getSemanticValue());
+											+ ((IDatatype) thing).getInterpretedValue());
 								} else {
 									log.warn("Can not fill field: " + clazz.getSimpleName() + " for indiviual: "
 											+ individual);
@@ -356,7 +356,7 @@ public class UpperBound {
 								 */
 								for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(slotType)) {
 									if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-											.equals(((IDatatype) goldSlotValue).getSemanticValue())) {
+											.equals(((IDatatype) goldSlotValue).getInterpretedValue())) {
 										value = mentionAnnotation;
 										break;
 									}
@@ -375,7 +375,7 @@ public class UpperBound {
 								} else {
 
 									log.warn("Can not fill dt-field: " + slot.getName() + ":"
-											+ ((IDatatype) goldSlotValue).getSemanticValue());
+											+ ((IDatatype) goldSlotValue).getInterpretedValue());
 
 									addFailure(slot.getType());
 
@@ -405,7 +405,7 @@ public class UpperBound {
 						} else {
 							if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
 								log.warn("Can not fill field: " + slotType.getSimpleName() + ":"
-										+ ((IDatatype) slot.get(goldModel)).getSemanticValue());
+										+ ((IDatatype) slot.get(goldModel)).getInterpretedValue());
 							} else {
 								log.warn("Can not fill field: " + slotType.getSimpleName() + " for individual: "
 										+ individual);

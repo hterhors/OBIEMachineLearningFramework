@@ -11,12 +11,12 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.HeterogeneousSlotTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
@@ -97,7 +97,7 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 		for (TemplateAnnotation ann : list) {
 			countBy.putIfAbsent(ann.getThing().getClass(), new HashMap<>());
 			if (ReflectionUtils.isAnnotationPresent(ann.getThing().getClass(), DatatypeProperty.class)) {
-				final String text = ((IDatatype) ann.getThing()).getSemanticValue();
+				final String text = ((IDatatype) ann.getThing()).getInterpretedValue();
 				countBy.get(ann.getThing().getClass()).put(text,
 						countBy.get(ann.getThing().getClass()).getOrDefault(text, 0) + 1);
 			}

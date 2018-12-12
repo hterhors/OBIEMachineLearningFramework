@@ -10,14 +10,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.instances.EmptyOBIEInstance;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 
 public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
@@ -31,7 +31,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 	protected final boolean penalizeCardinality;
 
-	protected final InvestigationRestriction investigationRestrictions;
+	protected InvestigationRestriction globalInvestigationRestrictions;
 
 	/**
 	 * This condition returns true for lists that matches the "OR"-list paradigm. An
@@ -114,7 +114,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			final int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
 		this.enableCaching = enableCaching;
 		this.penalizeCardinality = penalizeCardinality;
-		this.investigationRestrictions = propertyRestrictions;
+		this.globalInvestigationRestrictions = propertyRestrictions;
 		this.orListCondition = orListCondition;
 		this.maxEvaluationDepth = maxEvaluationDepth;
 		this.maxNumberOfAnnotations = maxNumberOfAnnotations;
@@ -151,7 +151,11 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 	}
 
 	public InvestigationRestriction getInvestigationRestrictions() {
-		return investigationRestrictions;
+		return globalInvestigationRestrictions;
+	}
+
+	public void setInvestigationRestrictions(InvestigationRestriction investigationRestrictions) {
+		this.globalInvestigationRestrictions = investigationRestrictions;
 	}
 
 	public IOrListCondition getOrListCondition() {
@@ -208,7 +212,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		CacheKey ck;
 		PRF1 score;
 		if (enableCaching) {
-			ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
+			ck = new CacheKey(goldInstance, predictedInstance, globalInvestigationRestrictions);
 
 			if ((score = cache.get(ck)) != null) {
 				return score;
@@ -245,14 +249,14 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					|| ReflectionUtils.isAnnotationPresent(predictedInstance.getClass(), DatatypeProperty.class)) {
 				if (goldInstance.getClass().equals(predictedInstance.getClass())) {
 
-					final String predValue = ((IDatatype) predictedInstance).getSemanticValue();
+					final String predValue = ((IDatatype) predictedInstance).getInterpretedValue();
 					if (predValue == null) {
 						/*
 						 * This case happens only if the rootClassType is a data type class.
 						 */
 						score.fn++;
 						return score;
-					} else if (((IDatatype) goldInstance).getSemanticValue().equals(predValue)) {
+					} else if (((IDatatype) goldInstance).getInterpretedValue().equals(predValue)) {
 						/*
 						 * If both classes are same data type property and have the same value.
 						 */
@@ -260,7 +264,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 						return score;
 					} else {
 
-						if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
+						if ((depth == 0 && globalInvestigationRestrictions.investigateClassType) || depth != 0) {
 
 							/*
 							 * If they have not the same value.
@@ -281,52 +285,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			}
 
 			/*
-			 * TODO: Include giving points for same class? Does not make sense a lot as
-			 * classes are always explored with individuals.
-			 */
-			/*
-			 * If they are not data types. investigate class type
-			 */
-//			if (goldInstance.getClass().equals(predictedInstance.getClass())) {
-//				if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
-//					/*
-//					 * If both classes are the same and no data type properties.
-//					 */
-//					if (ignoreEmptyInstancesOnEvaluation && predictedInstance.isEmpty())
-//						/*
-//						 * If the predicted instance is null and we want to ignore empty instances than
-//						 * deal it as its not existent.
-//						 */
-//						score.fn++;
-//					else
-//						// otherwise add +1 to true positive
-//						score.tp++;
-//				}
-//			} else {
-//				if (predictedInstance == EmptyOBIEInstance.emptyInstance) {
-//					// if (depth == 0 &&
-//					// investigationRestrictions.investigateClassType || depth
-//					// != 0) {
-//					score.fn++;
-//					// }
-//				} else if (goldInstance == EmptyOBIEInstance.emptyInstance) {
-//					// if (depth == 0 &&
-//					// investigationRestrictions.investigateClassType || depth
-//					// != 0) {
-//					if (!(ignoreEmptyInstancesOnEvaluation && predictedInstance.isEmpty()))
-//						score.fp++;
-//					// }
-//				} else if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
-//					score.fp++;
-//					score.fn++;
-//				}
-//			}
-
-			/*
 			 * If they are not data types investigate individual type
 			 */
 			if (checkForSameType(goldInstance, predictedInstance)) {
-				if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
+				if (depth == 0 && globalInvestigationRestrictions.investigateClassType || depth != 0) {
 					/*
 					 * If both classes are the same and no data type properties.
 					 */
@@ -354,7 +316,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					if (!(ignoreEmptyInstancesOnEvaluation && predictedInstance.isEmpty()))
 						score.fp++;
 					// }
-				} else if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
+				} else if (depth == 0 && globalInvestigationRestrictions.investigateClassType || depth != 0) {
 
 					if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() != null) {
 						score.fp++;
@@ -386,10 +348,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		Set<String> predictionFields = new HashSet<>();
 
 		if (goldInstance != null) {
-			goldFields = ReflectionUtils.getSlotNames(goldInstance.getClass(), investigationRestrictions);
+			goldFields = ReflectionUtils.getSlotNames(goldInstance.getClass(), globalInvestigationRestrictions);
 		}
 		if (predictedInstance != null) {
-			predictionFields = ReflectionUtils.getSlotNames(predictedInstance.getClass(), investigationRestrictions);
+			predictionFields = ReflectionUtils.getSlotNames(predictedInstance.getClass(), globalInvestigationRestrictions);
 		}
 
 		/*
@@ -640,10 +602,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		final List<String> semanticPredictedValues = new ArrayList<>();
 
 		for (IOBIEThing gV : goldList) {
-			semanticGoldValues.add(((IDatatype) gV).getSemanticValue());
+			semanticGoldValues.add(((IDatatype) gV).getInterpretedValue());
 		}
 		for (IOBIEThing pV : predictionList) {
-			semanticPredictedValues.add(((IDatatype) pV).getSemanticValue());
+			semanticPredictedValues.add(((IDatatype) pV).getInterpretedValue());
 		}
 
 		int tp;

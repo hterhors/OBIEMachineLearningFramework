@@ -3,9 +3,9 @@ package de.hterhors.obie.ml.evaluation.evaluator;
 import java.util.List;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 public interface IOBIEEvaluator {
 
@@ -33,6 +33,8 @@ public interface IOBIEEvaluator {
 
 	public InvestigationRestriction getInvestigationRestrictions();
 
+	public void setInvestigationRestrictions(InvestigationRestriction investigationRestriction);
+
 	public IOrListCondition getOrListCondition();
 
 	public int getMaxEvaluationDepth();
@@ -40,37 +42,5 @@ public interface IOBIEEvaluator {
 	public boolean isEnableCaching();
 
 	public int getMaxNumberOfAnnotations();
-//	
-//	public PRF1 prf1(List<IOBIEThing> gold, List<IOBIEThing> predictions);
-//	
-//	public PRF1 prf1(IOBIEThing gold, IOBIEThing predictions);
-//	
-//	double f1(IOBIEThing gold, IOBIEThing prediction);
-//	
-//	double recall(IOBIEThing gold, IOBIEThing prediction);
-//	
-//	double precision(IOBIEThing gold, IOBIEThing prediction);
-//	
-//	double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions);
-//	
-//	double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions);
-//	
-//	double f1(List<IOBIEThing> gold, List<IOBIEThing> predictions);
-//	
-//	public void clearCache();
-//	
-//	public boolean isIgnoreEmptyInstancesOnEvaluation();
-//	
-//	public boolean isPenalizeCardinality();
-//	
-//	public InvestigationRestriction getInvestigationRestrictions();
-//	
-//	public IOrListCondition getOrListCondition();
-//	
-//	public int getMaxEvaluationDepth();
-//	
-//	public boolean isEnableCaching();
-//	
-//	public int getMaxNumberOfAnnotations();
 
 }

@@ -18,6 +18,7 @@ import de.hterhors.obie.core.OntologyAnalyzer;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.dtinterpreter.IDatatypeInterpretation;
@@ -26,7 +27,6 @@ import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 
 public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedEntitityLinker, Serializable {
 

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.run.param.RunParameter;
@@ -20,7 +21,8 @@ import learning.ObjectiveFunction;
  * @author hterhors
  *
  */
-public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTemplateAnnotations> implements Serializable {
+public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTemplateAnnotations>
+		implements Serializable {
 
 	/**
 	 * 
@@ -40,6 +42,9 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTe
 				.map(s -> s.getThing()).collect(Collectors.toList());
 		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.getThing())
 				.collect(Collectors.toList());
+//		InvestigationRestriction investigationRestriction = ;
+
+//		evaluator.setInvestigationRestrictions(investigationRestriction);
 
 		// System.out.println("predictions = ");
 		// predictions.forEach(p ->

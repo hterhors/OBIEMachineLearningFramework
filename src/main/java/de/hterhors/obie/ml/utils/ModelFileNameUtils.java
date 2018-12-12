@@ -3,12 +3,12 @@ package de.hterhors.obie.ml.utils;
 import java.io.File;
 import java.util.Set;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
-import de.hterhors.obie.ml.run.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.ml.run.param.RunParameter;
 
 public class ModelFileNameUtils {

@@ -2,26 +2,19 @@ package de.hterhors.obie.ml.templates;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
-import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.BOWnGramsTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -45,7 +38,7 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static Logger log = LogManager.getFormatterLogger(InterTokenTemplate.class);
+	private static Logger log = LogManager.getFormatterLogger(BOWnGramsTemplate.class);
 
 	private static final String TOKEN_SPLITTER_SPACE = " ";
 
@@ -133,7 +126,7 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 		tokens.add(0, START_SIGN);
 		tokens.add(tokens.size(), END_SIGN);
 
-		for (int n = MAX_N_GRAM_SIZE; n <= MAX_N_GRAM_SIZE; n++) {
+		for (int n = 1; n <= MAX_N_GRAM_SIZE; n++) {
 			for (int offset = 0; offset < tokens.size() - 1; offset++) {
 
 				/*
@@ -149,37 +142,44 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 					break;
 
 				StringBuffer fBuffer = new StringBuffer();
+
+				boolean add = true;
 				for (int t = offset; t < offset + n; t++) {
 
-					if (tokens.get(t).isEmpty()) {
-						fBuffer.append("<EMPTY>").append(TOKEN_SPLITTER_SPACE);
-						continue;
+					final String token = tokens.get(t);
+
+					if (token.isEmpty()) {
+//						fBuffer.append("<EMPTY>").append(TOKEN_SPLITTER_SPACE);
+						add = false;
+						break;
 					}
 
-					if (BasicRegExPattern.STOP_WORDS.contains(tokens.get(t).toLowerCase())) {
-						fBuffer.append("<STOP>").append(TOKEN_SPLITTER_SPACE);
-						continue;
+					if (BasicRegExPattern.STOP_WORDS.contains(token.toLowerCase())) {
+//						fBuffer.append("<STOP>").append(TOKEN_SPLITTER_SPACE);
+						add = false;
+						break;
 					}
 
-					fBuffer.append(tokens.get(t)).append(TOKEN_SPLITTER_SPACE);
+					fBuffer.append(token).append(TOKEN_SPLITTER_SPACE);
 
 				}
 
-				final String featureName = fBuffer.toString().trim();
-
-				if (featureName.length() < MIN_TOKEN_LENGTH)
+				if (!add)
 					continue;
 
-				if (featureName.isEmpty())
+				final String featureName = fBuffer.toString().toLowerCase();
+
+				if (fBuffer.length() < MIN_TOKEN_LENGTH)
+					continue;
+
+				if (fBuffer.length() == 0)
 					continue;
 
 				featureVector.set(LEFT + context + RIGHT + TOKEN_SPLITTER_SPACE + featureName, true);
 
 			}
 		}
-
 	}
-
 }
 //p: 0.765625	r: 0.765625	f1: 0.765625
 //OFF

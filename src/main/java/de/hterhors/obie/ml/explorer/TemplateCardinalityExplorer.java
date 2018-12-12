@@ -9,11 +9,12 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.param.RunParameter;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 
@@ -101,7 +102,8 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 
 		}
 
-		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentTemplateAnnotations()
+				.getTemplateAnnotations()) {
 			final OBIEState generatedState = new OBIEState(previousState);
 			generatedState.getCurrentTemplateAnnotations().removeEntity(internalAnnotaton);
 			generatedStates.add(generatedState);

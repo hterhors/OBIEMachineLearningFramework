@@ -16,14 +16,14 @@ import org.apache.logging.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -131,7 +131,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 			currentRootTemplate = OBIEUtils.deepClone(templateAnnotation.getThing());
 
-			topDownRecursiveListCardinalityChanger(generatedStates, currentRootTemplate, new ArrayList<SlotPath>());
+			topDownRecursiveListCardinalityChanger(generatedStates, currentRootTemplate, new ArrayList<SlotPath>(),
+					investigationRestriction);
 
 			for (StateInstancePair scioClass : generatedStates) {
 
@@ -147,7 +148,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void topDownRecursiveListCardinalityChanger(List<StateInstancePair> generatedStates,
-			IOBIEThing parentTemplate, List<SlotPath> currentFieldPath) {
+			IOBIEThing parentTemplate, List<SlotPath> currentFieldPath,
+			InvestigationRestriction investigationRestriction) {
 
 		if (parentTemplate == null)
 			return;
@@ -182,7 +184,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 						for (IOBIEThing thing : (List<IOBIEThing>) slot.get(parentTemplate)) {
 							List<SlotPath> newFieldPath = new ArrayList<>(currentFieldPath);
 							newFieldPath.add(new SlotPath(index, slot));
-							topDownRecursiveListCardinalityChanger(generatedStates, thing, newFieldPath);
+							topDownRecursiveListCardinalityChanger(generatedStates, thing, newFieldPath,
+									investigationRestriction);
 							index++;
 						}
 					} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -199,7 +202,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					List<SlotPath> newFieldPath = new ArrayList<>(currentFieldPath);
 					newFieldPath.add(new SlotPath(0, slot));
 					topDownRecursiveListCardinalityChanger(generatedStates, (IOBIEThing) slot.get(parentTemplate),
-							newFieldPath);
+							newFieldPath, investigationRestriction);
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					e.printStackTrace();
 				}
@@ -332,10 +335,10 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 			if (oldList.size() >= maxNumberOfEntityElements) {
 				return wasNOTModByPreFilledTemplate;
 			}
-			
+
 			final Set<AbstractIndividual> individuals = oldList.stream().map(s -> s.getIndividual())
 					.collect(Collectors.toSet());
-			
+
 			for (IOBIEThing candidateClass : candidateInstances) {
 
 				/*
@@ -356,7 +359,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 				 */
 				if (individuals.contains(candidateClass.getIndividual()))
 					continue;
-				
+
 //				if (oldList.contains(candidateClass)) {
 //					/*
 //					 * Do not allow multiple equal items.
@@ -389,6 +392,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					 */
 					Field genClassField = ReflectionUtils.getAccessibleFieldByName(clonedListHoldingClass.getClass(),
 							slot.getName());
+					
 					genClassField.set(clonedListHoldingClass, newList);
 
 					/*

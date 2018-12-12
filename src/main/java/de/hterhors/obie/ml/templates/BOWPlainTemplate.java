@@ -3,7 +3,6 @@ package de.hterhors.obie.ml.templates;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,15 +10,14 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.BOWPlainTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -108,7 +106,7 @@ public class BOWPlainTemplate extends AbstractOBIETemplate<Scope> implements Ser
 		return;
 	}
 
-	public static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(""));
+	public static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList("@", "."));
 
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
@@ -119,41 +117,23 @@ public class BOWPlainTemplate extends AbstractOBIETemplate<Scope> implements Ser
 
 		for (Token token : factor.getFactorScope().instance.getTokens()) {
 
-			if (BasicRegExPattern.STOP_WORDS.contains(token.getText().toLowerCase()))
-				continue;
-//
-//			if (STOP_WORDS.contains(token.getText().toLowerCase()))
+//			if (BasicRegExPattern.STOP_WORDS.contains(token.getText().toLowerCase()))
 //				continue;
 
-//			if (token.getText().matches(BasicRegExPattern.SPECIAL_CHARS))
+			if (STOP_WORDS.contains(token.getText().toLowerCase()))
+				continue;
+
+			if (token.getText().trim().isEmpty())
+				continue;
+
+			// if (token.getText().matches(BasicRegExPattern.SPECIAL_CHARS))
 //				continue;
 
 //			featureVector.set(className + "_" + token.getText().toLowerCase(), true);
-			featureVector.set("<"+className + "> " + token.getText(), true);
+//			featureVector.set("<" + className + "> " + token.getText(), true);
+			featureVector.set("<" + className + "> " + token.getText().toLowerCase(), true);
 
 		}
-//		if (BasicRegExPattern.STOP_WORDS.contains(token.getText().toLowerCase()))
-//		featureVector.set(className + "_" + token.getText(), true);
-//		10 fold cross validation mean: p: 0.670562744140625	r: 0.670562744140625	f1: 0.670562744140625
-//		OFF-->0.3766233766233766
-//		NOT-->0.8559670781893005
-		
-		
-		//			featureVector.set(className + "_" + token.getText(), true);
-//		10 fold cross validation mean: p: 0.737060546875	r: 0.737060546875	f1: 0.737060546875
-//		OFF-->0.36363636363636365
-//		NOT-->0.8683127572016461
-
-//		if (BasicRegExPattern.STOP_WORDS.contains(token.getText().toLowerCase()))
-//			featureVector.set(className + "_" + token.getText().toLowerCase(), true);
-//		10 fold cross validation mean: p: 0.708984375	r: 0.708984375	f1: 0.708984375
-//		OFF-->0.45454545454545453
-//		NOT-->0.8477366255144033
-
-//		featureVector.set(className + "_" + token.getText().toLowerCase(), true);
-//		10 fold cross validation mean: p: 0.72796630859375	r: 0.72796630859375	f1: 0.72796630859375
-//		OFF-->0.45454545454545453
-//		NOT-->0.8600823045267489
 
 	}
 

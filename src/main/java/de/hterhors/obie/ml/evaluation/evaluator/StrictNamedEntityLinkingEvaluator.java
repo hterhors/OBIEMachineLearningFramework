@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 /**
  * How to use this as evaluation but not extends abstract evaluator implementing
@@ -201,7 +201,10 @@ public class StrictNamedEntityLinkingEvaluator implements IOBIEEvaluator {
 
 	@Override
 	public void clearCache() {
+	}
 
+	@Override
+	public void setInvestigationRestrictions(InvestigationRestriction investigationRestriction) {
 	}
 
 }

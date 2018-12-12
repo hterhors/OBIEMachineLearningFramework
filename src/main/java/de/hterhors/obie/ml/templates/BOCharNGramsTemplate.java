@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
@@ -21,7 +22,6 @@ import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.BOCharNGramsTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -45,7 +45,7 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static Logger log = LogManager.getFormatterLogger(InterTokenTemplate.class);
+	private static Logger log = LogManager.getFormatterLogger(BOCharNGramsTemplate.class);
 
 	private static final String TOKEN_SPLITTER_SPACE = " ";
 
@@ -59,7 +59,7 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 
 	private static final String RIGHT = ">";
 
-	private static final int MAX_N_GRAM_SIZE = 20;
+	private static final int MAX_N_GRAM_SIZE = 7;
 
 	public BOCharNGramsTemplate(RunParameter parameter) {
 		super(parameter);
@@ -133,7 +133,7 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 		tokens.add(0, START_SIGN);
 		tokens.add(tokens.size(), END_SIGN);
 
-		for (int n = 0; n <= MAX_N_GRAM_SIZE; n++) {
+		for (int n = 1; n <= MAX_N_GRAM_SIZE; n++) {
 			for (int offset = 0; offset < tokens.size() - 1; offset++) {
 
 				/*

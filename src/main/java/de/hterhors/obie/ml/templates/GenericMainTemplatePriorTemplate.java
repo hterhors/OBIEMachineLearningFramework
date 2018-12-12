@@ -8,13 +8,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.templates.GenericMainTemplatePriorTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
@@ -202,7 +202,7 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 	 * @param datatypeSlotValue           the filler of the slot
 	 */
 	private Scope getDatatypeScope(String slotIdentifier, IDatatype datatypeSlotValue) {
-		return new Scope(this, slotIdentifier, datatypeSlotValue.getSemanticValue());
+		return new Scope(this, slotIdentifier, datatypeSlotValue.getInterpretedValue());
 	}
 
 	/**
