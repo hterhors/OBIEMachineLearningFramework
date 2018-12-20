@@ -31,9 +31,9 @@ public interface IOBIEEvaluator {
 
 	public boolean isPenalizeCardinality();
 
-	public InvestigationRestriction getInvestigationRestrictions();
+//	public InvestigationRestriction getInvestigationRestrictions();
 
-	public void setInvestigationRestrictions(InvestigationRestriction investigationRestriction);
+//	public void setInvestigationRestrictions(InvestigationRestriction investigationRestriction);
 
 	public IOrListCondition getOrListCondition();
 

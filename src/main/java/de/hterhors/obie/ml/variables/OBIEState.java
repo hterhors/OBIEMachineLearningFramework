@@ -2,30 +2,32 @@ package de.hterhors.obie.ml.variables;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.run.param.EInstantiationType;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.run.utils.SlotTemplateInstantiationUtils;
 import de.hterhors.obie.ml.scorer.InstanceCollection;
 import de.hterhors.obie.ml.scorer.InstanceCollection.FeatureDataPoint;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
+import de.hterhors.obie.ml.variables.OBIEInstance.EInstanceType;
 import exceptions.MissingFactorException;
 import factors.Factor;
 import factors.FactorScope;
@@ -49,8 +51,6 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	private final RunParameter parameter;
 
 	private final Set<IOBIEThing> preFilledUsedObjects;
-
-	private final InvestigationRestriction investigationRestriction;
 
 	/**
 	 * Get all pre filled template candidates based on the slot-type if any. If not
@@ -122,7 +122,6 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		this.preFilledObjectMap = state.preFilledObjectMap;
 		this.parameter = state.parameter;
 		this.preFilledUsedObjects = new HashSet<>(state.preFilledUsedObjects);
-		this.investigationRestriction = state.investigationRestriction;
 	}
 
 	/**
@@ -138,7 +137,10 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		this.preFilledUsedObjects = new HashSet<>();
 		this.currentTemplateAnnotations = new InstanceTemplateAnnotations();
 		this.preFilledObjectMap = new HashMap<>();
-		this.investigationRestriction = parameter.investigationRestriction;
+
+		InvestigationRestriction r = getDefaultInvestigationRestriction();
+
+		instance.getGoldAnnotation().getTemplateAnnotations().forEach(t -> t.getThing().setInvestigationRestriction(r));
 
 		if (parameter.initializer == EInstantiationType.SPECIFIED) {
 
@@ -162,6 +164,9 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			for (int i = 0; i < numOfEntities; i++) {
 				for (Class<? extends IOBIEThing> searchType : parameter.rootSearchTypes) {
 					for (IOBIEThing initInstance : getInitializingObject(instance, searchType, parameter.initializer)) {
+
+						initInstance.setInvestigationRestriction(r);
+
 						this.currentTemplateAnnotations.addAnnotation(new TemplateAnnotation(searchType, initInstance));
 					}
 				}
@@ -235,11 +240,18 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 			set.add(SlotTemplateInstantiationUtils.getEmptyInstance(searchType));
 			break;
+		/**
+		 * TODO: Check if invest restriction is correct here!
+		 */
 		case RANDOM:
-			set.add(SlotTemplateInstantiationUtils.getFullRandomInstance(instance, searchType));
+			set.add(SlotTemplateInstantiationUtils.getFullRandomInstance(instance, searchType,
+					getDefaultInvestigationRestriction()));
 			break;
+		/**
+		 * TODO: Check if invest restriction is correct here!
+		 */
 		case WRONG:
-			set.add(SlotTemplateInstantiationUtils.getFullWrong(searchType));
+			set.add(SlotTemplateInstantiationUtils.getFullWrong(searchType, getDefaultInvestigationRestriction()));
 			break;
 		case NONE:
 			break;
@@ -312,10 +324,43 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		builder.append("]: ");
 		for (TemplateAnnotation e : currentTemplateAnnotations.getTemplateAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getThing(), parameter.investigationRestriction));
+			builder.append(OBIEClassFormatter.format(e.getThing()
+//					, parameter.investigationRestriction
+			));
 			builder.append("\n");
 		}
 		return builder.toString();
+	}
+
+	static public final Map<OBIEInstance, InvestigationRestriction> dropOutInvestigation = new HashMap<>();
+
+	static private final Random r = new Random(new Random(100L).nextLong());
+
+	public InvestigationRestriction getDefaultInvestigationRestriction() {
+
+		InvestigationRestriction inv;
+		if (instance.getInstanceType() == EInstanceType.TRAIN) {
+//
+//			if (dropOutInvestigation.containsKey(this.instance)) {
+//				return dropOutInvestigation.get(this.instance);
+//			}
+//
+//			List<RestrictedField> allFields = InvestigationRestriction
+//					.getMainSingleFields(parameter.rootSearchTypes.iterator().next());
+//
+//			Collections.shuffle(allFields, new Random(r.nextLong()));
+////			allFields.size() - 1
+//
+//			Set<RestrictedField> fields = new HashSet<>(
+//					allFields.subList(0, new Random(r.nextLong()).nextInt(allFields.size())));
+//			inv = new InvestigationRestriction(parameter.rootSearchTypes.iterator().next(), fields, true);
+//			dropOutInvestigation.put(this.instance, inv);
+
+			inv = parameter.defaultTrainInvestigationRestriction;
+		} else {
+			inv = parameter.defaultTestInvestigationRestriction;
+		}
+		return inv;
 	}
 
 }

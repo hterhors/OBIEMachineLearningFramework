@@ -605,8 +605,10 @@ public abstract class AbstractRunner {
 		 * Final evaluation with Cartesian
 		 */
 		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
-				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
-				parameter.evaluator.getInvestigationRestrictions(), parameter.evaluator.getMaxNumberOfAnnotations(),
+				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality()
+//				,
+//				parameter.evaluator.getInvestigationRestrictions()
+				, parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
 		return EvaluatePrediction.evaluateREPredictions(getObjectiveFunction(), predictions, evaluator);
@@ -621,7 +623,8 @@ public abstract class AbstractRunner {
 		 */
 		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
 				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
-				parameter.evaluator.getInvestigationRestrictions(), parameter.evaluator.getMaxNumberOfAnnotations(),
+//				parameter.evaluator.getInvestigationRestrictions(), 
+				parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
 		EvaluatePrediction.evaluatePerSlotPredictions(getObjectiveFunction(), predictions, evaluator, detailedOutput);

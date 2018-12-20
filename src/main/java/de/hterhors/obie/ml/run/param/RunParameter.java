@@ -172,8 +172,8 @@ public class RunParameter implements Serializable {
 
 	/**
 	 * Tasks specific exploration condition that goes beyond the
-	 * {@link #investigationRestriction}. This allows to set hard exploration
-	 * constrains.
+	 * {@link #defaultTrainInvestigationRestriction}. This allows to set hard
+	 * exploration constrains.
 	 * 
 	 * Even more specified exploration conditions. This does not affect the
 	 * evaluation! Use this interface to specify if specific fields should be
@@ -195,7 +195,13 @@ public class RunParameter implements Serializable {
 	 * The investigation restriction allows to focus only on specific slots. It
 	 * influences the sampling procedure and the evaluation.
 	 */
-	public  InvestigationRestriction investigationRestriction;
+	public final InvestigationRestriction defaultTrainInvestigationRestriction;
+
+	/**
+	 * The investigation restriction allows to focus only on specific slots. It
+	 * influences the sampling procedure and the evaluation.
+	 */
+	public final InvestigationRestriction defaultTestInvestigationRestriction;
 
 	/**
 	 * A predefined set of initial objects if {@link #initializer} is set
@@ -301,7 +307,8 @@ public class RunParameter implements Serializable {
 			boolean multiThreading, AbstractProjectEnvironment<?> projectEnvironment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
-			svm_parameter svmParam, InvestigationRestriction investigationRestriction,
+			svm_parameter svmParam, InvestigationRestriction defaultTrainInvestigationRestriction,
+			InvestigationRestriction defaultTestInvestigationRestriction,
 			Map<Class<? extends IOBIEThing>, List<IOBIEThing>> initializationObjects, boolean exploreExistingTemplates,
 			boolean exploreOnOntologyLevel, boolean enableDiscourseProgression,
 			IInitializeNumberOfObjects numberOfInitializedObjects, IOBIEEvaluator evaluator,
@@ -333,7 +340,8 @@ public class RunParameter implements Serializable {
 		if (scorerType == EScorerType.LIB_SVM)
 			Objects.requireNonNull(svmParam);
 
-		Objects.requireNonNull(investigationRestriction);
+		Objects.requireNonNull(defaultTrainInvestigationRestriction);
+		Objects.requireNonNull(defaultTestInvestigationRestriction);
 
 		if (initializer == EInstantiationType.SPECIFIED) {
 			requireElements(initializationObjects);
@@ -387,7 +395,8 @@ public class RunParameter implements Serializable {
 		this.explorationCondition = explorationCondition;
 		this.explorers = explorersTypes;
 		this.svmParam = svmParam;
-		this.investigationRestriction = investigationRestriction;
+		this.defaultTrainInvestigationRestriction = defaultTrainInvestigationRestriction;
+		this.defaultTestInvestigationRestriction = defaultTestInvestigationRestriction;
 		this.initializationObjects = initializationObjects;
 		this.exploreExistingTemplates = exploreExistingTemplates;
 		this.exploreOnOntologyLevel = exploreOnOntologyLevel;
@@ -497,7 +506,7 @@ public class RunParameter implements Serializable {
 				+ personalNotes + ", rootSearchTypes=" + rootSearchTypes + ", initializer=" + initializer
 				+ ", environment=" + projectEnvironment + ", explorationCondition=" + explorationCondition
 				+ ", explorers=" + explorers + ", svmParam=" + svmParam + ", investigationRestriction="
-				+ investigationRestriction + ", initializationObjects=" + initializationObjects
+				+ defaultTrainInvestigationRestriction + ", initializationObjects=" + initializationObjects
 				+ ", exploreExistingTemplates=" + exploreExistingTemplates + ", enableDiscourseProgression="
 				+ enableDiscourseProgression + ", exploreOnOntologyLevel=" + exploreOnOntologyLevel
 				+ ", numberOfInitializedObjects=" + numberOfInitializedObjects + ", maxNumberOfEntityElements="
@@ -531,7 +540,9 @@ public class RunParameter implements Serializable {
 
 		private Set<Class<? extends IOBIEThing>> rootSearchTypes = new HashSet<>();
 
-		private InvestigationRestriction investigationRestriction = InvestigationRestriction.noRestrictionInstance;
+		private InvestigationRestriction defaultTrainInvestigationRestriction = InvestigationRestriction.noRestrictionInstance;
+
+		private InvestigationRestriction defaultTestInvestigationRestriction = InvestigationRestriction.noRestrictionInstance;
 
 		private EInstantiationType initializer = EInstantiationType.EMPTY;
 
@@ -798,12 +809,23 @@ public class RunParameter implements Serializable {
 			return this;
 		}
 
-		public InvestigationRestriction getInvestigationRestriction() {
-			return investigationRestriction;
+		public InvestigationRestriction getDefaultTrainInvestigationRestriction() {
+			return defaultTrainInvestigationRestriction;
 		}
 
-		public Builder setInvestigationRestriction(InvestigationRestriction investigationRestriction) {
-			this.investigationRestriction = investigationRestriction;
+		public Builder setDefaultTrainInvestigationRestriction(
+				InvestigationRestriction defaultTrainInvestigationRestriction) {
+			this.defaultTrainInvestigationRestriction = defaultTrainInvestigationRestriction;
+			return this;
+		}
+
+		public InvestigationRestriction getDefaultTestInvestigationRestriction() {
+			return defaultTestInvestigationRestriction;
+		}
+
+		public Builder setDefaultTestInvestigationRestriction(
+				InvestigationRestriction defaultTestInvestigationRestriction) {
+			this.defaultTestInvestigationRestriction = defaultTestInvestigationRestriction;
 			return this;
 		}
 
@@ -912,11 +934,11 @@ public class RunParameter implements Serializable {
 			return new RunParameter(excludeEmptyInstancesFromCorpus, templates, rootDirectory, epochs, optimizer,
 					scorerType, personalNotes, rootSearchTypes, initializer, runID, multiThreading, projectEnvironment,
 					manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
-					investigationRestriction, initializationObjects, exploreExistingTemplates, exploreOnOntologyLevel,
-					enableDiscourseProgression, numberOfInitializedObjects, evaluator, maxNumberOfEntityElements,
-					maxNumberOfDataTypeElements, regularizer, maxNumberOfSamplingSteps, rndForSampling,
-					ignoreEmptyInstancesonEvaluation, corpusConfiguration, ontologyEnvironment,
-					restrictExplorationToFoundConcepts, candidateRetrieval);
+					defaultTrainInvestigationRestriction, defaultTestInvestigationRestriction, initializationObjects,
+					exploreExistingTemplates, exploreOnOntologyLevel, enableDiscourseProgression,
+					numberOfInitializedObjects, evaluator, maxNumberOfEntityElements, maxNumberOfDataTypeElements,
+					regularizer, maxNumberOfSamplingSteps, rndForSampling, ignoreEmptyInstancesonEvaluation,
+					corpusConfiguration, ontologyEnvironment, restrictExplorationToFoundConcepts, candidateRetrieval);
 		}
 
 	}

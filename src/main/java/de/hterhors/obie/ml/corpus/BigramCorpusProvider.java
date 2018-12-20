@@ -42,6 +42,7 @@ import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.OBIEInstance.EInstanceType;
 import learning.Trainer;
 
 /**
@@ -331,6 +332,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		distributer.distributeInstances(this).distributeTrainingInstances(trainingDocuments)
 				.distributeDevelopmentInstances(developmentDocuments).distributeTestInstances(testDocuments);
 
+		trainingDocuments.forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
+		developmentDocuments.forEach(d -> d.setInstanceType(EInstanceType.DEV));
+		testDocuments.forEach(d -> d.setInstanceType(EInstanceType.TEST));
+
 		this.currentFold = -1;
 		this.currentActiveLearningItertion = 0;
 
@@ -398,7 +403,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * 
 	 * @param developmentDocuments
 	 * @param castedConfig
-	 * @param investigationRestriction
+	 * @param defaultTrainInvestigationRestriction
 	 * @param rootClassTypes
 	 * @param documents
 	 * 
@@ -506,12 +511,15 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		newTrainingInstances.addAll(this.remainingFullCorpus.getInternalInstances()
 				.subList((this.currentFold + 1) * foldSize, this.remainingFullCorpus.getInternalInstances().size()));
 
+		newTrainingInstances.forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
+
 		this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
 
 		this.testCorpus = new BigramInternalCorpus(this.remainingFullCorpus.getInternalInstances().subList(
 				this.currentFold * foldSize,
 				last ? this.remainingFullCorpus.getInternalInstances().size() : (this.currentFold + 1) * foldSize));
-
+	
+		this.testCorpus.getInternalInstances().forEach(d -> d.setInstanceType(EInstanceType.TEST));
 	}
 
 	@Override
@@ -576,6 +584,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
 
 			this.developmentCorpus = new BigramInternalCorpus(remainingInstances);
+			
+			this.trainingCorpus.getInternalInstances().forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
 
 			return newInstances;
 		}

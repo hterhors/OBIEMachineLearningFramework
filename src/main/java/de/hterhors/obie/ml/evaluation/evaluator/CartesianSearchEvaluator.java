@@ -42,24 +42,29 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 * Default constructor.
 	 */
 	public CartesianSearchEvaluator() {
-		this(true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
-				Integer.MAX_VALUE, true);
+		this(true, Integer.MAX_VALUE, true,
+// InvestigationRestriction.noRestrictionInstance,
+				f -> false, Integer.MAX_VALUE, true);
 	}
 
 	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
-			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
-			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
-		this(enableCaching, maxEvaluationDepth, penalizeCardinality, investigationRestrictions, f -> false,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+			final boolean penalizeCardinality
+//			, InvestigationRestriction investigationRestrictions
+			, int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
+		this(enableCaching, maxEvaluationDepth, penalizeCardinality
+//				,				investigationRestrictions
+				, f -> false, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 	}
 
 	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
-			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			final boolean penalizeCardinality,
+//			InvestigationRestriction investigationRestrictions,
 			IOrListCondition orListCondition, int maxNumberOfAnnotations,
 			final boolean ignoreEmptyInstancesOnEvaluation) {
 
-		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+		super(enableCaching, penalizeCardinality
+//				, investigationRestrictions
+				, orListCondition, maxEvaluationDepth, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 
 		for (int i = 0; i <= MAX_NUMBER_OF_PERMUTATIONS; i++) {
 

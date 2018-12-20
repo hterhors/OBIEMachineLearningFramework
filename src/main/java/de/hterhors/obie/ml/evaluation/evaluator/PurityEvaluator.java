@@ -39,22 +39,26 @@ public class PurityEvaluator extends AbstractOBIEEvaluator {
 	public static Logger log = LogManager.getFormatterLogger(PurityEvaluator.class.getSimpleName());
 
 	public PurityEvaluator() {
-		this(true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
-				Integer.MAX_VALUE, true);
+		this(true, Integer.MAX_VALUE, true
+//				, InvestigationRestriction.noRestrictionInstance
+				, f -> false, Integer.MAX_VALUE, true);
 	}
 
 	public PurityEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, int maxNumberOfAnnotations,
-			final boolean ignoreEmptyInstancesOnEvaluation) {
-		this(enableCaching, maxEvaluationDepth, penalizeCardinality, investigationRestrictions, f -> false,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
-	}
-
-	public PurityEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, IOrListCondition orListCondition,
+//			InvestigationRestriction investigationRestrictions, 
 			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
-		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+		this(enableCaching, maxEvaluationDepth, penalizeCardinality,
+//				investigationRestrictions,
+				f -> false, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+	}
+
+	public PurityEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
+//			InvestigationRestriction investigationRestrictions,
+			IOrListCondition orListCondition, int maxNumberOfAnnotations,
+			final boolean ignoreEmptyInstancesOnEvaluation) {
+		super(enableCaching, penalizeCardinality,
+//				investigationRestrictions,
+				orListCondition, maxEvaluationDepth, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 	}
 
 	@Override

@@ -246,12 +246,16 @@ public class EvaluatePrediction {
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 					.getTemplateAnnotations()) {
 				if (!resultEntity.getThing().equals(resultEntity.getInitializationThing()))
-					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+					result.get(key).add(new EvaluationObject(resultEntity
+//							, evaluator.getInvestigationRestrictions()
+					));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
-				gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+				gold.get(key).add(new EvaluationObject(goldEntity
+//						, evaluator.getInvestigationRestrictions()
+				));
 			}
 
 		}
@@ -402,7 +406,9 @@ public class EvaluatePrediction {
 				for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
 					if (add |= individualType.equals(goldEntity.getThing().getIndividual())) {
 						gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-						gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+						gold.get(key).add(new EvaluationObject(goldEntity
+//								, evaluator.getInvestigationRestrictions()
+						));
 					}
 				}
 
@@ -410,8 +416,9 @@ public class EvaluatePrediction {
 					result.putIfAbsent(key, new HashSet<EvaluationObject>());
 					for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 							.getTemplateAnnotations()) {
-						result.get(key)
-								.add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+						result.get(key).add(new EvaluationObject(resultEntity
+//										, evaluator.getInvestigationRestrictions()
+						));
 					}
 				}
 			}
@@ -569,7 +576,9 @@ public class EvaluatePrediction {
 				for (TemplateAnnotation goldEntity : prediction.getGoldResult().getTemplateAnnotations()) {
 					if (add |= individualType.equals(goldEntity.getThing().getIndividual())) {
 						gold.putIfAbsent(key, new HashSet<EvaluationObject>());
-						gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+						gold.get(key).add(new EvaluationObject(goldEntity
+//								, evaluator.getInvestigationRestrictions()
+						));
 					}
 				}
 
@@ -577,8 +586,9 @@ public class EvaluatePrediction {
 					result.putIfAbsent(key, new HashSet<EvaluationObject>());
 					for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 							.getTemplateAnnotations()) {
-						result.get(key)
-								.add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+						result.get(key).add(new EvaluationObject(resultEntity
+//										, evaluator.getInvestigationRestrictions()
+						));
 					}
 				}
 
@@ -642,12 +652,16 @@ public class EvaluatePrediction {
 			for (TemplateAnnotation resultEntity : prediction.getState().getCurrentTemplateAnnotations()
 					.getTemplateAnnotations()) {
 				if (!resultEntity.getThing().equals(resultEntity.getInitializationThing()))
-					result.get(key).add(new EvaluationObject(resultEntity, evaluator.getInvestigationRestrictions()));
+					result.get(key).add(new EvaluationObject(resultEntity
+//							, evaluator.getInvestigationRestrictions()
+					));
 			}
 
 			gold.putIfAbsent(key, new HashSet<EvaluationObject>());
 			for (TemplateAnnotation goldEntity : goldState.getTemplateAnnotations()) {
-				gold.get(key).add(new EvaluationObject(goldEntity, evaluator.getInvestigationRestrictions()));
+				gold.get(key).add(new EvaluationObject(goldEntity
+//						, evaluator.getInvestigationRestrictions()
+				));
 			}
 
 		}
@@ -667,8 +681,17 @@ public class EvaluatePrediction {
 		Class<? extends IOBIEThing> classType = gold.get(gold.keySet().iterator().next()).iterator().next().scioClass
 				.getClass();
 
+		List<RestrictedField> mainFields = InvestigationRestriction.getMainSingleFields(classType);
+
+		Set<RestrictedField> goldRestrictions = predictions.iterator().next().getGoldResult().getTemplateAnnotations()
+				.iterator().next().getThing().getInvestigationRestriction().getFieldNamesRestrictions();
+
+		if (goldRestrictions != null) {
+			mainFields.retainAll(goldRestrictions);
+		}
+
 		List<Set<RestrictedField>> restrictFieldsList = InvestigationRestriction
-				.getFieldRestrictionCombinations(classType, InvestigationRestriction.getMainSingleFields(classType));
+				.getFieldRestrictionCombinations(classType, mainFields);
 
 		List<InvestigationRestriction> restrictions = new ArrayList<>();
 		restrictions.add(new InvestigationRestriction(classType, Collections.emptySet(), true));
@@ -688,12 +711,13 @@ public class EvaluatePrediction {
 		for (InvestigationRestriction rest : restrictions) {
 
 			evaluator = new CartesianSearchEvaluator(true, evaluator.getMaxEvaluationDepth(),
-					evaluator.isPenalizeCardinality(), rest, evaluator.getOrListCondition(), 7,
-					evaluator.isIgnoreEmptyInstancesOnEvaluation());
+					evaluator.isPenalizeCardinality()
+//					, rest
+					, evaluator.getOrListCondition(), 7, evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
 			if (detailedOutput) {
 				log.info("#############################");
-				log.info(evaluator.getInvestigationRestrictions());
+				log.info(rest);
 				log.info("#############################");
 			}
 
@@ -708,11 +732,11 @@ public class EvaluatePrediction {
 					log.info("Result:\t");
 					log.info(result.get(state.getKey()));
 				}
-				List<IOBIEThing> goldList = gold.get(state.getKey()).stream().map(s -> (s.scioClass))
-						.collect(Collectors.toList());
+				List<IOBIEThing> goldList = gold.get(state.getKey()).stream()
+						.map(s -> s.scioClass.setInvestigationRestriction(rest)).collect(Collectors.toList());
 
-				List<IOBIEThing> predictionList = result.get(state.getKey()).stream().map(s -> s.scioClass)
-						.collect(Collectors.toList());
+				List<IOBIEThing> predictionList = result.get(state.getKey()).stream()
+						.map(s -> s.scioClass.setInvestigationRestriction(rest)).collect(Collectors.toList());
 
 				final double p = evaluator.precision(goldList, predictionList);
 				final double r = evaluator.recall(goldList, predictionList);
@@ -733,9 +757,9 @@ public class EvaluatePrediction {
 
 			log.info("#############################");
 			if (detailedOutput)
-				log.info(evaluator.getInvestigationRestrictions());
+				log.info(rest);
 			else
-				log.info(evaluator.getInvestigationRestrictions().summarize());
+				log.info(rest.summarize());
 
 			meanP /= gold.entrySet().size();
 			meanR /= gold.entrySet().size();

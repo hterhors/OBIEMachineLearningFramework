@@ -78,7 +78,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 	final private int maxNumberOfEntityElements;
 	final private int maxNumberOfDataTypeElementsInList;
 
-	private final InvestigationRestriction investigationRestriction;
+//	private final InvestigationRestriction investigationRestriction;
 
 	private long currentAnnotationID;
 
@@ -108,7 +108,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 		this.exploreOnOntologyLevel = param.exploreOnOntologyLevel;
 		this.exploreExistingTemplates = param.exploreExistingTemplates;
-		this.investigationRestriction = param.investigationRestriction;
+//		this.investigationRestriction = param.investigationRestriction;
 		this.rnd = param.rndForSampling;
 		this.restrictExplorationOnConceptsInInstance = param.restrictExplorationToFoundConcepts;
 	}
@@ -131,8 +131,10 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 			currentRootTemplate = OBIEUtils.deepClone(templateAnnotation.getThing());
 
-			topDownRecursiveListCardinalityChanger(generatedStates, currentRootTemplate, new ArrayList<SlotPath>(),
-					investigationRestriction);
+			topDownRecursiveListCardinalityChanger(generatedStates, currentRootTemplate, new ArrayList<SlotPath>()
+//					,
+//					investigationRestriction
+			);
 
 			for (StateInstancePair scioClass : generatedStates) {
 
@@ -148,13 +150,17 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void topDownRecursiveListCardinalityChanger(List<StateInstancePair> generatedStates,
-			IOBIEThing parentTemplate, List<SlotPath> currentFieldPath,
-			InvestigationRestriction investigationRestriction) {
+			IOBIEThing parentTemplate, List<SlotPath> currentFieldPath
+//			,
+//			
+//			InvestigationRestriction investigationRestriction
+	) {
 
 		if (parentTemplate == null)
 			return;
 
-		List<Field> slots = ReflectionUtils.getSlots(parentTemplate.getClass(), investigationRestriction);
+		List<Field> slots = ReflectionUtils.getSlots(parentTemplate.getClass(),
+				parentTemplate.getInvestigationRestriction());
 
 		/*
 		 * For all fields:
@@ -184,8 +190,10 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 						for (IOBIEThing thing : (List<IOBIEThing>) slot.get(parentTemplate)) {
 							List<SlotPath> newFieldPath = new ArrayList<>(currentFieldPath);
 							newFieldPath.add(new SlotPath(index, slot));
-							topDownRecursiveListCardinalityChanger(generatedStates, thing, newFieldPath,
-									investigationRestriction);
+							topDownRecursiveListCardinalityChanger(generatedStates, thing, newFieldPath
+//									,
+//									investigationRestriction
+							);
 							index++;
 						}
 					} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -202,7 +210,9 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					List<SlotPath> newFieldPath = new ArrayList<>(currentFieldPath);
 					newFieldPath.add(new SlotPath(0, slot));
 					topDownRecursiveListCardinalityChanger(generatedStates, (IOBIEThing) slot.get(parentTemplate),
-							newFieldPath, investigationRestriction);
+							newFieldPath
+//							, investigationRestriction
+					);
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					e.printStackTrace();
 				}
@@ -310,14 +320,14 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 					candidateInstances = ExplorationUtils.getCandidates(this.currentState.getInstance(), slotSuperType,
 							exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
-							restrictExplorationOnConceptsInInstance);
+							restrictExplorationOnConceptsInInstance, listHoldingThing.getInvestigationRestriction());
 
 				}
 			} else {
 
 				candidateInstances = ExplorationUtils.getCandidates(this.currentState.getInstance(), slotSuperType,
 						exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
-						restrictExplorationOnConceptsInInstance);
+						restrictExplorationOnConceptsInInstance, listHoldingThing.getInvestigationRestriction());
 
 			}
 
@@ -392,7 +402,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					 */
 					Field genClassField = ReflectionUtils.getAccessibleFieldByName(clonedListHoldingClass.getClass(),
 							slot.getName());
-					
+
 					genClassField.set(clonedListHoldingClass, newList);
 
 					/*

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.variables.OBIEInstance;
+import de.hterhors.obie.ml.variables.OBIEInstance.EInstanceType;
 
 /**
  * Takes the original distribution of documents into training, development and
@@ -69,6 +70,21 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 		 */
 		return new Distributor() {
 
+			private void sortAndShuffleIf(List<String> l) {
+				if (corpusSizeFraction != 1.0F) {
+
+					/*
+					 * Ensure same order on shuffle, if fraction size is not equals 1;
+					 */
+					Collections.sort(l);
+
+					/*
+					 * Shuffle to not always get the first same elements based on the name.
+					 */
+					Collections.shuffle(l, new Random(987654321L));
+				}
+			}
+
 			@Override
 			public Distributor distributeTrainingInstances(List<OBIEInstance> trainingDocuments) {
 
@@ -92,21 +108,6 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 						trainingDocuments.add(easyAccessMap.get(name));
 				}
 				return this;
-			}
-
-			private void sortAndShuffleIf(List<String> l) {
-				if (corpusSizeFraction != 1.0F) {
-
-					/*
-					 * Ensure same order on shuffle, if fraction size is not equals 1;
-					 */
-					Collections.sort(l);
-
-					/*
-					 * Shuffle to not always get the first same elements based on the name.
-					 */
-					Collections.shuffle(l, new Random(987654321L));
-				}
 			}
 
 			@Override

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.OntologyFieldNames;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
@@ -169,7 +170,7 @@ public class ExplorationUtils {
 	 */
 	public static Set<IOBIEThing> getCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotType,
 			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence, boolean exploreOnOntologyLevel,
-			boolean restrictExplorationOnConceptsInInstance) {
+			boolean restrictExplorationOnConceptsInInstance, final InvestigationRestriction investigationRestriction) {
 
 		final Set<IOBIEThing> candidates = new HashSet<>();
 
@@ -203,7 +204,7 @@ public class ExplorationUtils {
 			for (AbstractIndividual individual : rootTypeIndividuals) {
 
 				addIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotType), candidates,
-						individual, exploreOnOntologyLevel);
+						individual, exploreOnOntologyLevel, investigationRestriction);
 			}
 
 			/*
@@ -222,7 +223,7 @@ public class ExplorationUtils {
 				for (AbstractIndividual individual : subTypeIndividuals) {
 
 					addIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotFillerType),
-							candidates, individual, exploreOnOntologyLevel);
+							candidates, individual, exploreOnOntologyLevel, investigationRestriction);
 
 				}
 			}
@@ -438,7 +439,8 @@ public class ExplorationUtils {
 	}
 
 	private static void addIndividualCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotFillerType,
-			Set<IOBIEThing> candidates, AbstractIndividual individualCandidate, boolean exploreOnOntologyLevel) {
+			Set<IOBIEThing> candidates, AbstractIndividual individualCandidate, boolean exploreOnOntologyLevel,
+			final InvestigationRestriction investigationRestriction) {
 
 		boolean keepIndividual = includeIndividualForSampling(individualCandidate);
 
@@ -451,7 +453,8 @@ public class ExplorationUtils {
 			 * Else create exactly one instance without textual reference.
 			 */
 
-			IOBIEThing newInstance = newClassForIndividual(slotFillerType, individualCandidate);
+			IOBIEThing newInstance = newClassForIndividual(slotFillerType, individualCandidate,
+					investigationRestriction);
 
 			candidates.add(newInstance);
 		} else {
@@ -460,7 +463,8 @@ public class ExplorationUtils {
 					.getIndividualAnnotations(individualCandidate);
 
 			for (NERLIndividualAnnotation nera : possibleNERAnnotations) {
-				IOBIEThing newThing = newClassForIndividual(slotFillerType, individualCandidate);
+				IOBIEThing newThing = newClassForIndividual(slotFillerType, individualCandidate,
+						investigationRestriction);
 				fillBasicFields(newThing, nera);
 				candidates.add(newThing);
 			}
@@ -521,7 +525,7 @@ public class ExplorationUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	private static IOBIEThing newClassForIndividual(Class<? extends IOBIEThing> baseClassType_class,
-			AbstractIndividual individual) {
+			AbstractIndividual individual, InvestigationRestriction investigationRestriction) {
 
 		try {
 			IOBIEThing newInstance = (IOBIEThing) baseClassType_class.newInstance();
@@ -529,6 +533,8 @@ public class ExplorationUtils {
 			Field individualField = ReflectionUtils.getAccessibleFieldByName(baseClassType_class,
 					OntologyInitializer.INDIVIDUAL_FIELD_NAME);
 			individualField.set(newInstance, individual);
+
+			newInstance.setInvestigationRestriction(investigationRestriction);
 
 			for (Field field : ReflectionUtils.getSlots(newInstance.getClass())) {
 				/*

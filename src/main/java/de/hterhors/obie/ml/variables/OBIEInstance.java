@@ -13,8 +13,10 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.semanticweb.owlapi.reasoner.IllegalConfigurationException;
 
 import corpus.LabeledInstance;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.RegExTokenizer;
 import de.hterhors.obie.core.tokenizer.SentenceSplitter;
@@ -43,6 +45,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		}
 	};
 
+	public static enum EInstanceType {
+		TRAIN, DEV, TEST, UNSET;
+
+	}
+
 	private static Logger log = LogManager.getFormatterLogger(OBIEInstance.class);
 
 	/**
@@ -59,6 +66,17 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	final private String content;
 
 	final private List<Token> tokens;
+
+	private EInstanceType instanceType = EInstanceType.UNSET;
+
+	public EInstanceType getInstanceType() {
+		return instanceType;
+	}
+
+	public OBIEInstance setInstanceType(EInstanceType instanceType) {
+		this.instanceType = instanceType;
+		return this;
+	}
 
 	/**
 	 * Tokens indexed by position.
@@ -191,10 +209,38 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		return namedEntityLinkingAnnotations;
 	}
 
+	
+
+//		@Override
+//	public int hashCode() {
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + ((name == null) ? 0 : name.hashCode());
+//		return result;
+//	}
+//
+//	@Override
+//	public boolean equals(Object obj) {
+//		if (this == obj)
+//			return true;
+//		if (obj == null)
+//			return false;
+//		if (getClass() != obj.getClass())
+//			return false;
+//		OBIEInstance other = (OBIEInstance) obj;
+//		if (name == null) {
+//			if (other.name != null)
+//				return false;
+//		} else if (!name.equals(other.name))
+//			return false;
+//		return true;
+//	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((goldAnnotation == null) ? 0 : goldAnnotation.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -208,6 +254,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		if (getClass() != obj.getClass())
 			return false;
 		OBIEInstance other = (OBIEInstance) obj;
+		if (goldAnnotation == null) {
+			if (other.goldAnnotation != null)
+				return false;
+		} else if (!goldAnnotation.equals(other.goldAnnotation))
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
@@ -220,5 +271,6 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	public String toString() {
 		return "InternalInstance [name=" + name + "]";
 	}
+
 
 }

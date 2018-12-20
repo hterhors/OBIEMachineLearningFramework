@@ -175,11 +175,6 @@ public class StrictNamedEntityLinkingEvaluator implements IOBIEEvaluator {
 	}
 
 	@Override
-	public InvestigationRestriction getInvestigationRestrictions() {
-		return null;
-	}
-
-	@Override
 	public IOrListCondition getOrListCondition() {
 		return null;
 	}
@@ -201,10 +196,6 @@ public class StrictNamedEntityLinkingEvaluator implements IOBIEEvaluator {
 
 	@Override
 	public void clearCache() {
-	}
-
-	@Override
-	public void setInvestigationRestrictions(InvestigationRestriction investigationRestriction) {
 	}
 
 }

@@ -90,7 +90,14 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 
 			final Set<IOBIEThing> candidates = ExplorationUtils.getCandidates(previousState.getInstance(),
 					rootTemplateType, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
-					restrictExplorationOnConceptsInInstance);
+					restrictExplorationOnConceptsInInstance,
+					/**
+					 * Test this! Tkae restriction from gold if exists if not (as in prediction) get the default of the state / instance.
+					 */
+					previousState.getInstance().getGoldAnnotation().getTemplateAnnotations().iterator().hasNext()
+							? previousState.getInstance().getGoldAnnotation().getTemplateAnnotations().iterator().next()
+									.getThing().getInvestigationRestriction()
+							: previousState.getDefaultInvestigationRestriction());
 
 			for (IOBIEThing candidateClass : candidates) {
 				final OBIEState generatedState = new OBIEState(previousState);

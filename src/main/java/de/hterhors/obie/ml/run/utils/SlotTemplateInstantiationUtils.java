@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.NotImplementedException;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
@@ -49,10 +50,11 @@ public class SlotTemplateInstantiationUtils {
 		return null;
 	}
 
-	public static IOBIEThing getFullRandomInstance(OBIEInstance instance, Class<? extends IOBIEThing> searchType) {
+	public static IOBIEThing getFullRandomInstance(OBIEInstance instance, Class<? extends IOBIEThing> searchType,
+			InvestigationRestriction investigationRestriction) {
 		try {
 			IOBIEThing o = searchType.newInstance();
-			fillRecursive(instance, o, true);
+			fillRecursive(instance, o, true, investigationRestriction);
 			return o;
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
@@ -60,10 +62,11 @@ public class SlotTemplateInstantiationUtils {
 		return null;
 	}
 
-	public static IOBIEThing getFullWrong(Class<? extends IOBIEThing> searchType) {
+	public static IOBIEThing getFullWrong(Class<? extends IOBIEThing> searchType,
+			InvestigationRestriction investigationRestriction) {
 		try {
 			IOBIEThing o = searchType.newInstance();
-			fillRecursive(null, o, false);
+			fillRecursive(null, o, false, investigationRestriction);
 			return o;
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
@@ -88,7 +91,8 @@ public class SlotTemplateInstantiationUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void fillRecursive(final OBIEInstance instance, final IOBIEThing object, final boolean random) {
+	private static void fillRecursive(final OBIEInstance instance, final IOBIEThing object, final boolean random,
+			InvestigationRestriction investigationRestriction) {
 
 		if (object == null)
 			return;
@@ -99,7 +103,7 @@ public class SlotTemplateInstantiationUtils {
 				.filter(f -> ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)).forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 
 							Class<? extends IOBIEThing> slotSuperType = ((Class<? extends IOBIEThing>) ((ParameterizedType) field
 									.getGenericType()).getActualTypeArguments()[0]);
@@ -109,9 +113,10 @@ public class SlotTemplateInstantiationUtils {
 									final IOBIEThing value = getValueForDT(instance, random, slotSuperType);
 									((List<IOBIEThing>) field.get(object)).add(value);
 								} else {
-									final IOBIEThing value = getValueForNonDT(instance, random, slotSuperType);
+									final IOBIEThing value = getValueForNonDT(instance, random, slotSuperType,
+											investigationRestriction);
 									((List<IOBIEThing>) field.get(object)).add(value);
-									fillRecursive(instance, value, random);
+									fillRecursive(instance, value, random, investigationRestriction);
 								}
 							} else {
 								throw new NotImplementedException(
@@ -126,9 +131,10 @@ public class SlotTemplateInstantiationUtils {
 									final IOBIEThing value = getValueForDT(instance, random, slotSuperType);
 									field.set(object, value);
 								} else {
-									final IOBIEThing value = getValueForNonDT(instance, random, slotSuperType);
+									final IOBIEThing value = getValueForNonDT(instance, random, slotSuperType,
+											investigationRestriction);
 									field.set(object, value);
-									fillRecursive(instance, value, random);
+									fillRecursive(instance, value, random, investigationRestriction);
 								}
 							} else {
 								throw new NotImplementedException(
@@ -174,11 +180,12 @@ public class SlotTemplateInstantiationUtils {
 	}
 
 	private static IOBIEThing getValueForNonDT(OBIEInstance instance, boolean random,
-			final Class<? extends IOBIEThing> slotSuperType) throws InstantiationException, IllegalAccessException {
+			final Class<? extends IOBIEThing> slotSuperType, InvestigationRestriction investigationRestriction)
+			throws InstantiationException, IllegalAccessException {
 		final IOBIEThing value;
 		if (random) {
 			Set<IOBIEThing> candidates = ExplorationUtils.getCandidates(instance, slotSuperType, new HashSet<>(), false,
-					false);
+					false, investigationRestriction);
 			if (candidates != null && !candidates.isEmpty()) {
 				int index = rand.nextInt(candidates.size());
 				Iterator<IOBIEThing> iter = candidates.iterator();

@@ -8,16 +8,20 @@ import de.hterhors.obie.ml.variables.TemplateAnnotation;
 public class EvaluationObject {
 
 	public final IOBIEThing scioClass;
-	private final InvestigationRestriction investigationRestriction;
+//	private final InvestigationRestriction investigationRestriction;
 
-	public EvaluationObject(TemplateAnnotation resultEntity, InvestigationRestriction investigationRestriction) {
+	public EvaluationObject(TemplateAnnotation resultEntity
+//			, InvestigationRestriction investigationRestriction
+			) {
 		this.scioClass = resultEntity.getThing();
-		this.investigationRestriction = investigationRestriction;
+//		this.investigationRestriction = investigationRestriction;
 	}
 
 	@Override
 	public String toString() {
-		return OBIEClassFormatter.format(scioClass, false, investigationRestriction);
+		return OBIEClassFormatter.format(scioClass, false
+//				, investigationRestriction
+				);
 	}
 
 }

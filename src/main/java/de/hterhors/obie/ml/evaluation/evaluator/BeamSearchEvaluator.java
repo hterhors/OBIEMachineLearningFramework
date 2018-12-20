@@ -28,7 +28,9 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	private final int beamSize;
 
 	public BeamSearchEvaluator(final int beamSize) {
-		this(beamSize, true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
+		this(beamSize, true, Integer.MAX_VALUE, true,
+//				InvestigationRestriction.noRestrictionInstance,
+				f -> false,
 				Integer.MAX_VALUE, true);
 	}
 
@@ -48,10 +50,13 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @param ignoreEmptyInstancesOnEvaluation
 	 */
 	public BeamSearchEvaluator(final int beamSize, boolean enableCaching, final int maxEvaluationDepth,
-			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			final boolean penalizeCardinality,
+//			InvestigationRestriction investigationRestrictions,
 			IOrListCondition orListCondition, int maxNumberOfAnnotations,
 			final boolean ignoreEmptyInstancesOnEvaluation) {
-		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
+		super(enableCaching, penalizeCardinality,
+//				investigationRestrictions, 
+				orListCondition, maxEvaluationDepth,
 				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 		this.beamSize = beamSize < 1 ? Integer.MAX_VALUE : beamSize;
 	}

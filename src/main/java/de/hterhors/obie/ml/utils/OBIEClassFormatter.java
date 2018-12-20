@@ -17,22 +17,30 @@ public class OBIEClassFormatter {
 
 	private static final String ONE_DEPTH = "    ";
 
-	public static String format(IOBIEThing scioClass, InvestigationRestriction investigationRestriction) {
+	public static String format(IOBIEThing scioClass
+//			, InvestigationRestriction investigationRestriction
+	) {
 		if (scioClass == null)
 			return "null";
-		return format(scioClass, false, investigationRestriction);
+		return format(scioClass, false
+//				, investigationRestriction
+		);
 	}
 
-	public static String format(IOBIEThing scioClass) {
-		if (scioClass == null)
-			return "null";
-		return format(scioClass, false, InvestigationRestriction.noRestrictionInstance);
-	}
+//	public static String format(IOBIEThing scioClass) {
+//		if (scioClass == null)
+//			return "null";
+//		return format(scioClass, false
+////				, InvestigationRestriction.noRestrictionInstance
+//		);
+//	}
 
 	public static String format(IOBIEThing scioClass, boolean printAll) {
 		try {
 
-			return toStringUsingRelfections(scioClass, 0, printAll, InvestigationRestriction.noRestrictionInstance);
+			return toStringUsingRelfections(scioClass, 0, printAll
+//					, InvestigationRestriction.noRestrictionInstance
+			);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -40,21 +48,26 @@ public class OBIEClassFormatter {
 		return null;
 	}
 
-	public static String format(IOBIEThing scioClass, boolean printAll,
-			InvestigationRestriction investigationRestriction) {
-		try {
+//	public static String format(IOBIEThing scioClass, boolean printAll
+////			,
+////			InvestigationRestriction investigationRestriction
+//	) {
+//		try {
+//
+//			return toStringUsingRelfections(scioClass, 0, printAll
+////					, investigationRestriction
+//			);
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return null;
+//	}
 
-			return toStringUsingRelfections(scioClass, 0, printAll, investigationRestriction);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private static String toStringUsingRelfections(IOBIEThing c, int depth, boolean printAll,
-			InvestigationRestriction investigationRestriction)
-			throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
+	private static String toStringUsingRelfections(IOBIEThing c, int depth, boolean printAll
+//			,
+//			InvestigationRestriction investigationRestriction
+	) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
 		StringBuilder sb = new StringBuilder();
 
 		if (c == null)
@@ -77,7 +90,7 @@ public class OBIEClassFormatter {
 		sb.append("\n");
 		depth++;
 
-		List<Field> fields = ReflectionUtils.getSlots(c.getClass(), investigationRestriction);
+		List<Field> fields = ReflectionUtils.getSlots(c.getClass(), c.getInvestigationRestriction());
 
 		for (Field slot : fields) {
 
@@ -114,7 +127,9 @@ public class OBIEClassFormatter {
 //								sb.append(getDepth(depth + 1) + l.getClass()));
 							} else {
 								sb.append("\n");
-								sb.append(toStringUsingRelfections(l, depth + 1, printAll, investigationRestriction));
+								sb.append(toStringUsingRelfections(l, depth + 1, printAll
+//										, investigationRestriction
+								));
 							}
 						}
 					}
@@ -134,7 +149,9 @@ public class OBIEClassFormatter {
 //						sb.append(ONE_DEPTH + cn.getClass()) + "\n");
 					} else {
 						sb.append("\n");
-						sb.append(toStringUsingRelfections(cn, depth + 1, printAll, investigationRestriction));
+						sb.append(toStringUsingRelfections(cn, depth + 1, printAll
+//								, investigationRestriction
+						));
 					}
 				}
 			}

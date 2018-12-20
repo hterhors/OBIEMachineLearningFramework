@@ -15,10 +15,12 @@ import de.hterhors.obie.ml.evaluation.evaluator.PurityEvaluator;
 public class TestEvaluation {
 
 	final static private IOBIEEvaluator purityREevaluator = new PurityEvaluator(true, 1000, true,
-			InvestigationRestriction.noRestrictionInstance, 10, false);
+//			InvestigationRestriction.noRestrictionInstance,
+			10, false);
 
 	final static private IOBIEEvaluator cartesianREevaluator = new CartesianSearchEvaluator(true, 1000, true,
-			InvestigationRestriction.noRestrictionInstance, 10, false);
+//			InvestigationRestriction.noRestrictionInstance, 
+			10, false);
 
 	final static private IOBIEEvaluator NERevaluator = new StrictNamedEntityLinkingEvaluator();
 

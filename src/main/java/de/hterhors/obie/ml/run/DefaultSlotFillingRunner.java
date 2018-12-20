@@ -73,6 +73,17 @@ public class DefaultSlotFillingRunner extends AbstractRunner {
 				},
 				//
 				new EpochCallback() {
+
+					@Override
+					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+//						log.info(OBIEState.dropOutInvestigation.size());
+//						OBIEState.dropOutInvestigation.entrySet().forEach(log::info);
+						OBIEState.dropOutInvestigation.clear();
+					}
+
+				},
+				//
+				new EpochCallback() {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {
