@@ -7,11 +7,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.ReflectionUtils;
-import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
-import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.SlotIsFilledTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -32,8 +30,8 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LogManager.getFormatterLogger(SlotIsFilledTemplate.class.getName());
 
-	public SlotIsFilledTemplate(RunParameter parameter) {
-		super(parameter);
+	public SlotIsFilledTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	class Scope extends FactorScope {
@@ -100,7 +98,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		 * Parent-Child relation
 		 */
 
-		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));

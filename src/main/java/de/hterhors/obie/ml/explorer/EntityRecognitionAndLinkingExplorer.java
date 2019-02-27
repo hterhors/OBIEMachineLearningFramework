@@ -243,7 +243,10 @@ public class EntityRecognitionAndLinkingExplorer extends AbstractOBIEExplorer {
 
 		final AtomicBoolean containsAnnotation = new AtomicBoolean(false);
 
-		ReflectionUtils.getSlots(scioClass.getClass()).forEach(field -> {
+		/*
+		 * TODO: need investigation restriction here?
+		 */
+		ReflectionUtils.getSlots(scioClass.getClass(),scioClass.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(scioClass)) {

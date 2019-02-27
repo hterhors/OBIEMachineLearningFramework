@@ -25,8 +25,12 @@ public class DefaultSlotFillingRunner extends AbstractRunner {
 	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();
 	private final Set<Integer> epochsTrainedGreedily = new HashSet<>();
 
-	public DefaultSlotFillingRunner(RunParameter parameter) {
+	private final boolean callGC;
+
+	public DefaultSlotFillingRunner(RunParameter parameter, boolean callGC) {
 		super(parameter);
+		this.callGC = callGC;
+
 		log.info("Initialize sampling settings...");
 
 		this.random = new Random(100L);
@@ -41,6 +45,10 @@ public class DefaultSlotFillingRunner extends AbstractRunner {
 		}
 		log.info("Epochs trained with objective score: " + epochsTrainedWithObjective);
 		log.info("Epochs trained greedily: " + epochsTrainedGreedily);
+	}
+
+	public DefaultSlotFillingRunner(RunParameter parameter) {
+		this(parameter, true);
 	}
 
 	@Override
@@ -66,8 +74,10 @@ public class DefaultSlotFillingRunner extends AbstractRunner {
 							saveModel(epoch);
 							trainWithObjective = false;
 						}
-						log.info("Call GC manually...");
-						System.gc();
+						if (callGC) {
+							log.info("Call GC manually...");
+							System.gc();
+						}
 					}
 
 				},
@@ -78,7 +88,7 @@ public class DefaultSlotFillingRunner extends AbstractRunner {
 					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 //						log.info(OBIEState.dropOutInvestigation.size());
 //						OBIEState.dropOutInvestigation.entrySet().forEach(log::info);
-						OBIEState.dropOutInvestigation.clear();
+						OBIEState.dropOutInstanceCache.clear();
 					}
 
 				},

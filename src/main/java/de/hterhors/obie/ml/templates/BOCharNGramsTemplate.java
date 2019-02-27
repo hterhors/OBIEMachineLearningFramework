@@ -3,10 +3,7 @@ package de.hterhors.obie.ml.templates;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,13 +11,9 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
-import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.BOCharNGramsTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -61,8 +54,8 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 
 	private static final int MAX_N_GRAM_SIZE = 7;
 
-	public BOCharNGramsTemplate(RunParameter parameter) {
-		super(parameter);
+	public BOCharNGramsTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	class Scope extends FactorScope {
@@ -103,7 +96,7 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getNonDatatypeSlots(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {

@@ -91,7 +91,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	public final List<OBIEInstance> allExistingInternalInstances = new ArrayList<>();
 
-	transient private int currentFold = -1;
+	public transient int currentFold = -1;
 
 	public Set<String> getOriginalTrainingInstances() {
 		return Collections.unmodifiableSet(originalTrainingInstances);
@@ -158,8 +158,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			long t = System.currentTimeMillis();
 			for (INamedEntitityLinker l : entityLinker) {
 				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
-				annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
-				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
+				annotationbuilder.addClassAnnotations(
+						l.annotateClasses(internalInstance.getName(), internalInstance.getContent()));
+				annotationbuilder.addIndividualAnnotations(
+						l.annotateIndividuals(internalInstance.getName(), internalInstance.getContent()));
 
 			}
 			internalInstance.setAnnotations(annotationbuilder.build());
@@ -245,9 +247,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			}
 
 		}
-		/*
-		 * Add factors for object type properties.
-		 */
+
 		ReflectionUtils.getSlots(annotation.getClass()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
@@ -312,6 +312,13 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 					it.remove();
 					continue;
 				}
+			}
+		}
+
+		log.info("Apply investigation restriction from parameter to gold data...");
+		for (Iterator<OBIEInstance> it = this.allExistingInternalInstances.iterator(); it.hasNext();) {
+			for (TemplateAnnotation annotation : it.next().getGoldAnnotation().getTemplateAnnotations()) {
+				setRestrictionRec(annotation.getThing(), parameter.defaultTestInvestigationRestriction);
 			}
 		}
 
@@ -482,6 +489,44 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		throw new RuntimeException();
 	}
 
+	/**
+	 * Adds investigationRestriction to all slot values of the parent value.
+	 * 
+	 * @param thing
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	private static void setRestrictionRec(IOBIEThing thing, InvestigationRestriction r) {
+
+		if (thing == null)
+			return;
+
+		try {
+
+			if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class))
+				return;
+
+			thing.setInvestigationRestriction(r);
+
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(thing.getClass(), r)) {
+
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+
+					for (IOBIEThing sv : (List<IOBIEThing>) slot.get(thing)) {
+						setRestrictionRec(sv, r);
+					}
+				} else {
+					setRestrictionRec((IOBIEThing) slot.get(thing), r);
+				}
+
+			}
+
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+
 	@Override
 	public boolean nextFold() {
 		if (!(distributer instanceof FoldCrossCorpusDistributor))
@@ -518,7 +563,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		this.testCorpus = new BigramInternalCorpus(this.remainingFullCorpus.getInternalInstances().subList(
 				this.currentFold * foldSize,
 				last ? this.remainingFullCorpus.getInternalInstances().size() : (this.currentFold + 1) * foldSize));
-	
+
 		this.testCorpus.getInternalInstances().forEach(d -> d.setInstanceType(EInstanceType.TEST));
 	}
 
@@ -584,7 +629,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
 
 			this.developmentCorpus = new BigramInternalCorpus(remainingInstances);
-			
+
 			this.trainingCorpus.getInternalInstances().forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
 
 			return newInstances;
@@ -608,7 +653,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		if (annotation == null)
 			return true;
 
-		final List<Field> fields = ReflectionUtils.getSlots(annotation.getClass());
+		final List<Field> fields = ReflectionUtils.getNonDatatypeSlots(annotation.getClass());
 
 		for (Field field : fields) {
 			try {

@@ -91,7 +91,7 @@ public abstract class AbstractRunner {
 	private Scorer scorer;
 
 	protected boolean trainWithObjective = false;
-	protected boolean sampleGreedy= false;
+	protected boolean sampleGreedy = false;
 
 	private final InstanceCollection featureMapData = new InstanceCollection();
 
@@ -157,6 +157,7 @@ public abstract class AbstractRunner {
 		}
 
 	}
+
 
 	/**
 	 * Continues training for a given set of documents using the previous loaded or
@@ -334,8 +335,8 @@ public abstract class AbstractRunner {
 		 * 
 		 */
 		try {
-			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName()).getConstructor(RunParameter.class)
-					.newInstance(this.parameter);
+			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName()).getConstructor(AbstractRunner.class)
+					.newInstance(this);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -391,8 +392,9 @@ public abstract class AbstractRunner {
 
 		for (INamedEntitityLinker l : linker) {
 			log.info("Apply: " + l.getClass().getSimpleName() + " to: " + instance.getName());
-			annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getContent()));
-			annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(instance.getContent()));
+			annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getName(), instance.getContent()));
+			annotationbuilder
+					.addIndividualAnnotations(l.annotateIndividuals(instance.getName(), instance.getContent()));
 		}
 		instance.setAnnotations(annotationbuilder.build());
 
@@ -423,8 +425,9 @@ public abstract class AbstractRunner {
 
 			for (INamedEntitityLinker l : entityLinker) {
 				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + instance.getName());
-				annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getContent()));
-				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(instance.getContent()));
+				annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getName(), instance.getContent()));
+				annotationbuilder
+						.addIndividualAnnotations(l.annotateIndividuals(instance.getName(), instance.getContent()));
 			}
 			instance.setAnnotations(annotationbuilder.build());
 
@@ -600,6 +603,23 @@ public abstract class AbstractRunner {
 	public PRF1 evaluateOnTest() throws Exception {
 
 		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = testOnTest();
+
+		/**
+		 * Final evaluation with Cartesian
+		 */
+		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
+				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality()
+//				,
+//				parameter.evaluator.getInvestigationRestrictions()
+				, parameter.evaluator.getMaxNumberOfAnnotations(),
+				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
+
+		return EvaluatePrediction.evaluateREPredictions(getObjectiveFunction(), predictions, evaluator);
+	}
+
+	public PRF1 evaluateOnTrain() throws Exception {
+
+		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = testOnTrain();
 
 		/**
 		 * Final evaluation with Cartesian

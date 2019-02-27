@@ -14,7 +14,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.RootClassCardinalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -32,8 +32,8 @@ import learning.Vector;
  */
 public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public RootClassCardinalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public RootClassCardinalityTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(RootClassCardinalityTemplate.class.getName());
@@ -99,7 +99,7 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 			Map<Class<? extends IOBIEThing>, Integer> countRootClasses, final IOBIEThing rootClass) {
 		List<Scope> factors = new ArrayList<>();
 
-		ReflectionUtils.getSlots(rootClass.getClass()).forEach(field -> {
+		ReflectionUtils.getNonDatatypeSlots(rootClass.getClass(),rootClass.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 					final int rootCardinality = countRootClasses.get(rootClass.getClass());
@@ -140,6 +140,9 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
+		if (ReflectionUtils.isAnnotationPresent(factor.getFactorScope().propertyClass, DatatypeProperty.class))
+			return;
+
 		final Set<NERLClassAnnotation> evidenceMentions = factor.getFactorScope().document
 				.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().propertyClass);
 		int propertyEvidence = evidenceMentions == null ? 0 : evidenceMentions.size();
@@ -151,8 +154,6 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 				factor.getFactorScope().rootClass, propertyEvidence, factor.getFactorScope().rootClass,
 				factor.getFactorScope().rootCardinality), true);
 
-		if (ReflectionUtils.isAnnotationPresent(factor.getFactorScope().propertyClass, DatatypeProperty.class))
-			return;
 
 		/*
 		 * Add type of the field which is the root of the actual class. (More general)

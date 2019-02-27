@@ -13,7 +13,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.FrequencyTemplate.Scope;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
@@ -46,8 +46,8 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(FrequencyTemplate.class.getName());
 
-	public FrequencyTemplate(RunParameter parameter) {
-		super(parameter);
+	public FrequencyTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -133,7 +133,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factors for object type properties.
 		 */
 
-		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field
@@ -154,6 +154,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
+	if(true) return;
 		Vector featureVector = factor.getFeatureVector();
 
 		if (factor.getFactorScope().individual != null) {

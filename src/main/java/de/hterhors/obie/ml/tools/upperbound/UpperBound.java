@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
@@ -43,7 +44,7 @@ import de.hterhors.obie.ml.variables.TemplateAnnotation;
  */
 public class UpperBound {
 
-	private static final int MAX_CARDINALITY = 100;
+	private static final int MAX_CARDINALITY = 1;
 
 	final private RunParameter parameter;
 
@@ -70,12 +71,15 @@ public class UpperBound {
 		PRF1 upperBound = new PRF1();
 		for (OBIEInstance doc : documents) {
 
+//			if (!doc.getName().startsWith("N243"))
+//				continue;
+
 			log.info(doc.getName());
 
+			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
+			maxRecallPredictions.forEach(m -> setRestrictionRec(m, parameter.defaultTestInvestigationRestriction));
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
 					.map(e -> (IOBIEThing) e.getThing()).collect(Collectors.toList());
-
-			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
 
 			System.out.println(gold);
 			System.out.println(maxRecallPredictions);
@@ -96,6 +100,44 @@ public class UpperBound {
 		log.info("Failures:");
 		countFailures.entrySet().forEach(log::info);
 
+	}
+
+	/**
+	 * Adds investigationRestriction to all slot values of the parent value.
+	 * 
+	 * @param thing
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	private void setRestrictionRec(IOBIEThing thing, InvestigationRestriction r) {
+
+		if (thing == null)
+			return;
+
+		try {
+
+			if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class))
+				return;
+
+			thing.setInvestigationRestriction(r);
+
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(thing.getClass(), r)) {
+
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+
+					for (IOBIEThing sv : (List<IOBIEThing>) slot.get(thing)) {
+						setRestrictionRec(sv, r);
+					}
+				} else {
+					setRestrictionRec((IOBIEThing) slot.get(thing), r);
+				}
+
+			}
+
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 	/**
@@ -167,7 +209,7 @@ public class UpperBound {
 				} else {
 					predictionModel = newClassWithIndividual(goldModel.getClass(), goldModel.getIndividual());
 
-					addClassesRecursivly(goldModel, predictionModel, goldInstance.getNamedEntityLinkingAnnotations());
+					addRecursivly(goldModel, predictionModel, goldInstance.getNamedEntityLinkingAnnotations());
 				}
 
 				if (predictionModel != null)
@@ -185,6 +227,7 @@ public class UpperBound {
 
 	private IOBIEThing projectDataTypeClass(OBIEInstance goldInstance, IOBIEThing goldModel, IOBIEThing predictionModel)
 			throws InstantiationException, IllegalAccessException {
+
 		if (goldInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(goldModel.getClass())) {
 
 			NERLClassAnnotation value = null;
@@ -211,18 +254,16 @@ public class UpperBound {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addClassesRecursivly(IOBIEThing goldModel, IOBIEThing predictionModel,
-			NamedEntityLinkingAnnotations ner) {
+	private void addRecursivly(IOBIEThing goldModel, IOBIEThing predictionModel, NamedEntityLinkingAnnotations ner) {
 		/*
 		 * Add factors for object type properties.
 		 */
-
-		List<Field> slots = ReflectionUtils.getSlots(goldModel.getClass());
+		List<Field> slots = ReflectionUtils.getSlots(goldModel.getClass(), goldModel.getInvestigationRestriction());
 
 		for (Field slot : slots) {
 			try {
 				if (slot.get(goldModel) != null) {
-					if (ReflectionUtils.isAnnotationPresent(slot,RelationTypeCollection.class)) {
+					if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
 						List<IOBIEThing> values = new ArrayList<>();
 
 						Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(), slot.getName());
@@ -252,10 +293,12 @@ public class UpperBound {
 								/*
 								 * We call this method with the new added class recursively.
 								 */
-								addClassesRecursivly(thing, property, ner);
+								addRecursivly(thing, property, ner);
 
 							} else if (ner.containsClassAnnotations(clazz)
-									|| ner.containsIndividualAnnotations(individual)) {
+									// check if individual is null for classes that do not have any individuals
+									// (supposed to be named Individuals)
+									|| (individual == null || ner.containsIndividualAnnotations(individual))) {
 								/*
 								 * If class is DatatypeProperty we need the exact value.
 								 */
@@ -280,7 +323,7 @@ public class UpperBound {
 												+ ((IDatatype) thing).getInterpretedValue());
 										addFailure(slot.getType());
 									}
-								} else if (ner.containsIndividualAnnotations(individual)) {
+								} else if (individual == null || ner.containsIndividualAnnotations(individual)) {
 
 									/*
 									 * Else we need only the class mentioned anywhere.
@@ -292,7 +335,7 @@ public class UpperBound {
 									/*
 									 * We call this method with the new added class recursively.
 									 */
-									addClassesRecursivly(thing, property, ner);
+									addRecursivly(thing, property, ner);
 								}
 
 							} else {
@@ -343,9 +386,9 @@ public class UpperBound {
 							/*
 							 * We call this method with the new added class recursively.
 							 */
-							addClassesRecursivly(goldSlotValue, property, ner);
+							addRecursivly(goldSlotValue, property, ner);
 						} else if (ner.containsClassAnnotations(slotType)
-								|| ner.containsIndividualAnnotations(individual)) {
+								|| (individual == null || ner.containsIndividualAnnotations(individual))) {
 							/*
 							 * If field is DataTypeProeprty we need an exact match.
 							 */
@@ -381,7 +424,7 @@ public class UpperBound {
 
 								}
 
-							} else if (ner.containsIndividualAnnotations(individual)) {
+							} else if (individual == null || ner.containsIndividualAnnotations(individual)) {
 
 								/*
 								 * Else we need only the class mentioned anywhere.
@@ -400,7 +443,7 @@ public class UpperBound {
 								/*
 								 * We call this method with the new added class recursively.
 								 */
-								addClassesRecursivly(goldSlotValue, property, ner);
+								addRecursivly(goldSlotValue, property, ner);
 							}
 						} else {
 							if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {

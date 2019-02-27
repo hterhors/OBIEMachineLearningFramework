@@ -42,6 +42,8 @@ public class REObjectiveFunction extends ObjectiveFunction<OBIEState, InstanceTe
 				.map(s -> s.getThing()).collect(Collectors.toList());
 		List<IOBIEThing> gold = goldResult.getTemplateAnnotations().stream().map(s -> s.getThing())
 				.collect(Collectors.toList());
+		
+//		System.out.println("obj");
 //		InvestigationRestriction investigationRestriction = ;
 
 //		evaluator.setInvestigationRestrictions(investigationRestriction);

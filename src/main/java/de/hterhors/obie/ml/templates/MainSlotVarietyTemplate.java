@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,11 +15,10 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.MainSlotVarietyTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -43,8 +41,8 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public MainSlotVarietyTemplate(RunParameter parameter) {
-		super(parameter);
+	public MainSlotVarietyTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(MainSlotVarietyTemplate.class.getName());
@@ -152,7 +150,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			/*
 			 * Add factors for object type properties.
 			 */
-			ReflectionUtils.getSlots(entityScioClass.getClass()).stream().forEach(field -> {
+			ReflectionUtils.getSlots(entityScioClass.getClass(),entityScioClass.getInvestigationRestriction()).stream().forEach(field -> {
 						try {
 							if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 								for (IOBIEThing element : (List<IOBIEThing>) field.get(entityScioClass)) {

@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -14,10 +13,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.ReflectionUtils;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.SentenceLocalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -57,8 +55,8 @@ import learning.Vector;
  */
 public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public SentenceLocalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public SentenceLocalityTemplate(AbstractRunner runner) {
+		super(runner);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -157,7 +155,7 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	 *         ontology instance.
 	 */
 	private List<IOBIEThing> collectValuesFromFields(final IOBIEThing ontologyInstance) {
-		return ReflectionUtils.getSlots(ontologyInstance.getClass()).stream().map(f -> {
+		return ReflectionUtils.getSlots(ontologyInstance.getClass(),ontologyInstance.getInvestigationRestriction()).stream().map(f -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(f, RelationTypeCollection.class)) {
 					/**

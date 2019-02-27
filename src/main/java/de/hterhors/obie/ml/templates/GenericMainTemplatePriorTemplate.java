@@ -13,7 +13,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.GenericMainTemplatePriorTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -44,8 +44,8 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 
 	private static final String MAIN_INDIVIDUAL_IDENTIFIER = "main_individual";
 
-	public GenericMainTemplatePriorTemplate(RunParameter parameter) {
-		super(parameter);
+	public GenericMainTemplatePriorTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	class Scope extends FactorScope {
@@ -102,7 +102,7 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 			 * class contains any (important) sub classes.
 			 */
 
-			for (Field field : ReflectionUtils.getSlots(thing.getClass())) {
+			for (Field field : ReflectionUtils.getSlots(thing.getClass(), thing.getInvestigationRestriction())) {
 				try {
 					final String context = field.getName();
 
@@ -263,8 +263,8 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 		 * For each property and for each value for that property create a single
 		 * feature.
 		 */
-		factor.getFeatureVector().set("Prior: " + factor.getFactorScope().slotName + "->"
-				+ factor.getFactorScope().slotValue, true);
+		factor.getFeatureVector()
+				.set("Prior: " + factor.getFactorScope().slotName + "->" + factor.getFactorScope().slotValue, true);
 //		}
 	}
 

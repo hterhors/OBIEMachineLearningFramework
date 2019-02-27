@@ -15,8 +15,11 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.AbstractOntologyEnvironment;
+import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -475,8 +478,11 @@ public class RunParameter implements Serializable {
 
 		for (Class<? extends IOBIEThing> c : ReflectionUtils.getAssignableSubInterfaces(ontologyRootThing)) {
 			if (ExplorationUtils.isAuxiliary(c)) {
+
 				if (ReflectionUtils.isAnnotationPresent(c, ImplementationClass.class)) {
+
 					set.add(ReflectionUtils.getImplementationClass(c));
+
 				} else {
 					log.warn("Can not find implementation class for: " + c.getSimpleName());
 				}
@@ -558,13 +564,13 @@ public class RunParameter implements Serializable {
 
 		private boolean restrictExplorationToFoundConcepts = true;
 
-		private AbstractProjectEnvironment<?> projectEnvironment;
+		private AbstractProjectEnvironment<?> projectEnvironment = null;
 
-		private AbstractOntologyEnvironment ontologyEnvironment;
+		private AbstractOntologyEnvironment ontologyEnvironment = null;
 
 		private String personalNotes = "Default Notes";
 
-		private String runID = String.valueOf("RND_" + new Random().nextInt());
+		private String runID = String.valueOf("runID" + new Random().nextInt());
 
 		private int maxNumberOfSamplingSteps = 100;
 
@@ -764,7 +770,7 @@ public class RunParameter implements Serializable {
 			return this;
 		}
 
-		public AbstractProjectEnvironment getProjectEnvironment() {
+		public AbstractProjectEnvironment<?> getProjectEnvironment() {
 			return projectEnvironment;
 		}
 
@@ -777,7 +783,7 @@ public class RunParameter implements Serializable {
 			return this;
 		}
 
-		public Builder setProjectEnvironment(AbstractProjectEnvironment projectEnvironment) {
+		public Builder setProjectEnvironment(AbstractProjectEnvironment<?> projectEnvironment) {
 			this.projectEnvironment = projectEnvironment;
 			return this;
 		}

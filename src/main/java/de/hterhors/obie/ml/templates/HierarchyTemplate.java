@@ -15,7 +15,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.HierarchyTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -35,8 +35,8 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	final private static String FEATURE_GREATER_THAN_HIERARCHY = "Type_of_%s_has_hierarchy > %d";
 	final private static String FEATURE_EQUAL_HIERARCHY = "Type_of_%s_has_hierarchy = %d";
 
-	public HierarchyTemplate(RunParameter parameter) {
-		super(parameter);
+	public HierarchyTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	class Scope extends FactorScope {
@@ -82,7 +82,7 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 				.forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 							/**
 							 * TODO: Integrate lists.
 							 */
@@ -104,8 +104,8 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 		final Set<Class<? extends IOBIEThing>> rootClassTypes = ReflectionUtils
 				.getSuperRootClasses(factor.getFactorScope().clazz);
 
-		final int hierarchy = OntologyAnalyzer.getHierarchy(parameter.projectEnvironment.getOntologyThingInterface(),
-				factor.getFactorScope().clazz);
+		final int hierarchy = OntologyAnalyzer.getHierarchy(
+				runner.getParameter().projectEnvironment.getOntologyThingInterface(), factor.getFactorScope().clazz);
 
 		for (Class<? extends IOBIEThing> rootClass : rootClassTypes) {
 

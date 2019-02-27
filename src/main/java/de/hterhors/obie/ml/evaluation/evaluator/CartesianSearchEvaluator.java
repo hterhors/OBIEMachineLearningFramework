@@ -195,7 +195,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 
 		if (maxSize > maxNumberOfAnnotations) {
 			log.warn("Skip comparison... to many cases as defined in the parameter!");
-			return new PRF1(0, 0, 0);
+			return zeroScore;
 		}
 		if (maxSize > WARNING_ON_MAX) {
 			log.warn("WARN! List size to compare are greater than " + WARNING_ON_MAX + ". Size = " + maxSize
@@ -203,7 +203,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 					+ ". This may result in a long computation time.");
 			if (maxSize > MAX_NUMBER_OF_PERMUTATIONS) {
 				log.warn("Skip comparison... to many cases!");
-				return new PRF1(0, 0, 0);
+				return zeroScore;
 			}
 		}
 

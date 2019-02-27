@@ -97,6 +97,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		this.goldAnnotation = goldAnnotations;
 
 		this.name = documentName;
+
 		this.content = prepareDocumentContent(documentContent);
 
 		this.tokens = RegExTokenizer.tokenize(getDocumentSentences(documentContent)).stream()
@@ -209,8 +210,6 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		return namedEntityLinkingAnnotations;
 	}
 
-	
-
 //		@Override
 //	public int hashCode() {
 //		final int prime = 31;
@@ -271,6 +270,5 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	public String toString() {
 		return "InternalInstance [name=" + name + "]";
 	}
-
 
 }

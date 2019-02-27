@@ -4,12 +4,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
@@ -32,12 +34,12 @@ import de.hterhors.obie.ml.variables.OBIEInstance;
  */
 public class RandomBaseline {
 
-	private final RunParameter param;
+	private final RunParameter parameter;
 
 	private final Random random;
 
 	public RandomBaseline(RunParameter param, final long randomSeed) {
-		this.param = param;
+		this.parameter = param;
 		this.random = new Random(randomSeed);
 	}
 
@@ -47,45 +49,85 @@ public class RandomBaseline {
 
 		for (OBIEInstance doc : corpus.getInternalInstances()) {
 
-			System.out.println("_____________" + doc.getName() + "_______________");
+//			System.out.println("_____________" + doc.getName() + "_______________");
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream().map(e -> e.getThing())
 					.collect(Collectors.toList());
+
 			List<IOBIEThing> predictions = predictFillerByRandom(doc);
+			predictions.forEach(m -> setRestrictionRec(m, parameter.defaultTestInvestigationRestriction));
 
-			System.out.println("___________GOLD___________");
-			doc.getGoldAnnotation().getTemplateAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getThing(), false)));
-			System.out.println("___________RANDOM___________");
-			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
+//			System.out.println("___________GOLD___________");
+//			doc.getGoldAnnotation().getTemplateAnnotations()
+//					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getThing(), false)));
+//			System.out.println("___________RANDOM___________");
+//			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 
-			PRF1 score = param.evaluator.prf1(gold, predictions);
+			PRF1 score = parameter.evaluator.prf1(gold, predictions);
 
 			final double precision = score.getPrecision();
 			final double recall = score.getRecall();
 			final double f1 = score.getF1();
 
-			System.out.println("precision = " + precision);
-			System.out.println("recall = " + recall);
-			System.out.println("f1 = " + f1);
+//			System.out.println("precision = " + precision);
+//			System.out.println("recall = " + recall);
+//			System.out.println("f1 = " + f1);
 			mean.add(score);
-			System.out.println("");
-			System.out.println("");
-			System.out.println("");
+//			System.out.println("");
+//			System.out.println("");
+//			System.out.println("");
 		}
 
-		System.out.println("Random baseline mean-P = " + mean.getPrecision());
-		System.out.println("Random baseline mean-R = " + mean.getRecall());
-		System.out.println("Random baseline mean-F1 = " + mean.getF1());
+//		System.out.println("Random baseline mean-P = " + mean.getPrecision());
+//		System.out.println("Random baseline mean-R = " + mean.getRecall());
+//		System.out.println("Random baseline mean-F1 = " + mean.getF1());
 
 		return mean;
 
 	}
 
+	/**
+	 * Adds investigationRestriction to all slot values of the parent value.
+	 * 
+	 * @param thing
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	private void setRestrictionRec(IOBIEThing thing, InvestigationRestriction r) {
+
+		if (thing == null)
+			return;
+
+		try {
+
+			if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class))
+				return;
+
+			thing.setInvestigationRestriction(r);
+
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(thing.getClass(), r)) {
+
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+
+					for (IOBIEThing sv : (List<IOBIEThing>) slot.get(thing)) {
+						setRestrictionRec(sv, r);
+					}
+				} else {
+					setRestrictionRec((IOBIEThing) slot.get(thing), r);
+				}
+
+			}
+
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+
 	public List<IOBIEThing> predictFillerByRandom(OBIEInstance instance) {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
-		int randomNumberOfRootSlotTemplates = getRandomIndexBetween(1, 1);
+		int randomNumberOfRootSlotTemplates = parameter.numberOfInitializedObjects.number(instance);//getRandomIndexBetween(1, 1);
 
 		for (int i = 0; i < randomNumberOfRootSlotTemplates; i++) {
 			try {
@@ -94,17 +136,28 @@ public class RandomBaseline {
 						.getImplementationClass(getRandomFromCollection(instance.rootClassTypes));
 
 				IOBIEThing predictionClass = null;
-				predictionClass = randomClazz.newInstance();
+
+				List<ClassFrequencyPair> classFreqList = HighFrequencyUtils.getMostFrequentClassesOrValue(
+						ReflectionUtils.getDirectInterfaces(randomClazz), instance, 1000);
+				
+				classFreqList.add(new ClassFrequencyPair(randomClazz,null,null,200));
+				
+				predictionClass = classFreqList.get(new Random().nextInt(classFreqList.size())).clazz.newInstance();
 
 				List<IndividualFrequencyPair> individualFreqList = HighFrequencyUtils
-						.getMostFrequentIndividuals(ReflectionUtils.getDirectInterfaces(randomClazz), instance, 1);
+						.getMostFrequentIndividuals(ReflectionUtils.getDirectInterfaces(randomClazz), instance, 10000);
+			
+				Collections.shuffle(individualFreqList);
+
 				/**
 				 * TODO: allow multiple main templates ???
 				 */
 				for (IndividualFrequencyPair individual : individualFreqList) {
 
-					predictionClass = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
-							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
+					predictionClass = individual.belongingClazz
+							.getConstructor(String.class, InvestigationRestriction.class, String.class)
+							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
+									individual.textMention);
 					break;
 				}
 
@@ -130,7 +183,8 @@ public class RandomBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass());
+		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass(),
+				parameter.defaultTestInvestigationRestriction);
 
 		for (Field slot : fields) {
 
@@ -149,7 +203,7 @@ public class RandomBaseline {
 							Integer.MAX_VALUE);
 
 					final int numOfElements = getRandomIndexBetween(0,
-							Math.min(param.maxNumberOfDataTypeElements, cfps.size()));
+							Math.min(parameter.maxNumberOfDataTypeElements, cfps.size()));
 
 					for (int i = 0; i < numOfElements; i++) {
 
@@ -176,7 +230,7 @@ public class RandomBaseline {
 					final Class<? extends IOBIEThing> slotGenericClassType = ReflectionUtils
 							.getImplementationClass(slotType);
 
-					for (int i = 0; i < getRandomIndexBetween(1, param.maxNumberOfEntityElements); i++) {
+					for (int i = 0; i < getRandomIndexBetween(1, parameter.maxNumberOfEntityElements); i++) {
 						/*
 						 * Add n auxiliary classes.
 						 */
@@ -204,7 +258,7 @@ public class RandomBaseline {
 					}
 
 					final int numOfElements = getRandomIndexBetween(0,
-							Math.min(param.maxNumberOfEntityElements, individualFreqList.size()));
+							Math.min(parameter.maxNumberOfEntityElements, individualFreqList.size()));
 
 					if (!individualFreqList.isEmpty()) {
 						List<IOBIEThing> randomNElements = new ArrayList<>();
@@ -321,8 +375,10 @@ public class RandomBaseline {
 					/**
 					 * TODO: pass individual instead of string!
 					 */
-					property = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
-							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
+					property = individual.belongingClazz
+							.getConstructor(String.class, InvestigationRestriction.class, String.class)
+							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
+									individual.textMention);
 				}
 			} else {
 				property = null;

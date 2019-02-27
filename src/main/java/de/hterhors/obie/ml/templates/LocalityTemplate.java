@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.LocalityTemplate.Scope;
 import de.hterhors.obie.ml.templates.utils.ClassTypePositionPair;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -33,8 +33,8 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public LocalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public LocalityTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(LocalityTemplate.class.getName());

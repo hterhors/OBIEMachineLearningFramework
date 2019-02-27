@@ -124,6 +124,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 		Collection<TemplateAnnotation> templateAnnotations = currentState.getCurrentTemplateAnnotations()
 				.getTemplateAnnotations();
 
+	
+
 		for (TemplateAnnotation templateAnnotation : templateAnnotations) {
 			this.currentAnnotationID = templateAnnotation.getAnnotationID();
 
@@ -143,7 +145,8 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 		}
 
-		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
+//		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
+//		proposalStates.forEach(System.out::println);
 		return proposalStates;
 
 	}

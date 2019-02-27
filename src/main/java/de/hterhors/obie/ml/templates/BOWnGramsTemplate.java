@@ -13,7 +13,7 @@ import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.BOWnGramsTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -54,8 +54,8 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 
 	private static final int MAX_N_GRAM_SIZE = 3;
 
-	public BOWnGramsTemplate(RunParameter parameter) {
-		super(parameter);
+	public BOWnGramsTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	class Scope extends FactorScope {
@@ -96,7 +96,7 @@ public class BOWnGramsTemplate extends AbstractOBIETemplate<Scope> implements Se
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getNonDatatypeSlots(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {

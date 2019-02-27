@@ -14,7 +14,7 @@ import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.GlobalLocalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -26,8 +26,8 @@ import learning.Vector;
 @Deprecated
 public class GlobalLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public GlobalLocalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public GlobalLocalityTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	/**

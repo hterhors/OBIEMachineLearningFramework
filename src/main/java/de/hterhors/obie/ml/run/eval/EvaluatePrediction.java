@@ -694,7 +694,7 @@ public class EvaluatePrediction {
 				.getFieldRestrictionCombinations(classType, mainFields);
 
 		List<InvestigationRestriction> restrictions = new ArrayList<>();
-		restrictions.add(new InvestigationRestriction(classType, Collections.emptySet(), true));
+		restrictions.add(new InvestigationRestriction(Collections.emptySet(), true));
 
 		for (Set<RestrictedField> set : restrictFieldsList) {
 			if (set.size() > 1) {
@@ -704,16 +704,17 @@ public class EvaluatePrediction {
 				continue;
 			}
 			for (int i = 1; i < 3; i++) {
-				restrictions.add(new InvestigationRestriction(classType, set, i % 2 == 0));
+				restrictions.add(new InvestigationRestriction(set, i % 2 == 0));
 			}
 		}
 
+		evaluator = new CartesianSearchEvaluator(true, evaluator.getMaxEvaluationDepth(),
+				evaluator.isPenalizeCardinality()
+//					, rest
+				, evaluator.getOrListCondition(), 7, evaluator.isIgnoreEmptyInstancesOnEvaluation());
+		
 		for (InvestigationRestriction rest : restrictions) {
 
-			evaluator = new CartesianSearchEvaluator(true, evaluator.getMaxEvaluationDepth(),
-					evaluator.isPenalizeCardinality()
-//					, rest
-					, evaluator.getOrListCondition(), 7, evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
 			if (detailedOutput) {
 				log.info("#############################");

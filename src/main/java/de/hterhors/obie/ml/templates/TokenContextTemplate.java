@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,7 +15,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.TokenContextTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -44,9 +43,9 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	public TokenContextTemplate(RunParameter parameter) {
-		super(parameter);
-		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
+	public TokenContextTemplate(AbstractRunner runner) {
+		super(runner);
+		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
 
 	static class PositionContainer {
@@ -139,7 +138,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass(), obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
@@ -162,22 +161,36 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(obieClass)) {
 				for (NERLClassAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
 						.getClassAnnotations(obieClass)) {
+					try {
 					positions.add(new PositionContainer(ReflectionUtils.simpleName(nera.classType),
 							internalInstance.charPositionToTokenPosition(nera.onset),
 							internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+					} catch (Exception e) {
+						System.out.println(individual);
+						System.out.println(nera);
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 			}
 			if (internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(individual)) {
 				for (NERLIndividualAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
 						.getIndividualAnnotations(individual)) {
+					try {
 
-					positions.add(new PositionContainer(ReflectionUtils.simpleName(obieClass),
-							internalInstance.charPositionToTokenPosition(nera.onset),
-							internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+						positions.add(new PositionContainer(ReflectionUtils.simpleName(obieClass),
+								internalInstance.charPositionToTokenPosition(nera.onset),
+								internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
 
-					positions.add(new PositionContainer(nera.relatedIndividual.name,
-							internalInstance.charPositionToTokenPosition(nera.onset),
-							internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+						positions.add(new PositionContainer(nera.relatedIndividual.name,
+								internalInstance.charPositionToTokenPosition(nera.onset),
+								internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+					} catch (Exception e) {
+						System.out.println(individual);
+						System.out.println(nera);
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 			}
 		} else {

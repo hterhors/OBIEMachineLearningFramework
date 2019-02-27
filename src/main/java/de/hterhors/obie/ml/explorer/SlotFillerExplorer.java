@@ -86,9 +86,15 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		this.currentState = currentState;
 
 		final List<OBIEState> proposalStates = new LinkedList<OBIEState>();
-
+//		System.out.println("#########################");
+//		System.out.println(currentState);
+//		System.out.println("#########################");
 		final Collection<TemplateAnnotation> templateAnnotations = currentState.getCurrentTemplateAnnotations()
 				.getTemplateAnnotations();
+
+//		if (currentState.getInstance().getName().contains("Geoff_Dyson")) {
+//			System.out.println("here");
+//		}
 
 		for (final TemplateAnnotation templateAnnotation : templateAnnotations) {
 
@@ -105,6 +111,15 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		}
 
 		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
+//		if (currentState.getInstance().getName().contains("N223")) {
+////			proposalStates.forEach(System.out::println);
+//		for (OBIEState s : proposalStates) {
+//			System.out.println(s);
+//			for (TemplateAnnotation templateAnnotation : s.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+//				System.out.println(templateAnnotation.getThing());
+//			}
+//		}
+//		}
 		return proposalStates;
 	}
 
@@ -340,9 +355,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				 * Get and add possible values for current element.
 				 */
 
-				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement, listBaseClassType
-						, parentTemplate.getInvestigationRestriction()
-				)) {
+				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement,
+						listBaseClassType, parentTemplate.getInvestigationRestriction())) {
 
 					/**
 					 * Do not add null elements in lists.
@@ -391,7 +405,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					 */
 					Field listFieldOfNewClass = ReflectionUtils.getAccessibleFieldByName(newClass.getClass(),
 							fieldName);
-				
+
 					listFieldOfNewClass.set(newClass, newList);
 
 					/*
@@ -445,10 +459,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 			final Class<? extends IOBIEThing> slotType = (Class<? extends IOBIEThing>) slot.getType();
 
-			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType
-					,
-					parentTemplate.getInvestigationRestriction()
-			)) {
+			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType,
+					parentTemplate.getInvestigationRestriction())) {
 
 //				if (modAtFieldClass.instance == null) {
 //					continue;

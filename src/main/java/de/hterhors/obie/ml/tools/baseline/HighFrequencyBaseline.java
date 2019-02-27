@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
@@ -45,36 +46,75 @@ public class HighFrequencyBaseline {
 
 		for (OBIEInstance doc : corpus.getInternalInstances()) {
 
-			System.out.println(doc.getName());
+//			System.out.println(doc.getName());
 
 			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream().map(e -> e.getThing())
 					.collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictFillerByFrequency(doc);
+			predictions.forEach(m -> setRestrictionRec(m, param.defaultTestInvestigationRestriction));
 
-			doc.getGoldAnnotation().getTemplateAnnotations()
-					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getThing(), false)));
-			System.out.println("____________________________");
-			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
+//			doc.getGoldAnnotation().getTemplateAnnotations()
+//					.forEach(s -> System.out.println(OBIEClassFormatter.format(s.getThing(), false)));
+//			System.out.println("____________________________");
+//			predictions.forEach(f -> System.out.println(OBIEClassFormatter.format(f, false)));
 
 			PRF1 score = param.evaluator.prf1(gold, predictions);
 
-			final double precision = score.getPrecision();
-			final double recall = score.getRecall();
-			final double f1 = score.getF1();
-
-			System.out.println("precision = " + precision);
-			System.out.println("recall = " + recall);
-			System.out.println("f1 = " + f1);
+//			final double precision = score.getPrecision();
+//			final double recall = score.getRecall();
+//			final double f1 = score.getF1();
+//
+//			System.out.println("precision = " + precision);
+//			System.out.println("recall = " + recall);
+//			System.out.println("f1 = " + f1);
 			mean.add(score);
-			System.out.println("");
-			System.out.println("");
-			System.out.println("");
+//			System.out.println("");
+//			System.out.println("");
+//			System.out.println("");
 		}
-		System.out.println("Most frequent baseline mean-P = " + mean.getPrecision());
-		System.out.println("Most frequent baseline mean-R = " + mean.getRecall());
-		System.out.println("Most frequent baseline mean-F1 = " + mean.getF1());
+//		System.out.println("Most frequent baseline mean-P = " + mean.getPrecision());
+//		System.out.println("Most frequent baseline mean-R = " + mean.getRecall());
+//		System.out.println("Most frequent baseline mean-F1 = " + mean.getF1());
 		return mean;
+	}
+
+	/**
+	 * Adds investigationRestriction to all slot values of the parent value.
+	 * 
+	 * @param thing
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	private void setRestrictionRec(IOBIEThing thing, InvestigationRestriction r) {
+
+		if (thing == null)
+			return;
+
+		try {
+
+			if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class))
+				return;
+
+			thing.setInvestigationRestriction(r);
+
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(thing.getClass(), r)) {
+
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+
+					for (IOBIEThing sv : (List<IOBIEThing>) slot.get(thing)) {
+						setRestrictionRec(sv, r);
+					}
+				} else {
+					setRestrictionRec((IOBIEThing) slot.get(thing), r);
+				}
+
+			}
+
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 	/**
@@ -97,13 +137,20 @@ public class HighFrequencyBaseline {
 	private List<IOBIEThing> predictFillerByFrequency(OBIEInstance instance) {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
+		int randomNumberOfRootSlotTemplates = param.numberOfInitializedObjects.number(instance);// getRandomIndexBetween(1,
+																								// 1);
 
 		for (TemplateAnnotation goldAnnotation : instance.getGoldAnnotation().getTemplateAnnotations()) {
-
 			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.getThing();
 			IOBIEThing predictionClass = null;
 			try {
-				predictionClass = goldClass.getClass().newInstance();
+
+				Class<? extends IOBIEThing> searchClazz = instance.rootClassTypes.iterator().next();
+				ClassFrequencyPair classFreqList = HighFrequencyUtils.getMostFrequentClass(searchClazz, instance);
+
+				predictionClass = classFreqList.clazz == null
+						? ReflectionUtils.getImplementationClass(searchClazz).newInstance()
+						: classFreqList.clazz.newInstance();
 
 				List<IndividualFrequencyPair> individualFreqList = HighFrequencyUtils.getMostFrequentIndividuals(
 						ReflectionUtils.getDirectInterfaces(goldClass.getClass()), instance, 1);
@@ -112,8 +159,9 @@ public class HighFrequencyBaseline {
 				 */
 				for (IndividualFrequencyPair individual : individualFreqList) {
 
-					predictionClass = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
-							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
+					predictionClass = individual.belongingClazz
+							.getConstructor(String.class, InvestigationRestriction.class, String.class)
+							.newInstance(individual.individual.getURI(), null, individual.textMention);
 					break;
 				}
 
@@ -126,7 +174,7 @@ public class HighFrequencyBaseline {
 			/*
 			 * Add only one prediction class.
 			 */
-			if (predictions.size() < MAX_PREDICTIONS_TO_ADD)
+			if (predictions.size() < randomNumberOfRootSlotTemplates)
 				predictions.add(predictionClass);
 
 		}
@@ -142,7 +190,8 @@ public class HighFrequencyBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass());
+		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass(),
+				param.defaultTestInvestigationRestriction);
 
 		for (Field slot : fields) {
 
@@ -324,8 +373,10 @@ public class HighFrequencyBaseline {
 					/**
 					 * TODO: pass individual instead of string!
 					 */
-					property = individual.belongingClazz.getConstructor(String.class, String.class).newInstance(
-							(individual.individual.nameSpace + individual.individual.name), individual.textMention);
+					property = individual.belongingClazz
+							.getConstructor(String.class, InvestigationRestriction.class, String.class)
+							.newInstance((individual.individual.nameSpace + individual.individual.name), null,
+									individual.textMention);
 				}
 			} else {
 				property = null;

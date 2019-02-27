@@ -2,22 +2,17 @@ package de.hterhors.obie.ml.templates;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.core.tokenizer.ContentCleaner;
 import de.hterhors.obie.core.tools.metric.LevenShteinSimilarity;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.StringSimilarityTemplate.Scope;
 import de.hterhors.obie.ml.templates.utils.BinningUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -36,8 +31,8 @@ import learning.Vector;
  */
 public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public StringSimilarityTemplate(RunParameter parameter) {
-		super(parameter);
+	public StringSimilarityTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -119,8 +114,8 @@ public class StringSimilarityTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getSlots(scioClass.getClass()).stream()
-				.filter(f -> !ReflectionUtils.isAnnotationPresent(f, DatatypeProperty.class)).forEach(field -> {
+		ReflectionUtils.getNonDatatypeSlots(scioClass.getClass(), scioClass.getInvestigationRestriction()).stream()
+				.forEach(field -> {
 					try {
 						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {

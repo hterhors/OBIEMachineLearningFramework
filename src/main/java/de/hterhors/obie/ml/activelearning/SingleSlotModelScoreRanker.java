@@ -47,7 +47,7 @@ public class SingleSlotModelScoreRanker implements IActiveLearningDocumentRanker
 					continue;
 				}
 				for (int i = 1; i < 3; i++) {
-					restrictions.add(new InvestigationRestriction(classType, set, i % 2 == 0));
+					restrictions.add(new InvestigationRestriction(set, i % 2 == 0));
 				}
 			}
 		}

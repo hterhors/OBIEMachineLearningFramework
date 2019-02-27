@@ -20,7 +20,7 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.Word2VecClusterTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -35,8 +35,8 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 
 	final private Map<String, List<Integer>> clusters = new HashMap<>();
 
-	public Word2VecClusterTemplate(RunParameter parameter) {
-		super(parameter);
+	public Word2VecClusterTemplate(AbstractRunner runner) {
+		super(runner);
 		try {
 			BufferedReader br = new BufferedReader(
 					new FileReader(new File("wordvector/kmeans_google-news_200_ranking.vec")));
@@ -87,8 +87,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 		state.getInstance().getTokens();
 
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			factors.addAll(
-					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
+			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
 		}
 		return factors;
 	}
@@ -126,7 +125,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 				.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
 					field.setAccessible(true);
 					try {
-						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
 								factors.addAll(addFactorRecursive(entityRootClassType, instance, element));
 							}

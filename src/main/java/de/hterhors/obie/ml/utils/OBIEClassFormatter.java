@@ -17,57 +17,22 @@ public class OBIEClassFormatter {
 
 	private static final String ONE_DEPTH = "    ";
 
-	public static String format(IOBIEThing scioClass
-//			, InvestigationRestriction investigationRestriction
-	) {
+	public static String format(IOBIEThing scioClass) {
 		if (scioClass == null)
 			return "null";
-		return format(scioClass, false
-//				, investigationRestriction
-		);
+		return format(scioClass, false);
 	}
-
-//	public static String format(IOBIEThing scioClass) {
-//		if (scioClass == null)
-//			return "null";
-//		return format(scioClass, false
-////				, InvestigationRestriction.noRestrictionInstance
-//		);
-//	}
 
 	public static String format(IOBIEThing scioClass, boolean printAll) {
 		try {
-
-			return toStringUsingRelfections(scioClass, 0, printAll
-//					, InvestigationRestriction.noRestrictionInstance
-			);
-
+			return toStringUsingRelfections(scioClass, 0, printAll);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-//	public static String format(IOBIEThing scioClass, boolean printAll
-////			,
-////			InvestigationRestriction investigationRestriction
-//	) {
-//		try {
-//
-//			return toStringUsingRelfections(scioClass, 0, printAll
-////					, investigationRestriction
-//			);
-//
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		return null;
-//	}
-
-	private static String toStringUsingRelfections(IOBIEThing c, int depth, boolean printAll
-//			,
-//			InvestigationRestriction investigationRestriction
-	) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
+	private static String toStringUsingRelfections(IOBIEThing c, int depth, boolean printAll) throws Exception {
 		StringBuilder sb = new StringBuilder();
 
 		if (c == null)
@@ -94,12 +59,9 @@ public class OBIEClassFormatter {
 
 		for (Field slot : fields) {
 
-//			if (!investigationRestriction.investigateField(field.getName()))
-//				continue;
-
-			slot.setAccessible(true);
 			sb.append(getDepth(depth) + slot.getName() + ":");
 			if (slot.get(c) == null) {
+
 				sb.append(ONE_DEPTH + "null\n");
 			} else {
 

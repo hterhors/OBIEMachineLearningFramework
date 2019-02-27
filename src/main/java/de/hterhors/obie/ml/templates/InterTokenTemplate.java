@@ -16,7 +16,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.InterTokenTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -58,10 +58,10 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 	private final AbstractOBIETemplate<?> thisTemplate;
 
-	public InterTokenTemplate(RunParameter parameter) {
-		super(parameter);
+	public InterTokenTemplate(AbstractRunner runner) {
+		super(runner);
 		this.thisTemplate = this;
-		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
+		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
 
 	class Scope extends FactorScope {
@@ -111,7 +111,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getSlots(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {

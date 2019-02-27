@@ -15,7 +15,7 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.InBetweenContextTemplate.PositionPairContainer;
 import de.hterhors.obie.ml.templates.LocalTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
@@ -51,9 +51,9 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	public LocalTemplate(RunParameter parameter) {
-		super(parameter);
-		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
+	public LocalTemplate(AbstractRunner runner) {
+		super(runner);
+		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
 
 	class Scope extends FactorScope {
@@ -110,7 +110,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factor parent - child relation
 		 */
-		ReflectionUtils.getSlots(parent.getClass()).forEach(field -> {
+		ReflectionUtils.getSlots(parent.getClass(),parent.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(parent)) {
@@ -172,92 +172,217 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 			AbstractIndividual parentIndividual, Integer parentCharOnset, Integer parentCharOffset,
 			Class<? extends IOBIEThing> childClass, AbstractIndividual childIndividual, Integer childCharOnset,
 			Integer childCharOffset, final String childSurfaceForm) {
-
 		List<Distance> positionsPairs = new ArrayList<>();
 
 		if (enableDistantSupervision) {
 
-			if (!internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(parentIndividual))
-				return positionsPairs;
+			if (internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(parentIndividual)) {
 
-			Set<NERLIndividualAnnotation> parentNerls = internalInstance.getNamedEntityLinkingAnnotations()
-					.getIndividualAnnotations(parentIndividual).stream().collect(Collectors.toSet());
+				Set<NERLIndividualAnnotation> parentNerls = internalInstance.getNamedEntityLinkingAnnotations()
+						.getIndividualAnnotations(parentIndividual);
 
-			if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
+				if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
 
-				Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
-						.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
-				if (childNerls != null) {
+					Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+							.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
+					if (childNerls != null) {
 
-					for (NERLIndividualAnnotation parentNerl : parentNerls) {
-						for (NERLClassAnnotation childNerl : childNerls) {
+						for (NERLIndividualAnnotation parentNerl : parentNerls) {
+							for (NERLClassAnnotation childNerl : childNerls) {
 
-							Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+								Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+								Class<? extends IOBIEThing> classType1 = parentClass;
+								Integer toPosition = Integer.valueOf(childNerl.onset);
+								Class<? extends IOBIEThing> classType2 = childNerl.classType;
+								/*
+								 * Switch "from" and "to" if from is after to position.
+								 */
+								if (fromPosition > toPosition) {
+									fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+									classType1 = childNerl.classType;
+
+									toPosition = Integer.valueOf(parentNerl.onset);
+									classType2 = parentClass;
+								}
+								addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
+										internalInstance);
+
+							}
+						}
+					} else {
+						/*
+						 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+						 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+						 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
+						 */
+					}
+
+				} else {
+
+					Set<NERLIndividualAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+							.getIndividualAnnotations(childIndividual);
+
+					if (childNerls != null) {
+
+						Class<? extends IOBIEThing> classType1 = parentClass;
+						Class<? extends IOBIEThing> classType2 = childClass;
+
+						for (NERLIndividualAnnotation parentNerl : parentNerls) {
+							for (NERLIndividualAnnotation childNerl : childNerls) {
+
+								Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+								Integer toPosition = Integer.valueOf(childNerl.onset);
+								/*
+								 * Switch "from" and "to" if from is after to position.
+								 */
+								if (fromPosition > toPosition) {
+									fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+									classType1 = childClass;
+
+									toPosition = Integer.valueOf(parentNerl.onset);
+									classType2 = parentClass;
+								}
+								addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
+										internalInstance);
+
+							}
+						}
+					} else {
+						/*
+						 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+						 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+						 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
+						 */
+					}
+				}
+			} else if (parentIndividual == null) {
+
+				/**
+				 * In case the parent class has no individual take class annotations.
+				 */
+
+				Set<NERLClassAnnotation> parentNerls = internalInstance.getNamedEntityLinkingAnnotations()
+						.getClassAnnotations(parentClass);
+
+				if (parentNerls == null)
+					return positionsPairs;
+
+				if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
+
+					Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+							.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
+					if (childNerls != null) {
+
+						for (NERLClassAnnotation parentNerl : parentNerls) {
+							for (NERLClassAnnotation childNerl : childNerls) {
+
+								Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+								Class<? extends IOBIEThing> classType1 = parentClass;
+								Integer toPosition = Integer.valueOf(childNerl.onset);
+								Class<? extends IOBIEThing> classType2 = childNerl.classType;
+								/*
+								 * Switch "from" and "to" if from is after to position.
+								 */
+								if (fromPosition > toPosition) {
+									fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+									classType1 = childNerl.classType;
+
+									toPosition = Integer.valueOf(parentNerl.onset);
+									classType2 = parentClass;
+								}
+								addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
+										internalInstance);
+
+							}
+						}
+					} else {
+						/*
+						 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+						 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+						 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
+						 */
+					}
+
+				} else {
+
+					if (childIndividual == null) {
+
+						Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+								.getClassAnnotations(childClass);
+
+						if (childNerls != null) {
+
 							Class<? extends IOBIEThing> classType1 = parentClass;
-							Integer toPosition = Integer.valueOf(childNerl.onset);
-							Class<? extends IOBIEThing> classType2 = childNerl.classType;
-							/*
-							 * Switch "from" and "to" if from is after to position.
-							 */
-							if (fromPosition > toPosition) {
-								fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
-								classType1 = childNerl.classType;
+							Class<? extends IOBIEThing> classType2 = childClass;
 
-								toPosition = Integer.valueOf(parentNerl.onset);
-								classType2 = parentClass;
+							for (NERLClassAnnotation parentNerl : parentNerls) {
+								for (NERLClassAnnotation childNerl : childNerls) {
+
+									Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+									Integer toPosition = Integer.valueOf(childNerl.onset);
+									/*
+									 * Switch "from" and "to" if from is after to position.
+									 */
+									if (fromPosition > toPosition) {
+										fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+										classType1 = childClass;
+
+										toPosition = Integer.valueOf(parentNerl.onset);
+										classType2 = parentClass;
+									}
+									addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
+											internalInstance);
+
+								}
 							}
-							addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
-									internalInstance);
+						} else {
+							/*
+							 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+							 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+							 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
+							 */
+						}
 
+					} else {
+
+						Set<NERLIndividualAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+								.getIndividualAnnotations(childIndividual);
+
+						if (childNerls != null) {
+
+							Class<? extends IOBIEThing> classType1 = parentClass;
+							Class<? extends IOBIEThing> classType2 = childClass;
+
+							for (NERLClassAnnotation parentNerl : parentNerls) {
+								for (NERLIndividualAnnotation childNerl : childNerls) {
+
+									Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+									Integer toPosition = Integer.valueOf(childNerl.onset);
+									/*
+									 * Switch "from" and "to" if from is after to position.
+									 */
+									if (fromPosition > toPosition) {
+										fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+										classType1 = childClass;
+
+										toPosition = Integer.valueOf(parentNerl.onset);
+										classType2 = parentClass;
+									}
+									addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
+											internalInstance);
+
+								}
+							}
+						} else {
+							/*
+							 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+							 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+							 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
+							 */
 						}
 					}
-				} else {
-					/*
-					 * TODO: no child nerls found. do nothing? This happens if the ner for data type
-					 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
-					 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
-					 */
 				}
-
-			} else {
-
-				Set<NERLIndividualAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
-						.getIndividualAnnotations(childIndividual).stream().collect(Collectors.toSet());
-				if (childNerls != null) {
-
-					Class<? extends IOBIEThing> toClassType = parentClass;
-					Class<? extends IOBIEThing> classType2 = childClass;
-
-					for (NERLIndividualAnnotation parentNerl : parentNerls) {
-						for (NERLIndividualAnnotation childNerl : childNerls) {
-
-							Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
-							Integer toPosition = Integer.valueOf(childNerl.onset);
-							/*
-							 * Switch "from" and "to" if from is after to position.
-							 */
-							if (fromPosition > toPosition) {
-								fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
-								toClassType = childClass;
-
-								toPosition = Integer.valueOf(parentNerl.onset);
-								classType2 = parentClass;
-							}
-							addDistances(positionsPairs, fromPosition, toPosition, toClassType, classType2,
-									internalInstance);
-
-						}
-					}
-				} else {
-					/*
-					 * TODO: no child nerls found. do nothing? This happens if the ner for data type
-					 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
-					 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
-					 */
-				}
-
 			}
-
 		} else {
 			Integer fromPosition = parentCharOffset;
 			Integer toPosition = childCharOnset;
@@ -277,57 +402,88 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 				addDistances(positionsPairs, fromPosition, toPosition, fromClassType, toClassType, internalInstance);
 			}
 		}
-		return positionsPairs;
-	}
 
-//	private List<Distance> computeDistances(OBIEInstance internalInstance, Class<? extends IOBIEThing> parentClass,
-//			Integer parentCharOnset, Integer parentCharOffset, Class<? extends IOBIEThing> childClass,
-//			Integer childCharOnset, Integer childCharOffset, final String childSurfaceForm) {
-//
-//		List<Distance> positionPairs = new ArrayList<>();
+		return positionsPairs;
+//		List<Distance> positionsPairs = new ArrayList<>();
 //
 //		if (enableDistantSupervision) {
 //
-//			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(childClass)
-//					&& internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(parentClass)) {
+//			if (!internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(parentIndividual))
+//				return positionsPairs;
 //
-//				Set<NERLClassAnnotation> parentNeras = internalInstance.getNamedEntityLinkingAnnotations()
-//						.getClassAnnotations(parentClass).stream().collect(Collectors.toSet());
+//			Set<NERLIndividualAnnotation> parentNerls = internalInstance.getNamedEntityLinkingAnnotations()
+//					.getIndividualAnnotations(parentIndividual).stream().collect(Collectors.toSet());
 //
-//				Set<NERLClassAnnotation> childNeras;
-//				if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
-//					childNeras = internalInstance.getNamedEntityLinkingAnnotations()
-//							.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
-//				} else {
-//					childNeras = internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(childClass)
-//							.stream().collect(Collectors.toSet());
-//				}
-//				if (childNeras != null) {
-//					for (NERLClassAnnotation parentNera : parentNeras) {
-//						for (NERLClassAnnotation childNera : childNeras) {
+//			if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
 //
-//							Integer fromPosition = Integer.valueOf(parentNera.onset + parentNera.text.length());
-//							Class<? extends IOBIEThing> classType1 = parentNera.classType;
-//							Integer toPosition = Integer.valueOf(childNera.onset);
-//							Class<? extends IOBIEThing> classType2 = childNera.classType;
+//				Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+//						.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
+//				if (childNerls != null) {
+//
+//					for (NERLIndividualAnnotation parentNerl : parentNerls) {
+//						for (NERLClassAnnotation childNerl : childNerls) {
+//
+//							Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+//							Class<? extends IOBIEThing> classType1 = parentClass;
+//							Integer toPosition = Integer.valueOf(childNerl.onset);
+//							Class<? extends IOBIEThing> classType2 = childNerl.classType;
 //							/*
 //							 * Switch "from" and "to" if from is after to position.
 //							 */
 //							if (fromPosition > toPosition) {
-//								fromPosition = Integer.valueOf(childNera.onset + childNera.text.length());
-//								classType1 = childNera.classType;
+//								fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+//								classType1 = childNerl.classType;
 //
-//								toPosition = Integer.valueOf(parentNera.onset);
-//								classType2 = parentNera.classType;
+//								toPosition = Integer.valueOf(parentNerl.onset);
+//								classType2 = parentClass;
 //							}
-//							addPositionPairs(positionPairs, fromPosition, toPosition, classType1, classType2,
+//							addDistances(positionsPairs, fromPosition, toPosition, classType1, classType2,
 //									internalInstance);
 //
 //						}
 //					}
 //				} else {
 //					/*
-//					 * TODO: What to do here? print warning
+//					 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+//					 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+//					 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
+//					 */
+//				}
+//
+//			} else {
+//
+//				Set<NERLIndividualAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+//						.getIndividualAnnotations(childIndividual).stream().collect(Collectors.toSet());
+//				if (childNerls != null) {
+//
+//					Class<? extends IOBIEThing> toClassType = parentClass;
+//					Class<? extends IOBIEThing> classType2 = childClass;
+//
+//					for (NERLIndividualAnnotation parentNerl : parentNerls) {
+//						for (NERLIndividualAnnotation childNerl : childNerls) {
+//
+//							Integer fromPosition = Integer.valueOf(parentNerl.onset + parentNerl.text.length());
+//							Integer toPosition = Integer.valueOf(childNerl.onset);
+//							/*
+//							 * Switch "from" and "to" if from is after to position.
+//							 */
+//							if (fromPosition > toPosition) {
+//								fromPosition = Integer.valueOf(childNerl.onset + childNerl.text.length());
+//								toClassType = childClass;
+//
+//								toPosition = Integer.valueOf(parentNerl.onset);
+//								classType2 = parentClass;
+//							}
+//							addDistances(positionsPairs, fromPosition, toPosition, toClassType, classType2,
+//									internalInstance);
+//
+//						}
+//					}
+//				} else {
+//					/*
+//					 * TODO: no child nerls found. do nothing? This happens if the ner for data type
+//					 * properties failed. e.g. the string we search is fifteen to 25 ml. This can
+//					 * not be parsed by the semantic interpretation. Thus the child nerls are empty.
 //					 */
 //				}
 //
@@ -338,22 +494,22 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 //			Integer toPosition = childCharOnset;
 //
 //			if (fromPosition != null && toPosition != null) {
-//				Class<? extends IOBIEThing> classType1 = parentClass;
-//				Class<? extends IOBIEThing> classType2 = childClass;
+//				Class<? extends IOBIEThing> fromClassType = parentClass;
+//				Class<? extends IOBIEThing> toClassType = childClass;
 //				/*
 //				 * Switch "from" and "to" if from is after to position.
 //				 */
 //				if (fromPosition > toPosition) {
 //					fromPosition = childCharOffset;
 //					toPosition = parentCharOnset;
-//					classType1 = childClass;
-//					classType2 = parentClass;
+//					fromClassType = childClass;
+//					toClassType = parentClass;
 //				}
-//				addPositionPairs(positionPairs, fromPosition, toPosition, classType1, classType2, internalInstance);
+//				addDistances(positionsPairs, fromPosition, toPosition, fromClassType, toClassType, internalInstance);
 //			}
 //		}
-//		return positionPairs;
-//	}
+//		return positionsPairs;
+	}
 
 	private void addDistances(List<Distance> positionPairs, Integer fromPosition, Integer toPosition,
 			Class<? extends IOBIEThing> classType1, Class<? extends IOBIEThing> classType2,
@@ -427,6 +583,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 			//
 			// }
 			featureVector.set(fromName + "->" + toName + " sentence dist = " + sentenceDistance, true);
+			featureVector.set(fromName + "->" + toName + " sentence dist >= 4" , sentenceDistance>=4);
 
 		}
 	}

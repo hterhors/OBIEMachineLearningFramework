@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,10 +9,9 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.NERTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -34,8 +32,8 @@ import learning.Vector;
  */
 public class NERTemplate extends AbstractOBIETemplate<Scope> {
 
-	public NERTemplate(RunParameter parameter) {
-		super(parameter);
+	public NERTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -92,20 +90,21 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		if (ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
 			return factors;
 
-		ReflectionUtils.getSlots(scioClass.getClass()).forEach(field -> {
-			try {
-				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
-					for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
-						factors.addAll(addFactorRecursive(internalInstance, entityRootClassType, element));
+		ReflectionUtils.getNonDatatypeSlots(scioClass.getClass(), scioClass.getInvestigationRestriction())
+				.forEach(field -> {
+					try {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
+							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
+								factors.addAll(addFactorRecursive(internalInstance, entityRootClassType, element));
+							}
+						} else {
+							factors.addAll(addFactorRecursive(internalInstance, entityRootClassType,
+									(IOBIEThing) field.get(scioClass)));
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				} else {
-					factors.addAll(addFactorRecursive(internalInstance, entityRootClassType,
-							(IOBIEThing) field.get(scioClass)));
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
+				});
 
 		return factors;
 

@@ -10,13 +10,12 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.CooccurrenceTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -47,9 +46,9 @@ import learning.Vector;
  */
 public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 
-	public CooccurrenceTemplate(RunParameter parameter) {
-		super(parameter);
-		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
+	public CooccurrenceTemplate(AbstractRunner runner) {
+		super(runner);
+		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
 
 	/**
@@ -155,22 +154,23 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			Class<? extends IOBIEThing> rootClassType, final IOBIEThing parentThing)
 			throws IllegalArgumentException, IllegalAccessException {
 
-		if (parentThing == null || parentThing.getIndividual() == null)
+		if (parentThing == null)
 			return;
 
 		/*
 		 * template-slot relation
 		 */
 		{
-			final String value1 = parentThing.getIndividual().name;
-			for (Field slot : ReflectionUtils.getSlots(parentThing.getClass())) {
+			final String value1 = parentThing.getIndividual() == null ? parentThing.getClass().getSimpleName()
+					: parentThing.getIndividual().name;
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(parentThing.getClass(),
+					parentThing.getInvestigationRestriction())) {
 				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
 					for (IOBIEThing slotValue : (List<? extends IOBIEThing>) slot.get(parentThing)) {
 						addScope(factors, obieInstance, rootClassType, value1, slot, slotValue);
 					}
 				} else {
-					IOBIEThing slotValue = (IOBIEThing) slot.get(parentThing);
-					addScope(factors, obieInstance, rootClassType, value1, slot, slotValue);
+					addScope(factors, obieInstance, rootClassType, value1, slot, (IOBIEThing) slot.get(parentThing));
 				}
 			}
 		}
@@ -180,7 +180,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		 * For every distinct slot pair do: for every distinct slotValue pair do: add
 		 * factor
 		 */
-		final List<Field> slots = ReflectionUtils.getSlots(parentThing.getClass());
+		final List<Field> slots = ReflectionUtils.getNonDatatypeSlots(parentThing.getClass(),
+				parentThing.getInvestigationRestriction());
 
 		{
 			for (int i = 0; i < slots.size(); i++) {
@@ -191,7 +192,9 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 
 				for (int j = i + 1; j < slots.size(); j++) {
 
-					final Field slot2 = ReflectionUtils.getSlots(parentThing.getClass()).get(j);
+					final Field slot2 = ReflectionUtils
+							.getNonDatatypeSlots(parentThing.getClass(), parentThing.getInvestigationRestriction())
+							.get(j);
 
 					final List<IOBIEThing> slot2Values = getFillers(parentThing, slot2);
 
@@ -267,7 +270,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 		if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
 			value = ((IDatatype) slotValue).getInterpretedValue();
 		} else {
-			value = slotValue.getIndividual().name;
+			value = slotValue.getIndividual() == null ? slotValue.getClass().getSimpleName()
+					: slotValue.getIndividual().name;
 		}
 		return value;
 	}
@@ -285,7 +289,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			value2 = ((IDatatype) slotValue).getInterpretedValue();
 
 		} else {
-			value2 = slotValue.getIndividual().name;
+			value2 = slotValue.getIndividual() == null ? slotValue.getClass().getSimpleName()
+					: slotValue.getIndividual().name;
 			addFactorRecursive(factors, obieInstance, rootClassType, slotValue);
 		}
 		factors.add(new Scope(rootClassType, value1, "->" + slot.getName() + "->", value2));

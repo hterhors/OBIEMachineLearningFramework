@@ -15,8 +15,7 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.BOWPlainTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -37,8 +36,8 @@ import learning.Vector;
  */
 public class BOWPlainTemplate extends AbstractOBIETemplate<Scope> implements Serializable {
 
-	public BOWPlainTemplate(RunParameter parameter) {
-		super(parameter);
+	public BOWPlainTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -89,7 +88,7 @@ public class BOWPlainTemplate extends AbstractOBIETemplate<Scope> implements Ser
 		 * Add factors for object type properties.
 		 */
 
-		ReflectionUtils.getSlots(scioClass.getClass()).forEach(slot -> {
+		ReflectionUtils.getNonDatatypeSlots(scioClass.getClass(),scioClass.getInvestigationRestriction()).forEach(slot -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) slot.get(scioClass)) {

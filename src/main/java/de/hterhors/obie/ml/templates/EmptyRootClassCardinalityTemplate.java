@@ -10,7 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.EmptyRootClassCardinalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -25,8 +25,8 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public EmptyRootClassCardinalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public EmptyRootClassCardinalityTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(EmptyRootClassCardinalityTemplate.class);

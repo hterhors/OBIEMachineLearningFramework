@@ -82,9 +82,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 			if (ReflectionUtils.isAnnotationPresent(rootTemplateType, DatatypeProperty.class)
 					&& size >= maxNumberOfDataTypeElements) {
 				continue;
-			}
-
-			if (size >= maxNumberOfEntityElements) {
+			} else if (size >= maxNumberOfEntityElements) {
 				continue;
 			}
 
@@ -92,7 +90,8 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 					rootTemplateType, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
 					restrictExplorationOnConceptsInInstance,
 					/**
-					 * Test this! Tkae restriction from gold if exists if not (as in prediction) get the default of the state / instance.
+					 * TODO: Test this! Take restriction from gold if exists if not (as in
+					 * prediction) get the default of the state / instance.
 					 */
 					previousState.getInstance().getGoldAnnotation().getTemplateAnnotations().iterator().hasNext()
 							? previousState.getInstance().getGoldAnnotation().getTemplateAnnotations().iterator().next()

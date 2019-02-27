@@ -15,7 +15,7 @@ import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractRunner;
 import de.hterhors.obie.ml.templates.HeterogeneousSlotTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
 import de.hterhors.obie.ml.variables.TemplateAnnotation;
@@ -24,7 +24,7 @@ import factors.FactorScope;
 import learning.Vector;
 
 /**
- * Measures the actual heterogeneity of actual assigned tokens for slots. Doing
+ * Measures the  heterogeneity of assigned tokens for slots. Doing
  * this, we try to prevent the system from assigning or using the same value
  * again and again.
  * 
@@ -34,8 +34,8 @@ import learning.Vector;
  */
 public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 
-	public HeterogeneousSlotTemplate(RunParameter parameter) {
-		super(parameter);
+	public HeterogeneousSlotTemplate(AbstractRunner runner) {
+		super(runner);
 	}
 
 	/**

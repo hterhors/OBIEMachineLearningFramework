@@ -39,6 +39,7 @@ public class ExplorationUtils {
 
 	private static final Map<Class<? extends IOBIEThing>, Map<Class<? extends IOBIEThing>, Boolean>> isDifferentiableToAllSiblingsCache = new ConcurrentHashMap<>();
 	private static Map<OBIEInstance, Map<Class<? extends IOBIEThing>, Collection<AbstractIndividual>>> individualCache = new HashMap<>();
+	private static Map<OBIEInstance, Map<Class<? extends IOBIEThing>, Collection<Class<? extends IOBIEThing>>>> classCache = new HashMap<>();
 
 	private ExplorationUtils() {
 
@@ -117,9 +118,6 @@ public class ExplorationUtils {
 	 * Copies only ontologymodel fields. do not copy offset onset textmention and
 	 * annotation id.
 	 * 
-	 * DO NOT COPY datatype value fields although it is content of the ontologymodel
-	 * FIXME: WHY WHY WHY ??? !f.isAnnotationPresent(DataTypeProperty.class) &&
-	 * 
 	 * @param copyToClass
 	 * @param copyFromClass
 	 * @return
@@ -131,7 +129,6 @@ public class ExplorationUtils {
 
 		for (Field toField : copyToFields) {
 			try {
-
 				if (copyFromClass != null) {
 					Field copyFromField = ReflectionUtils.getAccessibleFieldByName(copyFromClass.getClass(),
 							toField.getName());
@@ -144,7 +141,6 @@ public class ExplorationUtils {
 					if (!ReflectionUtils.isAnnotationPresent(toField, RelationTypeCollection.class))
 						toField.set(copyToClass, null);
 				}
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -186,63 +182,77 @@ public class ExplorationUtils {
 			 * Add candidate for datatype and auxiliary classes
 			 */
 			addDatatypeCandidates(instance, slotType, candidates, ReflectionUtils.getImplementationClass(slotType),
-					exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance,
-					exploreOnOntologyLevel);
+					exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel);
 
 		} else {
 
 			/*
-			 * Add candidates for individuals of root class type
+			 * Not interface but class
 			 */
-			final Collection<AbstractIndividual> rootTypeIndividuals;
-
-			rootTypeIndividuals = getIndividualCandidates(instance, restrictExplorationOnConceptsInInstance, slotType);
+			final Collection<Class<? extends IOBIEThing>> slotTypes = getClassCandidates(instance,
+					restrictExplorationOnConceptsInInstance, ReflectionUtils.getImplementationClass(slotType));
+		
+			slotTypes.add(ReflectionUtils.getImplementationClass(slotType));
 
 			/*
-			 * Get all possible individual candidates for the root type.
+			 * class
 			 */
-			for (AbstractIndividual individual : rootTypeIndividuals) {
-
-				addIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotType), candidates,
-						individual, exploreOnOntologyLevel, investigationRestriction);
-			}
-
-			/*
-			 * Get all possible individual candidates for sub interfaces of the root type.
-			 */
-			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils.getAssignableSubInterfaces(slotType)) {
-
-				final Collection<AbstractIndividual> subTypeIndividuals;
-
-				subTypeIndividuals = getIndividualCandidates(instance, restrictExplorationOnConceptsInInstance,
-						slotFillerType);
+			for (Class<? extends IOBIEThing> slotTypeCandidate : slotTypes) {
 
 				/*
-				 * Get all possible individual candidates.
+				 * Add candidates for individuals of root class type
 				 */
-				for (AbstractIndividual individual : subTypeIndividuals) {
+				final Collection<AbstractIndividual> rootTypeIndividuals = getIndividualCandidates(instance,
+						restrictExplorationOnConceptsInInstance,
+						ReflectionUtils.getDirectInterfaces(slotTypeCandidate));
 
-					addIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotFillerType),
-							candidates, individual, exploreOnOntologyLevel, investigationRestriction);
+				/*
+				 * Get all possible individual candidates for the root slot type.
+				 */
+				for (AbstractIndividual individual : rootTypeIndividuals) {
 
+					addIndividualCandidates(instance, slotTypeCandidate, candidates, individual, exploreOnOntologyLevel,
+							investigationRestriction);
 				}
-			}
 
-			addClassCandidates(instance, slotType, candidates, ReflectionUtils.getImplementationClass(slotType),
-					exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance,
-					exploreOnOntologyLevel);
+				/*
+				 * Get all possible individual candidates for sub interfaces of the root slot
+				 * type.
+				 */
+				for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+						.getAssignableSubInterfaces(ReflectionUtils.getDirectInterfaces(slotTypeCandidate))) {
+
+					final Collection<AbstractIndividual> subTypeIndividuals;
+
+					subTypeIndividuals = getIndividualCandidates(instance, restrictExplorationOnConceptsInInstance,
+							slotFillerType);
+
+					/*
+					 * Get all possible individual candidates.
+					 */
+					for (AbstractIndividual individual : subTypeIndividuals) {
+
+						addIndividualCandidates(instance, ReflectionUtils.getImplementationClass(slotFillerType),
+								candidates, individual, exploreOnOntologyLevel, investigationRestriction);
+
+					}
+				}
+				addClassCandidates(instance, ReflectionUtils.getDirectInterfaces(slotTypeCandidate), candidates,
+						slotTypeCandidate, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
+						investigationRestriction);
+			}
 		}
 
 		return candidates;
 	}
 
 	private static Collection<AbstractIndividual> getIndividualCandidates(OBIEInstance instance,
-			boolean restrictExplorationOnConceptsInInstance, Class<? extends IOBIEThing> slotFillerType) {
+			boolean restrictExplorationOnConceptsInInstance, Class<? extends IOBIEThing> slotType) {
 		final Collection<AbstractIndividual> subTypeIndividuals;
 		if (restrictExplorationOnConceptsInInstance) {
-			subTypeIndividuals = getPossibleIndividuals(instance, slotFillerType);
+			subTypeIndividuals = getPossibleIndividuals(instance, slotType);
 		} else {
-			subTypeIndividuals = getPossibleIndividuals(slotFillerType);
+			subTypeIndividuals = getPossibleIndividuals(slotType);
 		}
 		return subTypeIndividuals;
 	}
@@ -307,10 +317,72 @@ public class ExplorationUtils {
 		return Collections.emptySet();
 	}
 
+	private static Collection<Class<? extends IOBIEThing>> getClassCandidates(OBIEInstance instance,
+			boolean restrictExplorationOnConceptsInInstance, Class<? extends IOBIEThing> slotFillerType) {
+		final Collection<Class<? extends IOBIEThing>> subTypeIndividuals;
+		if (restrictExplorationOnConceptsInInstance) {
+			subTypeIndividuals = getPossibleClassCandidates(instance, slotFillerType);
+		} else {
+			subTypeIndividuals = getPossibleClassCandidates(slotFillerType);
+		}
+		return subTypeIndividuals;
+	}
+
+	/**
+	 * Given an ontological class this method returns a collection of all possible
+	 * individuals that are of the class type.
+	 * 
+	 * @param instance
+	 * 
+	 * @param slotSuperType_class
+	 * @return
+	 * @throws IllegalAccessException
+	 */
+	private static Collection<Class<? extends IOBIEThing>> getPossibleClassCandidates(OBIEInstance instance,
+			Class<? extends IOBIEThing> slotFillerType) {
+
+		Map<Class<? extends IOBIEThing>, Collection<Class<? extends IOBIEThing>>> v;
+
+		if ((v = classCache.get(instance)) != null) {
+			final Collection<Class<? extends IOBIEThing>> vl;
+			if ((vl = v.get(slotFillerType)) != null)
+				return vl;
+		} else {
+			v = new HashMap<>();
+			classCache.put(instance, v);
+		}
+
+		final Collection<Class<? extends IOBIEThing>> retainedIndividuals = new HashSet<>(
+				getPossibleClassCandidates(slotFillerType));
+
+		retainedIndividuals.retainAll(instance.getNamedEntityLinkingAnnotations().getAvailableClassTypes());
+
+		v.put(slotFillerType, retainedIndividuals);
+
+		return retainedIndividuals;
+	}
+
+	/**
+	 * Given an ontological class this method returns a collection of all possible
+	 * sub class candidates that are of the class type.
+	 * 
+	 * @param instance
+	 * 
+	 * @param slotSuperType_class
+	 * @return
+	 * @throws IllegalAccessException
+	 */
+	public static Collection<Class<? extends IOBIEThing>> getPossibleClassCandidates(
+			Class<? extends IOBIEThing> slotFillerType) {
+		Set<Class<? extends IOBIEThing>> slotFillerTypes = ReflectionUtils.getAssignableSubClasses(slotFillerType);
+		return slotFillerTypes;
+
+	}
+
 	private static void addClassCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
 			Set<IOBIEThing> candidates, Class<? extends IOBIEThing> slotFillerType,
-			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence,
-			boolean restrictExplorationOnConceptsInInstance, boolean exploreOnOntologyLevel) {
+			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence, boolean exploreOnOntologyLevel,
+			InvestigationRestriction investigationRestriction) {
 
 		boolean keepClass = includeClassForSampling(slotFillerType);
 
@@ -340,38 +412,60 @@ public class ExplorationUtils {
 			 * necessary if the position or text of this "auxiliary" class is important.
 			 */
 
-			IOBIEThing newInstance = newClassInstance(slotFillerType);
+			IOBIEThing newInstance = newClassInstance(slotFillerType, investigationRestriction);
 			candidates.add(newInstance);
+		} else if (getPossibleIndividuals(slotSuperType).isEmpty()) {
+
+			if (exploreOnOntologyLevel) {
+
+				/*
+				 * Else create exactly one instance without textual reference.
+				 */
+
+				IOBIEThing newInstance = newClassForIndividual(slotFillerType, null, investigationRestriction);
+
+				candidates.add(newInstance);
+			} else {
+
+				Set<NERLClassAnnotation> possibleNERAnnotations = instance.getNamedEntityLinkingAnnotations()
+						.getClassAnnotations(slotFillerType);
+
+				for (NERLClassAnnotation nera : possibleNERAnnotations) {
+					IOBIEThing newThing = newClassForIndividual(slotFillerType, null, investigationRestriction);
+					fillBasicFields(newThing, nera);
+					candidates.add(newThing);
+				}
+			}
 		} else {
-			/*
-			 * Commented out because: Do not add classes without individuals.
-			 */
-//				/*
-//				 * Get all possible class candidates.
-//				 */
-//				for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
-//						.getAssignableSubInterfaces(slotSuperType_interface)) {
-			//
-//					if (typeCandidates) {
-//						addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
-//								ReflectionUtils.getImplementationClass(slotFillerType),
-//								exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
-//					} else {
-//						addFillerClassCandidates(instance, slotSuperType_interface, candidates,
-//								ReflectionUtils.getImplementationClass(slotFillerType),
-//								exploreClassesWithoutTextualEvidence);
-//					}
+
+//			/*
+//			 * Commented out because: Do not add classes without individuals.
+//			 */
+//			/*
+//			 * Get all possible class candidates.
+//			 */
+//			for (Class<? extends IOBIEThing> slotFillerType : ReflectionUtils
+//					.getAssignableSubInterfaces(slotSuperType_interface)) {
+//
+//				if (typeCandidates) {
+//					addSlotTypeClassCandidates(instance, slotSuperType_interface, candidates,
+//							ReflectionUtils.getImplementationClass(slotFillerType),
+//							exploreClassesWithoutTextualEvidence, restrictExplorationOnConceptsInInstance);
+//				} else {
+//					addFillerClassCandidates(instance, slotSuperType_interface, candidates,
+//							ReflectionUtils.getImplementationClass(slotFillerType),
+//							exploreClassesWithoutTextualEvidence);
 //				}
-//			
 //			}
+//
+//		}
 		}
 
 	}
 
 	private static void addDatatypeCandidates(OBIEInstance instance, Class<? extends IOBIEThing> slotSuperType,
 			Set<IOBIEThing> candidates, Class<? extends IOBIEThing> slotFillerType,
-			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence,
-			boolean restrictExplorationOnConceptsInInstance, boolean exploreOnOntologyLevel) {
+			Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence, boolean exploreOnOntologyLevel) {
 
 		boolean keepClass = includeClassForSampling(slotFillerType);
 
@@ -389,8 +483,7 @@ public class ExplorationUtils {
 			 * text. for either classes or individuals
 			 *
 			 */
-			if (restrictExplorationOnConceptsInInstance
-					&& !instance.getNamedEntityLinkingAnnotations().containsClassAnnotations(slotFillerType)) {
+			if (!instance.getNamedEntityLinkingAnnotations().containsClassAnnotations(slotFillerType)) {
 				return;
 			}
 
@@ -404,7 +497,7 @@ public class ExplorationUtils {
 			for (NERLClassAnnotation nera : instance.getNamedEntityLinkingAnnotations()
 					.getClassAnnotationsBySemanticValues(slotFillerType)) {
 
-				IOBIEThing newInstance = newClassInstance(slotFillerType);
+				IOBIEThing newInstance = newClassInstance(slotFillerType, null);
 				fillBasicFields(newInstance, nera);
 				fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
 				candidates.add(newInstance);
@@ -429,7 +522,7 @@ public class ExplorationUtils {
 
 			for (NERLClassAnnotation nera : possibleNERAnnotations) {
 
-				IOBIEThing newInstance = newClassInstance(slotFillerType);
+				IOBIEThing newInstance = newClassInstance(slotFillerType, null);
 
 				fillBasicFields(newInstance, nera);
 				fillSemanticInterpretationField(newInstance, nera.getDTValueIfAnyElseTextMention());
@@ -488,26 +581,38 @@ public class ExplorationUtils {
 	 * filled with properties that are auxiliarily classes.
 	 * 
 	 * @param ipsinkThing
+	 * @param investigationRestriction
 	 * @return
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	@SuppressWarnings("unchecked")
-	private static IOBIEThing newClassInstance(Class<? extends IOBIEThing> ipsinkThing) {
+//	@SuppressWarnings("unchecked")
+	private static IOBIEThing newClassInstance(Class<? extends IOBIEThing> ipsinkThing,
+			InvestigationRestriction investigationRestriction) {
 		try {
 			IOBIEThing newInstance = (IOBIEThing) ipsinkThing.newInstance();
 
-			for (Field field : ReflectionUtils.getSlots(newInstance.getClass())) {
-				/*
-				 * NOTE: Pre fill auxiliary fields as default.
-				 */
-				if (isAuxiliary((Class<? extends IOBIEThing>) field.getType())) {
-					field.set(newInstance, ReflectionUtils
-							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
-				}
-			}
+			if (investigationRestriction != null)
+				newInstance.setInvestigationRestriction(investigationRestriction);
+
+//			for (Field field : ReflectionUtils.getNonDatatypeSlots(newInstance.getClass())) {
+//				/*
+//				 * NOTE: Pre fill auxiliary fields as default.
+//				 */
+//				if (isAuxiliary((Class<? extends IOBIEThing>) field.getType())) {
+//
+//					IOBIEThing auxFiller = ReflectionUtils
+//							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance();
+//
+//					if (investigationRestriction != null)
+//						auxFiller.setInvestigationRestriction(investigationRestriction);
+//
+//					field.set(newInstance, auxFiller);
+//				}
+//			}
 
 			return newInstance;
+
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
@@ -523,7 +628,7 @@ public class ExplorationUtils {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	@SuppressWarnings("unchecked")
+//	@SuppressWarnings("unchecked")
 	private static IOBIEThing newClassForIndividual(Class<? extends IOBIEThing> baseClassType_class,
 			AbstractIndividual individual, InvestigationRestriction investigationRestriction) {
 
@@ -536,16 +641,17 @@ public class ExplorationUtils {
 
 			newInstance.setInvestigationRestriction(investigationRestriction);
 
-			for (Field field : ReflectionUtils.getSlots(newInstance.getClass())) {
-				/*
-				 * TODO: Remove that !? This could be in a second iteration? Features? NOTE: Pre
-				 * fill auxiliary fields as default.
-				 */
-				if (isAuxiliary((Class<? extends IOBIEThing>) field.getType())) {
-					field.set(newInstance, ReflectionUtils
-							.getImplementationClass((Class<? extends IOBIEThing>) field.getType()).newInstance());
-				}
-			}
+//			for (Field field : ReflectionUtils.getNonDatatypeSlots(newInstance.getClass())) {
+//				/*
+//				 * TODO: Remove that !? This could be in a second iteration? Features? NOTE: Pre
+//				 * fill auxiliary fields as default.
+//				 */
+//				if (isAuxiliary((Class<? extends IOBIEThing>) field.getType())) {
+//					field.set(newInstance,
+//							ReflectionUtils.getImplementationClass((Class<? extends IOBIEThing>) field.getType())
+//									.newInstance().setInvestigationRestriction(investigationRestriction));
+//				}
+//			}
 
 			return newInstance;
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -628,10 +734,6 @@ public class ExplorationUtils {
 		siblings.addAll(ReflectionUtils.getSuperRootClasses(classType).stream()
 				.flatMap(c -> ReflectionUtils.getAssignableSubClasses(c).stream()).collect(Collectors.toList()));
 
-		/*
-		 * TODO: CHECKME: If there are no siblings it is basically distinguishable to
-		 * all others.
-		 */
 		boolean isDifferentiableToAllSiblings = true;
 
 		for (Class<? extends IOBIEThing> sibClass : siblings) {
@@ -642,11 +744,11 @@ public class ExplorationUtils {
 			if (!includeClassForSampling(sibClass))
 				continue;
 
-			final Set<String> sibPropertyNames = ReflectionUtils.getSlots(sibClass).stream().map(f -> f.getName())
-					.collect(Collectors.toSet());
+			final Set<String> sibPropertyNames = ReflectionUtils.getNonDatatypeSlots(sibClass).stream()
+					.map(f -> f.getName()).collect(Collectors.toSet());
 
-			final Set<String> diffPropertyNames = ReflectionUtils.getSlots(classType).stream().map(f -> f.getName())
-					.filter(n -> !sibPropertyNames.contains(n)).collect(Collectors.toSet());
+			final Set<String> diffPropertyNames = ReflectionUtils.getNonDatatypeSlots(classType).stream()
+					.map(f -> f.getName()).filter(n -> !sibPropertyNames.contains(n)).collect(Collectors.toSet());
 
 			isDifferentiableToAllSiblings &= !diffPropertyNames.isEmpty();
 
