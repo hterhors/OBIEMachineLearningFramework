@@ -15,10 +15,10 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.HierarchyTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -35,7 +35,7 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	final private static String FEATURE_GREATER_THAN_HIERARCHY = "Type_of_%s_has_hierarchy > %d";
 	final private static String FEATURE_EQUAL_HIERARCHY = "Type_of_%s_has_hierarchy = %d";
 
-	public HierarchyTemplate(AbstractRunner runner) {
+	public HierarchyTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -54,7 +54,7 @@ public class HierarchyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getThing()));
 		}
 		return factors;

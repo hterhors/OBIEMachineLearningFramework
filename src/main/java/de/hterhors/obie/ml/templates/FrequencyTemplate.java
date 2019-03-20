@@ -13,14 +13,14 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.FrequencyTemplate.Scope;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -46,7 +46,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(FrequencyTemplate.class.getName());
 
-	public FrequencyTemplate(AbstractRunner runner) {
+	public FrequencyTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -100,7 +100,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing(),
 					entity.rootClassType);
@@ -133,7 +133,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factors for object type properties.
 		 */
 
-		ReflectionUtils.getSlots(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
+		ReflectionUtils.getFields(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field

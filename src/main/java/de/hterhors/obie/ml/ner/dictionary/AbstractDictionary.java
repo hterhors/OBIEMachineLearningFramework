@@ -33,14 +33,14 @@ public abstract class AbstractDictionary implements IDictionary {
 			"7", "8", "9", "0", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "one", "two", "three",
 			"four", "five", "six", "seven", "eight", "nine", "zero", "first", "second", "third");
 
-	protected DictionaryEntry toDictionaryEntry(AbstractIndividual individual, String name) {
+	protected DictionaryEntry toDictionaryEntry(String type, String name) {
 		surfaceForms.add(name.toLowerCase());
 		for (Tokenization tokenization : RegExTokenizer.tokenize(Arrays.asList(name.toLowerCase()))) {
 			for (Token token : tokenization.tokens) {
 				tokens.add(token.getText());
 			}
 		}
-		return new DictionaryEntry(individual, name);
+		return new DictionaryEntry(type, name);
 	}
 
 	@Override

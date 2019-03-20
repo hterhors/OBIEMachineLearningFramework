@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.metrics.JaccardSimilarities;
 import de.hterhors.obie.ml.ner.candidateRetrieval.AbstractCandidateRetrieval;
@@ -29,7 +28,7 @@ public class JaccardRetrieval extends AbstractCandidateRetrieval {
 	/**
 	 * setOfnGrams, diseaseID
 	 */
-	private final Map<BitSet, Set<AbstractIndividual>> ngrammap;
+	private final Map<BitSet, Set<String>> ngrammap;
 
 	private Map<String, List<RetrievalCandidate>> cache = new ConcurrentHashMap<>();
 
@@ -45,16 +44,16 @@ public class JaccardRetrieval extends AbstractCandidateRetrieval {
 		this.dictionary = dictionary;
 		this.ngrammap = new HashMap<>();
 
-		Map<Set<String>, Set<AbstractIndividual>> ngramsString = new HashMap<>();
+		Map<Set<String>, Set<String>> ngramsString = new HashMap<>();
 
 		Set<String> allNGrams = new HashSet<>();
 
-		for (Entry<AbstractIndividual, Set<DictionaryEntry>> entry : dictionary.getEntries().entrySet()) {
+		for (Entry<String, Set<DictionaryEntry>> entry : dictionary.getEntries().entrySet()) {
 			addForDictionary(ngramsString, allNGrams, entry);
 		}
 
 		for (IDictionary subDict : dictionary.getSubDictionaries()) {
-			for (Entry<AbstractIndividual, Set<DictionaryEntry>> entry : subDict.getEntries().entrySet()) {
+			for (Entry<String, Set<DictionaryEntry>> entry : subDict.getEntries().entrySet()) {
 				addForDictionary(ngramsString, allNGrams, entry);
 
 			}
@@ -64,16 +63,16 @@ public class JaccardRetrieval extends AbstractCandidateRetrieval {
 			ngramIndex.put(ngram, ngramIndex.size());
 		}
 
-		for (Entry<Set<String>, Set<AbstractIndividual>> e : ngramsString.entrySet()) {
+		for (Entry<Set<String>, Set<String>> e : ngramsString.entrySet()) {
 			BitSet ngramsBitSet = toBitSet(e.getKey());
 			ngrammap.put(ngramsBitSet, e.getValue());
 		}
 
 	}
 
-	private void addForDictionary(Map<Set<String>, Set<AbstractIndividual>> ngramsString, Set<String> allNGrams,
-			Entry<AbstractIndividual, Set<DictionaryEntry>> entry) {
-		final AbstractIndividual concept = entry.getKey();
+	private void addForDictionary(Map<Set<String>, Set<String>> ngramsString, Set<String> allNGrams,
+			Entry<String, Set<DictionaryEntry>> entry) {
+		final String concept = entry.getKey();
 
 		for (DictionaryEntry e : entry.getValue()) {
 
@@ -139,7 +138,7 @@ public class JaccardRetrieval extends AbstractCandidateRetrieval {
 
 			final double js = JaccardSimilarities.jaccardSimilarity(entry.getKey(), bitSetGrams);
 			if (js >= NGRAM_SIMILARITY_TRESHOLD) {
-				for (AbstractIndividual jaccardCandidateConcept : entry.getValue()) {
+				for (String jaccardCandidateConcept : entry.getValue()) {
 					ids.add(new RetrievalCandidate(jaccardCandidateConcept, js));
 				}
 			}

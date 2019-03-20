@@ -15,11 +15,11 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.PropertyEvidenceForClassTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -32,7 +32,7 @@ import learning.Vector;
  */
 public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope> {
 
-	public PropertyEvidenceForClassTemplate(AbstractRunner runner) {
+	public PropertyEvidenceForClassTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -65,7 +65,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactors(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 		return factors;
@@ -119,7 +119,7 @@ public class PropertyEvidenceForClassTemplate extends AbstractOBIETemplate<Scope
 		for (Class<? extends IOBIEThing> relatedClassType : relatedClasses) {
 			if (ReflectionUtils.isAnnotationPresent(relatedClassType, DatatypeProperty.class))
 				continue;
-			boolean evidenceExists = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
+			boolean evidenceExists = factor.getFactorScope().instance.getEntityAnnotations()
 					.containsClassAnnotations(relatedClassType);
 
 			featureVector.set(String.format(TEMPLATE_0, relatedClassType.getSimpleName(),

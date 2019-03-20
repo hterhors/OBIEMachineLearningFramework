@@ -13,11 +13,11 @@ import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.BOCharNGramsTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -54,7 +54,7 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 
 	private static final int MAX_N_GRAM_SIZE = 7;
 
-	public BOCharNGramsTemplate(AbstractRunner runner) {
+	public BOCharNGramsTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -78,7 +78,7 @@ public class BOCharNGramsTemplate extends AbstractOBIETemplate<Scope> implements
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.getThing());
 		}
 

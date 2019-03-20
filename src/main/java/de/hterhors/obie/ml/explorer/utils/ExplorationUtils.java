@@ -191,7 +191,7 @@ public class ExplorationUtils {
 			 */
 			final Collection<Class<? extends IOBIEThing>> slotTypes = getClassCandidates(instance,
 					restrictExplorationOnConceptsInInstance, ReflectionUtils.getImplementationClass(slotType));
-		
+
 			slotTypes.add(ReflectionUtils.getImplementationClass(slotType));
 
 			/*
@@ -283,7 +283,7 @@ public class ExplorationUtils {
 
 		final Collection<AbstractIndividual> retainedIndividuals = new HashSet<>(getPossibleIndividuals(slotType));
 
-		retainedIndividuals.retainAll(instance.getNamedEntityLinkingAnnotations().getAvailableIndividualTypes());
+		retainedIndividuals.retainAll(instance.getEntityAnnotations().getAvailableIndividualTypes());
 
 		v.put(slotType, retainedIndividuals);
 
@@ -355,7 +355,7 @@ public class ExplorationUtils {
 		final Collection<Class<? extends IOBIEThing>> retainedIndividuals = new HashSet<>(
 				getPossibleClassCandidates(slotFillerType));
 
-		retainedIndividuals.retainAll(instance.getNamedEntityLinkingAnnotations().getAvailableClassTypes());
+		retainedIndividuals.retainAll(instance.getEntityAnnotations().getAvailableClassTypes());
 
 		v.put(slotFillerType, retainedIndividuals);
 
@@ -427,14 +427,15 @@ public class ExplorationUtils {
 				candidates.add(newInstance);
 			} else {
 
-				Set<NERLClassAnnotation> possibleNERAnnotations = instance.getNamedEntityLinkingAnnotations()
+				Set<NERLClassAnnotation> possibleNERAnnotations = instance.getEntityAnnotations()
 						.getClassAnnotations(slotFillerType);
 
-				for (NERLClassAnnotation nera : possibleNERAnnotations) {
-					IOBIEThing newThing = newClassForIndividual(slotFillerType, null, investigationRestriction);
-					fillBasicFields(newThing, nera);
-					candidates.add(newThing);
-				}
+				if (possibleNERAnnotations != null)
+					for (NERLClassAnnotation nera : possibleNERAnnotations) {
+						IOBIEThing newThing = newClassForIndividual(slotFillerType, null, investigationRestriction);
+						fillBasicFields(newThing, nera);
+						candidates.add(newThing);
+					}
 			}
 		} else {
 
@@ -483,7 +484,7 @@ public class ExplorationUtils {
 			 * text. for either classes or individuals
 			 *
 			 */
-			if (!instance.getNamedEntityLinkingAnnotations().containsClassAnnotations(slotFillerType)) {
+			if (!instance.getEntityAnnotations().containsClassAnnotations(slotFillerType)) {
 				return;
 			}
 
@@ -494,7 +495,7 @@ public class ExplorationUtils {
 			/**
 			 * 
 			 */
-			for (NERLClassAnnotation nera : instance.getNamedEntityLinkingAnnotations()
+			for (NERLClassAnnotation nera : instance.getEntityAnnotations()
 					.getClassAnnotationsBySemanticValues(slotFillerType)) {
 
 				IOBIEThing newInstance = newClassInstance(slotFillerType, null);
@@ -508,7 +509,7 @@ public class ExplorationUtils {
 			/**
 			 * If not we need explicit text mentions to create this class.
 			 */
-			Set<NERLClassAnnotation> possibleNERAnnotations = instance.getNamedEntityLinkingAnnotations()
+			Set<NERLClassAnnotation> possibleNERAnnotations = instance.getEntityAnnotations()
 					.getClassAnnotations(slotFillerType);
 			/*
 			 * 
@@ -552,7 +553,7 @@ public class ExplorationUtils {
 			candidates.add(newInstance);
 		} else {
 
-			Set<NERLIndividualAnnotation> possibleNERAnnotations = instance.getNamedEntityLinkingAnnotations()
+			Set<NERLIndividualAnnotation> possibleNERAnnotations = instance.getEntityAnnotations()
 					.getIndividualAnnotations(individualCandidate);
 
 			for (NERLIndividualAnnotation nera : possibleNERAnnotations) {

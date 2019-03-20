@@ -142,7 +142,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 		final InvestigationRestriction r = getDefaultInvestigationRestriction();
 
-		for (TemplateAnnotation iobieThing : instance.getGoldAnnotation().getTemplateAnnotations()) {
+		for (IETmplateAnnotation iobieThing : instance.getGoldAnnotation().getAnnotations()) {
 			setRestrictionRec(iobieThing.getThing(), r);
 		}
 
@@ -151,7 +151,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 			for (Entry<Class<? extends IOBIEThing>, List<IOBIEThing>> inits : parameter.initializationObjects
 					.entrySet()) {
 				for (IOBIEThing iobieThing : inits.getValue()) {
-					this.currentTemplateAnnotations.addAnnotation(new TemplateAnnotation(inits.getKey(), iobieThing));
+					this.currentTemplateAnnotations.addAnnotation(new IETmplateAnnotation(inits.getKey(), iobieThing));
 				}
 			}
 
@@ -171,7 +171,8 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 						setRestrictionRec(initInstance, r);
 
-						this.currentTemplateAnnotations.addAnnotation(new TemplateAnnotation(searchType, initInstance));
+						this.currentTemplateAnnotations
+								.addAnnotation(new IETmplateAnnotation(searchType, initInstance));
 					}
 				}
 			}
@@ -308,7 +309,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 	}
 
-	public InstanceTemplateAnnotations getCurrentTemplateAnnotations() {
+	public InstanceTemplateAnnotations getCurrentIETemplateAnnotations() {
 		return currentTemplateAnnotations;
 	}
 
@@ -357,18 +358,16 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("#OfAnnotations:");
-		builder.append(currentTemplateAnnotations.getTemplateAnnotations().size());
+		builder.append(currentTemplateAnnotations.getAnnotations().size());
 		builder.append(" [");
 		builder.append(SCORE_FORMAT.format(modelScore));
 		builder.append("]: ");
 		builder.append(" [");
 		builder.append(SCORE_FORMAT.format(objectiveScore));
 		builder.append("]: ");
-		for (TemplateAnnotation e : currentTemplateAnnotations.getTemplateAnnotations()) {
+		for (IETmplateAnnotation e : currentTemplateAnnotations.getAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getThing()
-//					, parameter.investigationRestriction
-			));
+			builder.append(OBIEClassFormatter.format(e.getThing(), true));
 			builder.append("\n");
 		}
 		return builder.toString();

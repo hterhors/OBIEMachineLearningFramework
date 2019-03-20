@@ -22,7 +22,7 @@ import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 public class SlotTemplateInstantiationUtils {
 
@@ -82,7 +82,7 @@ public class SlotTemplateInstantiationUtils {
 	 */
 	public static Set<IOBIEThing> getFullCorrect(InstanceTemplateAnnotations instanceAnnotations) {
 		Set<IOBIEThing> set = new HashSet<>();
-		for (TemplateAnnotation goldAnnotation : instanceAnnotations.getTemplateAnnotations()) {
+		for (IETmplateAnnotation goldAnnotation : instanceAnnotations.getAnnotations()) {
 			set.add(OBIEUtils.deepClone(goldAnnotation.getThing()));
 
 		}
@@ -155,7 +155,7 @@ public class SlotTemplateInstantiationUtils {
 		final String textValue;
 		final String dtValue;
 		if (random) {
-			final Set<NERLClassAnnotation> candidates = instance.getNamedEntityLinkingAnnotations()
+			final Set<NERLClassAnnotation> candidates = instance.getEntityAnnotations()
 					.getClassAnnotations(slotSuperType);
 			if (candidates != null && !candidates.isEmpty()) {
 				int index = rand.nextInt(candidates.size());

@@ -11,11 +11,11 @@ import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.NERTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -32,7 +32,7 @@ import learning.Vector;
  */
 public class NERTemplate extends AbstractOBIETemplate<Scope> {
 
-	public NERTemplate(AbstractRunner runner) {
+	public NERTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -64,7 +64,7 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			factors.addAll(addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getThing()));
 		}
 		return factors;
@@ -115,10 +115,10 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 
 		Vector featureVector = factor.getFeatureVector();
 
-		if (!factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
+		if (!factor.getFactorScope().instance.getEntityAnnotations()
 				.containsClassAnnotations(factor.getFactorScope().classType))
 			return;
-		boolean foundByNER = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
+		boolean foundByNER = factor.getFactorScope().instance.getEntityAnnotations()
 				.getClassAnnotations(factor.getFactorScope().classType).stream()
 				.map(e -> e.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet())
 				.contains(factor.getFactorScope().surfaceForm);

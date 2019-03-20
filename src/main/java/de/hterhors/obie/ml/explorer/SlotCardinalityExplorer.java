@@ -26,7 +26,7 @@ import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 /**
  * Explore the slot cardinality. This explorer may adds a new empty object to a
@@ -121,12 +121,12 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 
 		List<OBIEState> proposalStates = new LinkedList<OBIEState>();
 
-		Collection<TemplateAnnotation> templateAnnotations = currentState.getCurrentTemplateAnnotations()
-				.getTemplateAnnotations();
+		Collection<IETmplateAnnotation> templateAnnotations = currentState.getCurrentIETemplateAnnotations()
+				.getAnnotations();
 
 	
 
-		for (TemplateAnnotation templateAnnotation : templateAnnotations) {
+		for (IETmplateAnnotation templateAnnotation : templateAnnotations) {
 			this.currentAnnotationID = templateAnnotation.getAnnotationID();
 
 			List<StateInstancePair> generatedStates = new ArrayList<>();
@@ -162,7 +162,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 		if (parentTemplate == null)
 			return;
 
-		List<Field> slots = ReflectionUtils.getSlots(parentTemplate.getClass(),
+		List<Field> slots = ReflectionUtils.getFields(parentTemplate.getClass(),
 				parentTemplate.getInvestigationRestriction());
 
 		/*
@@ -267,7 +267,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 						continue;
 
 					OBIEState generatedState = new OBIEState(this.currentState);
-					generatedState.getCurrentTemplateAnnotations().getEntity(this.currentAnnotationID)
+					generatedState.getCurrentIETemplateAnnotations().getEntity(this.currentAnnotationID)
 							.update(clonedBaseClass);
 
 					generatedState.removeRecUsedPreFilledTemplate(currentSlotFillerList.get(i));
@@ -415,7 +415,7 @@ public class SlotCardinalityExplorer extends AbstractOBIEExplorer {
 					// generatedClasses.add(clonedBaseClass);
 
 					OBIEState generatedState = new OBIEState(this.currentState);
-					generatedState.getCurrentTemplateAnnotations().getEntity(this.currentAnnotationID)
+					generatedState.getCurrentIETemplateAnnotations().getEntity(this.currentAnnotationID)
 							.update(clonedBaseClass);
 
 					generatedState.addUsedPreFilledTemplate(candidateClass);

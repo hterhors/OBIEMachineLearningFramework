@@ -9,14 +9,14 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 
-public class TemplateAnnotation implements Serializable {
+public class IETmplateAnnotation implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public TemplateAnnotation(TemplateAnnotation e) {
+	public IETmplateAnnotation(IETmplateAnnotation e) {
 		this.rootClassType = e.rootClassType;
 		this.templateAnnotation = OBIEUtils.deepClone(e.templateAnnotation);
 		this.annotationID = e.annotationID;
@@ -48,7 +48,7 @@ public class TemplateAnnotation implements Serializable {
 
 	private static final AtomicLong annotationCounter = new AtomicLong();
 
-	public TemplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass
+	public IETmplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass
 //			,
 //			InvestigationRestriction investigationRestriction
 			) {
@@ -95,7 +95,7 @@ public class TemplateAnnotation implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		TemplateAnnotation other = (TemplateAnnotation) obj;
+		IETmplateAnnotation other = (IETmplateAnnotation) obj;
 		if (annotationID != other.annotationID)
 			return false;
 		if (initClass == null) {

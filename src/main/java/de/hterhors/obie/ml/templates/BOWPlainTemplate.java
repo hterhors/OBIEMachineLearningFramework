@@ -15,11 +15,11 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.BOWPlainTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -36,7 +36,7 @@ import learning.Vector;
  */
 public class BOWPlainTemplate extends AbstractOBIETemplate<Scope> implements Serializable {
 
-	public BOWPlainTemplate(AbstractRunner runner) {
+	public BOWPlainTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -65,7 +65,7 @@ public class BOWPlainTemplate extends AbstractOBIETemplate<Scope> implements Ser
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 

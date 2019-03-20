@@ -27,7 +27,7 @@ import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 /**
  * Calculates the maximum recall for a specific corpus. The recall is calculated
@@ -78,7 +78,7 @@ public class UpperBound {
 
 			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
 			maxRecallPredictions.forEach(m -> setRestrictionRec(m, parameter.defaultTestInvestigationRestriction));
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getAnnotations().stream()
 					.map(e -> (IOBIEThing) e.getThing()).collect(Collectors.toList());
 
 			System.out.println(gold);
@@ -87,11 +87,11 @@ public class UpperBound {
 			final PRF1 s = parameter.evaluator.prf1(gold, maxRecallPredictions);
 			log.info("score = " + s);
 
-			for (Class<? extends IOBIEThing> clazz : doc.getNamedEntityLinkingAnnotations().getAvailableClassTypes()) {
-				log.debug(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
+			for (Class<? extends IOBIEThing> clazz : doc.getEntityAnnotations().getAvailableClassTypes()) {
+				log.debug(doc.getEntityAnnotations().getClassAnnotations(clazz));
 			}
-			for (AbstractIndividual individual : doc.getNamedEntityLinkingAnnotations().getAvailableIndividualTypes()) {
-				log.debug(doc.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual));
+			for (AbstractIndividual individual : doc.getEntityAnnotations().getAvailableIndividualTypes()) {
+				log.debug(doc.getEntityAnnotations().getIndividualAnnotations(individual));
 			}
 
 			upperBound.add(s);
@@ -159,7 +159,7 @@ public class UpperBound {
 		final List<IOBIEThing> upperBoundPredictions = projectGoldToPredictions(doc);
 
 		log.info("______GoldAnnotations:______");
-		doc.getGoldAnnotation().getTemplateAnnotations()
+		doc.getGoldAnnotation().getAnnotations()
 				.forEach(s -> log.info(OBIEClassFormatter.format(s.getThing(), false)));
 		log.info("____________________________");
 		log.info("_________Predicted:_________");
@@ -189,12 +189,12 @@ public class UpperBound {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
 
-		List<TemplateAnnotation> goldAn = new ArrayList<>(goldInstance.getGoldAnnotation().getTemplateAnnotations());
+		List<IETmplateAnnotation> goldAn = new ArrayList<>(goldInstance.getGoldAnnotation().getAnnotations());
 		Collections.shuffle(goldAn);
 
 		int counter = 0;
 		boolean maxIsReached;
-		for (TemplateAnnotation goldAnnotation : goldAn) {
+		for (IETmplateAnnotation goldAnnotation : goldAn) {
 
 			maxIsReached = ++counter == MAX_CARDINALITY;
 			try {
@@ -209,7 +209,7 @@ public class UpperBound {
 				} else {
 					predictionModel = newClassWithIndividual(goldModel.getClass(), goldModel.getIndividual());
 
-					addRecursivly(goldModel, predictionModel, goldInstance.getNamedEntityLinkingAnnotations());
+					addRecursivly(goldModel, predictionModel, goldInstance.getEntityAnnotations());
 				}
 
 				if (predictionModel != null)
@@ -228,11 +228,11 @@ public class UpperBound {
 	private IOBIEThing projectDataTypeClass(OBIEInstance goldInstance, IOBIEThing goldModel, IOBIEThing predictionModel)
 			throws InstantiationException, IllegalAccessException {
 
-		if (goldInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(goldModel.getClass())) {
+		if (goldInstance.getEntityAnnotations().containsClassAnnotations(goldModel.getClass())) {
 
 			NERLClassAnnotation value = null;
 
-			for (NERLClassAnnotation mentionAnnotation : goldInstance.getNamedEntityLinkingAnnotations()
+			for (NERLClassAnnotation mentionAnnotation : goldInstance.getEntityAnnotations()
 					.getClassAnnotations(goldModel.getClass())) {
 				if (mentionAnnotation.getDTValueIfAnyElseTextMention()
 						.equals(((IDatatype) goldModel).getInterpretedValue())) {
@@ -258,7 +258,7 @@ public class UpperBound {
 		/*
 		 * Add factors for object type properties.
 		 */
-		List<Field> slots = ReflectionUtils.getSlots(goldModel.getClass(), goldModel.getInvestigationRestriction());
+		List<Field> slots = ReflectionUtils.getFields(goldModel.getClass(), goldModel.getInvestigationRestriction());
 
 		for (Field slot : slots) {
 			try {

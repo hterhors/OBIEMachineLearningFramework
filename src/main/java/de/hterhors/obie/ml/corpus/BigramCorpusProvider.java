@@ -37,11 +37,11 @@ import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance.EInstanceType;
 import learning.Trainer;
 
@@ -168,16 +168,16 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			final long tc = (System.currentTimeMillis() - t);
 
-			log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations()
+			log.info("Found " + internalInstance.getEntityAnnotations().numberOfTotalAnnotations()
 					+ " in instance: " + internalInstance.getName() + " in " + tc + " ms.");
 
 			if (log.isDebugEnabled()) {
-				log.debug(internalInstance.getNamedEntityLinkingAnnotations());
+				log.debug(internalInstance.getEntityAnnotations());
 			}
 
 			timeConsumed.addAndGet(tc);
 			lengthConsumed.addAndGet(internalInstance.getContent().length());
-			countEntities.addAndGet(internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations());
+			countEntities.addAndGet(internalInstance.getEntityAnnotations().numberOfTotalAnnotations());
 
 			final long estimedRemainignTime = (long) (((totalLength.doubleValue() - (double) lengthConsumed.get())
 					/ (double) lengthConsumed.get()) * (double) timeConsumed.get());
@@ -215,8 +215,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	private void checkAnnotationConsistencies(final List<OBIEInstance> trainingDocuments) {
 		for (OBIEInstance internalInstance : trainingDocuments) {
-			for (TemplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
-					.getTemplateAnnotations()) {
+			for (IETmplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
+					.getAnnotations()) {
 				checkForTextualAnnotations(internalAnnotation.getThing(), internalInstance.getName(),
 						internalInstance.getContent());
 			}
@@ -284,24 +284,24 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			count += internalInstance.getTokens().size();
 
 			if (parameter.excludeEmptyInstancesFromCorpus
-					&& internalInstance.getGoldAnnotation().getTemplateAnnotations().isEmpty()) {
+					&& internalInstance.getGoldAnnotation().getAnnotations().isEmpty()) {
 				log.debug("No annotation data found!" + " Remove empty document " + internalInstance.getName()
 						+ " from corpus.");
 				it.remove();
 				continue;
 			}
 
-			if (internalInstance.getGoldAnnotation().getTemplateAnnotations()
+			if (internalInstance.getGoldAnnotation().getAnnotations()
 					.size() > parameter.maxNumberOfEntityElements) {
 				log.debug("Number of annotations = "
-						+ internalInstance.getGoldAnnotation().getTemplateAnnotations().size() + " exceeds limit of: "
+						+ internalInstance.getGoldAnnotation().getAnnotations().size() + " exceeds limit of: "
 						+ parameter.maxNumberOfEntityElements + "! Remove document " + internalInstance.getName()
 						+ " from corpus.");
 				it.remove();
 				continue;
 			}
 
-			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
+			for (IETmplateAnnotation annotation : internalInstance.getGoldAnnotation().getAnnotations()) {
 
 				if (!testLimitToAnnnotationElementsRecursively(annotation.getThing(),
 						parameter.maxNumberOfEntityElements, parameter.maxNumberOfDataTypeElements)) {
@@ -317,7 +317,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		log.info("Apply investigation restriction from parameter to gold data...");
 		for (Iterator<OBIEInstance> it = this.allExistingInternalInstances.iterator(); it.hasNext();) {
-			for (TemplateAnnotation annotation : it.next().getGoldAnnotation().getTemplateAnnotations()) {
+			for (IETmplateAnnotation annotation : it.next().getGoldAnnotation().getAnnotations()) {
 				setRestrictionRec(annotation.getThing(), parameter.defaultTestInvestigationRestriction);
 			}
 		}
@@ -425,7 +425,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 				Objects.requireNonNull(a);
 
-				internalAnnotation.addAnnotation(new TemplateAnnotation(annotations.getKey(), a));
+				internalAnnotation.addAnnotation(new IETmplateAnnotation(annotations.getKey(), a));
 
 			}
 		}
@@ -582,7 +582,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public List<OBIEInstance> updateActiveLearning(AbstractRunner runner, IActiveLearningDocumentRanker ranker) {
+	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker ranker) {
 
 		if (!(distributer instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException("Configuration does not support active learning validation: "
@@ -599,10 +599,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			final List<OBIEInstance> trainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
 
 			Level trainerLevel = LogManager.getFormatterLogger(Trainer.class.getName()).getLevel();
-			Level runnerLevel = LogManager.getFormatterLogger(AbstractRunner.class).getLevel();
+			Level runnerLevel = LogManager.getFormatterLogger(AbstractOBIERunner.class).getLevel();
 
 			Configurator.setLevel(Trainer.class.getName(), Level.FATAL);
-			Configurator.setLevel(AbstractRunner.class.getName(), Level.FATAL);
+			Configurator.setLevel(AbstractOBIERunner.class.getName(), Level.FATAL);
 
 			log.info("Rank remaining training instances (" + getDevelopCorpus().getInternalInstances().size()
 					+ ") using " + ranker.getClass().getSimpleName() + "...");
@@ -610,7 +610,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			log.info("done!");
 
 			Configurator.setLevel(Trainer.class.getName(), trainerLevel);
-			Configurator.setLevel(AbstractRunner.class.getName(), runnerLevel);
+			Configurator.setLevel(AbstractOBIERunner.class.getName(), runnerLevel);
 
 			List<OBIEInstance> newInstances;
 			List<OBIEInstance> remainingInstances;

@@ -23,6 +23,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
+import de.hterhors.obie.ml.evaluation.evaluator.StrictNamedEntityLinkingEvaluator;
 import de.hterhors.obie.ml.exceptions.NotSupportedException;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
@@ -60,9 +61,9 @@ import templates.AbstractTemplate;
 import templates.TemplateFactory;
 import variables.AbstractState;
 
-public abstract class AbstractRunner {
+public abstract class AbstractOBIERunner {
 
-	public static Logger log = LogManager.getFormatterLogger(AbstractRunner.class);
+	public static Logger log = LogManager.getFormatterLogger(AbstractOBIERunner.class);
 
 	/**
 	 * Final set of parameter that are shared across the system.
@@ -105,7 +106,7 @@ public abstract class AbstractRunner {
 
 	public DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler;
 
-	public AbstractRunner(RunParameter parameter) {
+	public AbstractOBIERunner(RunParameter parameter) {
 		log.info("Initialize OBIE runner...");
 		this.parameter = parameter;
 		log.debug("Parameter: " + this.parameter.toInfoString());
@@ -157,7 +158,6 @@ public abstract class AbstractRunner {
 		}
 
 	}
-
 
 	/**
 	 * Continues training for a given set of documents using the previous loaded or
@@ -335,8 +335,8 @@ public abstract class AbstractRunner {
 		 * 
 		 */
 		try {
-			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName()).getConstructor(AbstractRunner.class)
-					.newInstance(this);
+			t = (AbstractOBIETemplate<?>) Class.forName(abstractTemplate.getName())
+					.getConstructor(AbstractOBIERunner.class).newInstance(this);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -514,9 +514,9 @@ public abstract class AbstractRunner {
 					InstanceT instance, int indexOfInstance, StateT finalState, int numberOfInstances, int epoch,
 					int numberOfEpochs) {
 				final OBIEState state = (OBIEState) finalState;
-				List<IOBIEThing> predictions = state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+				List<IOBIEThing> predictions = state.getCurrentIETemplateAnnotations().getAnnotations().stream()
 						.map(s -> s.getThing()).collect(Collectors.toList());
-				List<IOBIEThing> gold = state.getInstance().getGoldAnnotation().getTemplateAnnotations().stream()
+				List<IOBIEThing> gold = state.getInstance().getGoldAnnotation().getAnnotations().stream()
 						.map(s -> s.getThing()).collect(Collectors.toList());
 
 				try {
@@ -592,6 +592,8 @@ public abstract class AbstractRunner {
 			try {
 				explorers.add(explorerType.getConstructor(RunParameter.class).newInstance(parameter));
 			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(1);
 			}
 		}
 
@@ -608,13 +610,17 @@ public abstract class AbstractRunner {
 		 * Final evaluation with Cartesian
 		 */
 		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
-				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality()
-//				,
-//				parameter.evaluator.getInvestigationRestrictions()
-				, parameter.evaluator.getMaxNumberOfAnnotations(),
+				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
+				parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
+		return EvaluatePrediction.evaluateSlotFillingPredictions(getObjectiveFunction(), predictions, evaluator);
+	}
 
-		return EvaluatePrediction.evaluateREPredictions(getObjectiveFunction(), predictions, evaluator);
+	public PRF1 evaluateNERLOnTest() throws Exception {
+		List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> predictions = testOnTest();
+
+		return EvaluatePrediction.evaluateEntityRecognitionPredictions(getObjectiveFunction(), predictions,
+				new StrictNamedEntityLinkingEvaluator());
 	}
 
 	public PRF1 evaluateOnTrain() throws Exception {
@@ -625,13 +631,11 @@ public abstract class AbstractRunner {
 		 * Final evaluation with Cartesian
 		 */
 		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
-				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality()
-//				,
-//				parameter.evaluator.getInvestigationRestrictions()
-				, parameter.evaluator.getMaxNumberOfAnnotations(),
+				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
+				parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
 
-		return EvaluatePrediction.evaluateREPredictions(getObjectiveFunction(), predictions, evaluator);
+		return EvaluatePrediction.evaluateSlotFillingPredictions(getObjectiveFunction(), predictions, evaluator);
 	}
 
 	public void evaluatePerSlotOnTest(boolean detailedOutput) throws Exception {

@@ -16,7 +16,7 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 /**
  * Explores the cardinality of the main template classes.
@@ -77,7 +77,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 		 */
 		for (Class<? extends IOBIEThing> rootTemplateType : rootClassTypes) {
 
-			final int size = previousState.getCurrentTemplateAnnotations().getTemplateAnnotations().size();
+			final int size = previousState.getCurrentIETemplateAnnotations().getAnnotations().size();
 
 			if (ReflectionUtils.isAnnotationPresent(rootTemplateType, DatatypeProperty.class)
 					&& size >= maxNumberOfDataTypeElements) {
@@ -93,25 +93,25 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 					 * TODO: Test this! Take restriction from gold if exists if not (as in
 					 * prediction) get the default of the state / instance.
 					 */
-					previousState.getInstance().getGoldAnnotation().getTemplateAnnotations().iterator().hasNext()
-							? previousState.getInstance().getGoldAnnotation().getTemplateAnnotations().iterator().next()
+					previousState.getInstance().getGoldAnnotation().getAnnotations().iterator().hasNext()
+							? previousState.getInstance().getGoldAnnotation().getAnnotations().iterator().next()
 									.getThing().getInvestigationRestriction()
 							: previousState.getDefaultInvestigationRestriction());
 
 			for (IOBIEThing candidateClass : candidates) {
 				final OBIEState generatedState = new OBIEState(previousState);
-				generatedState.getCurrentTemplateAnnotations()
-						.addAnnotation(new TemplateAnnotation(rootTemplateType, candidateClass));
+				generatedState.getCurrentIETemplateAnnotations()
+						.addAnnotation(new IETmplateAnnotation(rootTemplateType, candidateClass));
 				generatedStates.add(generatedState);
 
 			}
 
 		}
 
-		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentTemplateAnnotations()
-				.getTemplateAnnotations()) {
+		for (IETmplateAnnotation internalAnnotaton : previousState.getCurrentIETemplateAnnotations()
+				.getAnnotations()) {
 			final OBIEState generatedState = new OBIEState(previousState);
-			generatedState.getCurrentTemplateAnnotations().removeEntity(internalAnnotaton);
+			generatedState.getCurrentIETemplateAnnotations().removeEntity(internalAnnotaton);
 			generatedStates.add(generatedState);
 		}
 

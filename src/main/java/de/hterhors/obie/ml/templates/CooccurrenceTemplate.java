@@ -15,11 +15,11 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.CooccurrenceTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -46,7 +46,7 @@ import learning.Vector;
  */
 public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 
-	public CooccurrenceTemplate(AbstractRunner runner) {
+	public CooccurrenceTemplate(AbstractOBIERunner runner) {
 		super(runner);
 		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
@@ -113,7 +113,7 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 
@@ -317,8 +317,8 @@ public class CooccurrenceTemplate extends AbstractOBIETemplate<Scope> {
 			/*
 			 * If DV is enabled add all surface forms of that class.
 			 */
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(filler.getClass())) {
-				surfaceForms = internalInstance.getNamedEntityLinkingAnnotations()
+			if (internalInstance.getEntityAnnotations().containsClassAnnotations(filler.getClass())) {
+				surfaceForms = internalInstance.getEntityAnnotations()
 						.getClassAnnotations(filler.getClass()).stream()
 						.map(nera -> nera.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet());
 			} else {

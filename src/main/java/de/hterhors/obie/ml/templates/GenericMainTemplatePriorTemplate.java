@@ -13,10 +13,10 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.GenericMainTemplatePriorTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 
@@ -44,7 +44,7 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 
 	private static final String MAIN_INDIVIDUAL_IDENTIFIER = "main_individual";
 
-	public GenericMainTemplatePriorTemplate(AbstractRunner runner) {
+	public GenericMainTemplatePriorTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -71,7 +71,7 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 		 * In the lecture corpus there is only one soccer player per document!
 		 *
 		 */
-		for (TemplateAnnotation entityAnnotation : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entityAnnotation : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			IOBIEThing thing = entityAnnotation.getThing();
 
@@ -102,7 +102,7 @@ public class GenericMainTemplatePriorTemplate extends AbstractOBIETemplate<Scope
 			 * class contains any (important) sub classes.
 			 */
 
-			for (Field field : ReflectionUtils.getSlots(thing.getClass(), thing.getInvestigationRestriction())) {
+			for (Field field : ReflectionUtils.getFields(thing.getClass(), thing.getInvestigationRestriction())) {
 				try {
 					final String context = field.getName();
 

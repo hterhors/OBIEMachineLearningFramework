@@ -15,12 +15,12 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.InBetweenContextTemplate.PositionPairContainer;
 import de.hterhors.obie.ml.templates.LocalTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -51,7 +51,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	public LocalTemplate(AbstractRunner runner) {
+	public LocalTemplate(AbstractOBIERunner runner) {
 		super(runner);
 		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
@@ -94,7 +94,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			callRecursive(factors, state.getInstance(), entity.rootClassType, entity.getThing());
 		}
 
@@ -110,7 +110,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factor parent - child relation
 		 */
-		ReflectionUtils.getSlots(parent.getClass(),parent.getInvestigationRestriction()).forEach(field -> {
+		ReflectionUtils.getFields(parent.getClass(),parent.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing listObject : (List<IOBIEThing>) field.get(parent)) {
@@ -176,14 +176,14 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (enableDistantSupervision) {
 
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(parentIndividual)) {
+			if (internalInstance.getEntityAnnotations().containsIndividualAnnotations(parentIndividual)) {
 
-				Set<NERLIndividualAnnotation> parentNerls = internalInstance.getNamedEntityLinkingAnnotations()
+				Set<NERLIndividualAnnotation> parentNerls = internalInstance.getEntityAnnotations()
 						.getIndividualAnnotations(parentIndividual);
 
 				if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
 
-					Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+					Set<NERLClassAnnotation> childNerls = internalInstance.getEntityAnnotations()
 							.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
 					if (childNerls != null) {
 
@@ -219,7 +219,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 				} else {
 
-					Set<NERLIndividualAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+					Set<NERLIndividualAnnotation> childNerls = internalInstance.getEntityAnnotations()
 							.getIndividualAnnotations(childIndividual);
 
 					if (childNerls != null) {
@@ -261,7 +261,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 				 * In case the parent class has no individual take class annotations.
 				 */
 
-				Set<NERLClassAnnotation> parentNerls = internalInstance.getNamedEntityLinkingAnnotations()
+				Set<NERLClassAnnotation> parentNerls = internalInstance.getEntityAnnotations()
 						.getClassAnnotations(parentClass);
 
 				if (parentNerls == null)
@@ -269,7 +269,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 				if (ReflectionUtils.isAnnotationPresent(childClass, DatatypeProperty.class)) {
 
-					Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+					Set<NERLClassAnnotation> childNerls = internalInstance.getEntityAnnotations()
 							.getClassAnnotationsByTextMention(childClass, childSurfaceForm);
 					if (childNerls != null) {
 
@@ -307,7 +307,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 					if (childIndividual == null) {
 
-						Set<NERLClassAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+						Set<NERLClassAnnotation> childNerls = internalInstance.getEntityAnnotations()
 								.getClassAnnotations(childClass);
 
 						if (childNerls != null) {
@@ -345,7 +345,7 @@ public class LocalTemplate extends AbstractOBIETemplate<Scope> {
 
 					} else {
 
-						Set<NERLIndividualAnnotation> childNerls = internalInstance.getNamedEntityLinkingAnnotations()
+						Set<NERLIndividualAnnotation> childNerls = internalInstance.getEntityAnnotations()
 								.getIndividualAnnotations(childIndividual);
 
 						if (childNerls != null) {

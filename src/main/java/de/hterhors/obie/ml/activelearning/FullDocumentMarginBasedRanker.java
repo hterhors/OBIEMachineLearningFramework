@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 
@@ -18,9 +18,9 @@ public class FullDocumentMarginBasedRanker implements IActiveLearningDocumentRan
 
 	final Logger log = LogManager.getRootLogger();
 
-	final private AbstractRunner runner;
+	final private AbstractOBIERunner runner;
 
-	public FullDocumentMarginBasedRanker(AbstractRunner runner) {
+	public FullDocumentMarginBasedRanker(AbstractOBIERunner runner) {
 		this.runner = runner;
 	}
 

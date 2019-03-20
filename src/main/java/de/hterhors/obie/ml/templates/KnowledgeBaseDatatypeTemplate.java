@@ -15,11 +15,11 @@ import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.owlreader.RDFObject;
 import de.hterhors.obie.core.owlreader.TripleStoreDatabase;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.KnowledgeBaseDatatypeTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 
@@ -68,7 +68,7 @@ public class KnowledgeBaseDatatypeTemplate extends AbstractOBIETemplate<Scope> {
 
 	private final TripleStoreDatabase db;
 
-	public KnowledgeBaseDatatypeTemplate(AbstractRunner runner) {
+	public KnowledgeBaseDatatypeTemplate(AbstractOBIERunner runner) {
 		super(runner);
 
 		log.info("Read external knowledgebase into triple store...");
@@ -78,7 +78,7 @@ public class KnowledgeBaseDatatypeTemplate extends AbstractOBIETemplate<Scope> {
 
 			for (OBIEInstance obieInstance : runner.corpusProvider.getTestCorpus().getInternalInstances()) {
 
-				for (TemplateAnnotation ta : obieInstance.getGoldAnnotation().getTemplateAnnotations()) {
+				for (IETmplateAnnotation ta : obieInstance.getGoldAnnotation().getAnnotations()) {
 
 					IOBIEThing thing = ta.getThing();
 
@@ -86,7 +86,7 @@ public class KnowledgeBaseDatatypeTemplate extends AbstractOBIETemplate<Scope> {
 //							+ thing.getIndividual().nameSpace + thing.getIndividual().name + "> ?p ?o }").queryData;
 //					invertQ2Result1.forEach(System.out::println);
 
-					for (Field slot : ReflectionUtils.getSlots(thing.getClass(), thing.getInvestigationRestriction())) {
+					for (Field slot : ReflectionUtils.getFields(thing.getClass(), thing.getInvestigationRestriction())) {
 
 						List<IOBIEThing> fillers;
 						if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
@@ -157,7 +157,7 @@ public class KnowledgeBaseDatatypeTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 

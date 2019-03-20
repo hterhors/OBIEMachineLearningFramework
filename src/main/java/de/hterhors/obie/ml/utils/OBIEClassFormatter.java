@@ -55,7 +55,7 @@ public class OBIEClassFormatter {
 		sb.append("\n");
 		depth++;
 
-		List<Field> fields = ReflectionUtils.getSlots(c.getClass(), c.getInvestigationRestriction());
+		List<Field> fields = ReflectionUtils.getFields(c.getClass(), c.getInvestigationRestriction());
 
 		for (Field slot : fields) {
 

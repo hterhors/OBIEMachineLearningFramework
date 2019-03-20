@@ -3,7 +3,6 @@ package de.hterhors.obie.ml.evaluation.evaluator;
 import java.util.List;
 
 import de.hterhors.obie.core.evaluation.PRF1;
-import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
 

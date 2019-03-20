@@ -51,7 +51,7 @@ public class RandomBaseline {
 
 //			System.out.println("_____________" + doc.getName() + "_______________");
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream().map(e -> e.getThing())
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getAnnotations().stream().map(e -> e.getThing())
 					.collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictFillerByRandom(doc);
@@ -183,7 +183,7 @@ public class RandomBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass(),
+		final List<Field> fields = ReflectionUtils.getFields(predictionModel.getClass(),
 				parameter.defaultTestInvestigationRestriction);
 
 		for (Field slot : fields) {

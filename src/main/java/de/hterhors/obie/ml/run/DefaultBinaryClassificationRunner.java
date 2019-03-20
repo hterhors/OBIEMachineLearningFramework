@@ -18,7 +18,7 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class DefaultBinaryClassificationRunner extends AbstractRunner {
+public class DefaultBinaryClassificationRunner extends AbstractOBIERunner {
 
 	private final Random random;
 	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();

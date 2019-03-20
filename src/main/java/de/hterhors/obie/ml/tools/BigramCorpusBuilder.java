@@ -60,7 +60,7 @@ public class BigramCorpusBuilder {
 
 		}
 
-		if (!overrideCorpusFileIfExists) {
+		if (corpusFile.exists() && !overrideCorpusFileIfExists) {
 			log.warn("Do not override, discard corpus!");
 			return;
 		} else {

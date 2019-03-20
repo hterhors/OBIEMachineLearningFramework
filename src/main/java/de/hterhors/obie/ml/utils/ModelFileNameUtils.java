@@ -69,7 +69,7 @@ public class ModelFileNameUtils {
 
 		modelDir.append("bigram/models/").append("/development/")
 				.append(parameter.corpusDistributor.getDistributorID() + "/")
-				.append(clazzSetToString(parameter.rootSearchTypes)).append("/")
+//				.append(clazzSetToString(parameter.rootSearchTypes)).append("/")
 //				.append(restrictionsToString(parameter.defaultTrainInvestigationRestriction))
 				.append("/").append(parameter.runID)
 				.append("/");

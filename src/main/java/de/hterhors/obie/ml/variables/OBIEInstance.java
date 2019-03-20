@@ -206,7 +206,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		return this;
 	}
 
-	public NamedEntityLinkingAnnotations getNamedEntityLinkingAnnotations() {
+	public NamedEntityLinkingAnnotations getEntityAnnotations() {
 		return namedEntityLinkingAnnotations;
 	}
 

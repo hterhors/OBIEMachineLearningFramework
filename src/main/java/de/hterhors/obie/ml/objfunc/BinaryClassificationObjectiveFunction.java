@@ -30,9 +30,9 @@ public class BinaryClassificationObjectiveFunction extends ObjectiveFunction<OBI
 	@Override
 	public double computeScore(OBIEState state, InstanceTemplateAnnotations goldResult) {
 
-		List<AbstractIndividual> predictions = state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+		List<AbstractIndividual> predictions = state.getCurrentIETemplateAnnotations().getAnnotations().stream()
 				.map(s -> s.getThing().getIndividual()).collect(Collectors.toList());
-		List<AbstractIndividual> gold = goldResult.getTemplateAnnotations().stream()
+		List<AbstractIndividual> gold = goldResult.getAnnotations().stream()
 				.map(s -> s.getThing().getIndividual()).collect(Collectors.toList());
 
 		return predictions.equals(gold) ? 1D : 0D;

@@ -10,7 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.tools.baseline.RandomBaseline;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 
@@ -19,11 +19,11 @@ public class FullDocumentRandFillerRanker implements IActiveLearningDocumentRank
 	final Logger log = LogManager.getRootLogger();
 
 	final Random random;
-	final AbstractRunner runner;
+	final AbstractOBIERunner runner;
 
 	private final RandomBaseline randomFiller;
 
-	public FullDocumentRandFillerRanker(AbstractRunner runner) {
+	public FullDocumentRandFillerRanker(AbstractOBIERunner runner) {
 		random = new Random();
 		this.runner = runner;
 		this.randomFiller = new RandomBaseline(runner.getParameter(), random.nextLong());
@@ -43,7 +43,7 @@ public class FullDocumentRandFillerRanker implements IActiveLearningDocumentRank
 			for (int i = 0; i < 10; i++) {
 				score.add(
 						runner.getParameter().evaluator.prf1(
-								obieInstance.getGoldAnnotation().getTemplateAnnotations().stream()
+								obieInstance.getGoldAnnotation().getAnnotations().stream()
 										.map(f -> f.getThing()).collect(Collectors.toList()),
 								this.randomFiller.predictFillerByRandom(obieInstance)));
 			}

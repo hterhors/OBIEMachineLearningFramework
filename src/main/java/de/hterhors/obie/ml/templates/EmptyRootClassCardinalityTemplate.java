@@ -10,10 +10,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.EmptyRootClassCardinalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -25,7 +25,7 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public EmptyRootClassCardinalityTemplate(AbstractRunner runner) {
+	public EmptyRootClassCardinalityTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -50,7 +50,7 @@ public class EmptyRootClassCardinalityTemplate extends AbstractOBIETemplate<Scop
 
 		final Map<Class<? extends IOBIEThing>, Integer> countEmptyClasses = new HashMap<>();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			if (entity.getThing().equals(entity.getInitializationThing())) {
 				countEmptyClasses.put(entity.rootClassType,
 						countEmptyClasses.getOrDefault(entity.rootClassType, 0) + 1);

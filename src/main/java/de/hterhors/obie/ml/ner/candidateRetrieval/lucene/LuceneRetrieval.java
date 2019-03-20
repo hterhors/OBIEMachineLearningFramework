@@ -28,7 +28,6 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
-import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.candidateRetrieval.AbstractCandidateRetrieval;
 import de.hterhors.obie.ml.ner.candidateRetrieval.RetrievalCandidate;
@@ -42,7 +41,7 @@ public class LuceneRetrieval extends AbstractCandidateRetrieval {
 
 	private RAMDirectory indexDir;
 
-	private Map<Integer, AbstractIndividual> luceneObjectMapping = new HashMap<>();
+	private Map<Integer, String> luceneObjectMapping = new HashMap<>();
 
 	private Map<String, List<RetrievalCandidate>> cache = new ConcurrentHashMap<>();
 	private final QueryParser parser;
@@ -63,13 +62,13 @@ public class LuceneRetrieval extends AbstractCandidateRetrieval {
 
 			int index = 0;
 
-			for (Entry<AbstractIndividual, Set<DictionaryEntry>> entry : dictionary.getEntries().entrySet()) {
+			for (Entry<String, Set<DictionaryEntry>> entry : dictionary.getEntries().entrySet()) {
 				add(indexWriter, index, entry);
 				index++;
 			}
 
 			for (IDictionary subDict : dictionary.getSubDictionaries()) {
-				for (Entry<AbstractIndividual, Set<DictionaryEntry>> entry : subDict.getEntries().entrySet()) {
+				for (Entry<String, Set<DictionaryEntry>> entry : subDict.getEntries().entrySet()) {
 					add(indexWriter, index, entry);
 					index++;
 				}
@@ -84,8 +83,7 @@ public class LuceneRetrieval extends AbstractCandidateRetrieval {
 		parser = new QueryParser(Version.LUCENE_46, "surfaceForm", new StandardAnalyzer(Version.LUCENE_46));
 	}
 
-	private void add(IndexWriter indexWriter, int index, Entry<AbstractIndividual, Set<DictionaryEntry>> entry)
-			throws IOException {
+	private void add(IndexWriter indexWriter, int index, Entry<String, Set<DictionaryEntry>> entry) throws IOException {
 		luceneObjectMapping.put(index, entry.getKey());
 
 		for (DictionaryEntry concept : entry.getValue()) {

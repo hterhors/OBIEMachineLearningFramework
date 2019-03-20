@@ -21,10 +21,10 @@ import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.owlreader.RDFObject;
 import de.hterhors.obie.core.owlreader.TripleStoreDatabase;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -76,7 +76,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 
 	private TripleStoreDatabase db;
 
-	public KnowledgeBaseTemplate(AbstractRunner runner) {
+	public KnowledgeBaseTemplate(AbstractOBIERunner runner) {
 		super(runner);
 
 		readExternal(runner);
@@ -84,18 +84,18 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 
 	}
 
-	private void readTrainingData(AbstractRunner runner) {
+	private void readTrainingData(AbstractOBIERunner runner) {
 		db = new TripleStoreDatabase();
 
 		try {
 
 			for (OBIEInstance obieInstance : runner.corpusProvider.getTrainingCorpus().getInternalInstances()) {
 
-				for (TemplateAnnotation ta : obieInstance.getGoldAnnotation().getTemplateAnnotations()) {
+				for (IETmplateAnnotation ta : obieInstance.getGoldAnnotation().getAnnotations()) {
 
 					IOBIEThing thing = ta.getThing();
 
-					for (Field slot : ReflectionUtils.getSlots(thing.getClass(), thing.getInvestigationRestriction())) {
+					for (Field slot : ReflectionUtils.getFields(thing.getClass(), thing.getInvestigationRestriction())) {
 
 						List<IOBIEThing> fillers;
 						if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
@@ -123,7 +123,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 		}
 	}
 
-	private void readExternal(AbstractRunner runner) {
+	private void readExternal(AbstractOBIERunner runner) {
 		log.info("Read external knowledgebase into triple store...");
 		db = new TripleStoreDatabase(new File("/home/hterhors/git/OBIECore/ontology_properties_en.ttl"));
 //		db = new TripleStoreDatabase(new File("/home/hterhors/git/OBIECore/knowledgebase_complete.ttl"));
@@ -131,7 +131,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 
 			for (OBIEInstance obieInstance : runner.corpusProvider.getFullCorpus().getInternalInstances()) {
 
-				for (TemplateAnnotation ta : obieInstance.getGoldAnnotation().getTemplateAnnotations()) {
+				for (IETmplateAnnotation ta : obieInstance.getGoldAnnotation().getAnnotations()) {
 
 					IOBIEThing thing = ta.getThing();
 
@@ -139,7 +139,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 //							+ thing.getIndividual().getURI() + thing.getIndividual().name + "> ?p ?o }").queryData;
 //					invertQ2Result1.forEach(System.out::println);
 
-					for (Field slot : ReflectionUtils.getSlots(thing.getClass(), thing.getInvestigationRestriction())) {
+					for (Field slot : ReflectionUtils.getFields(thing.getClass(), thing.getInvestigationRestriction())) {
 
 						List<IOBIEThing> fillers;
 						if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
@@ -242,7 +242,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 	@Override
 	public List<FactorScope> generateFactorScopes(OBIEState state) {
 		List<FactorScope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 
@@ -270,7 +270,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 		 * For every distinct slot pair do: for every distinct slotValue pair do: add
 		 * factor
 		 */
-		final List<Field> slots = ReflectionUtils.getSlots(parentThing.getClass(),
+		final List<Field> slots = ReflectionUtils.getFields(parentThing.getClass(),
 				parentThing.getInvestigationRestriction());
 
 		final AbstractIndividual parentIndividual = parentThing.getIndividual();
@@ -320,7 +320,7 @@ public class KnowledgeBaseTemplate extends AbstractOBIETemplate<FactorScope> {
 				for (int j = i + 1; j < slots.size(); j++) {
 
 					final Field slot2 = ReflectionUtils
-							.getSlots(parentThing.getClass(), parentThing.getInvestigationRestriction()).get(j);
+							.getFields(parentThing.getClass(), parentThing.getInvestigationRestriction()).get(j);
 
 					if (ReflectionUtils.isAnnotationPresent(slot2, DatatypeProperty.class))
 						continue;

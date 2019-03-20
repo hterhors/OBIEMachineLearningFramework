@@ -18,10 +18,10 @@ import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.MainSlotVarietyTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -41,7 +41,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public MainSlotVarietyTemplate(AbstractRunner runner) {
+	public MainSlotVarietyTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -119,7 +119,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		 * If there is only one rootClass (e.g. OrganismModel) the entry of the map for
 		 * that class should be equal to state.getPredictedResult.getEntities().size();
 		 */
-		state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().forEach(a -> {
+		state.getCurrentIETemplateAnnotations().getAnnotations().stream().forEach(a -> {
 
 			countRootClasses.put(a.getThing().getClass(),
 					1 + countRootClasses.getOrDefault(a.getThing().getClass(), 0));
@@ -137,7 +137,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			childrenOfEntities.put(ec.getKey(), new HashSet[ec.getValue()]);
 		}
 
-		for (TemplateAnnotation annotation : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation annotation : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			final IOBIEThing entityScioClass = annotation.getThing();
 
@@ -150,7 +150,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			/*
 			 * Add factors for object type properties.
 			 */
-			ReflectionUtils.getSlots(entityScioClass.getClass(),entityScioClass.getInvestigationRestriction()).stream().forEach(field -> {
+			ReflectionUtils.getFields(entityScioClass.getClass(),entityScioClass.getInvestigationRestriction()).stream().forEach(field -> {
 						try {
 							if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 								for (IOBIEThing element : (List<IOBIEThing>) field.get(entityScioClass)) {

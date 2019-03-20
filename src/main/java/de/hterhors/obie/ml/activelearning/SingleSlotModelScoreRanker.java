@@ -13,7 +13,7 @@ import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.InvestigationRestriction.RestrictedField;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.AbstractOBIEExplorer;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.run.DefaultSlotFillingRunner;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
@@ -25,9 +25,9 @@ public class SingleSlotModelScoreRanker implements IActiveLearningDocumentRanker
 	RunParameter parameter;
 
 	private final Set<InvestigationRestriction> restrictions = new HashSet<>();
-	private AbstractRunner runner;
+	private AbstractOBIERunner runner;
 
-	public SingleSlotModelScoreRanker(AbstractRunner runner) {
+	public SingleSlotModelScoreRanker(AbstractOBIERunner runner) {
 		// clone
 		this.parameter = runner.getParameter();
 		this.runner = new DefaultSlotFillingRunner(parameter);

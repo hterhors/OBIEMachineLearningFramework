@@ -15,17 +15,15 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.AbstractOntologyEnvironment;
-import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.InvestigationRestriction;
-import de.hterhors.obie.core.ontology.OntologyInitializer;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.projects.AbstractProjectEnvironment;
 import de.hterhors.obie.core.utils.ToStringFormatter;
 import de.hterhors.obie.ml.corpus.distributor.AbstractCorpusDistributor;
+import de.hterhors.obie.ml.corpus.distributor.OriginalCorpusDistributor;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.explorer.AbstractOBIEExplorer;
 import de.hterhors.obie.ml.explorer.IExplorationCondition;
@@ -35,6 +33,7 @@ import de.hterhors.obie.ml.templates.AbstractOBIETemplate;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.optimizer.Optimizer;
 import learning.optimizer.SGD;
+import learning.regularizer.L2;
 import learning.regularizer.Regularizer;
 import libsvm.svm_parameter;
 import sampling.samplingstrategies.AcceptStrategies;
@@ -357,9 +356,9 @@ public class RunParameter implements Serializable {
 			}
 		}
 
-		if (rootSearchTypes.size() > 1) {
-			throw new IllegalStateException("System does not support multiple root search types: " + rootSearchTypes);
-		}
+//		if (rootSearchTypes.size() > 1) {
+//			throw new IllegalStateException("System does not support multiple root search types: " + rootSearchTypes);
+//		}
 
 		Objects.requireNonNull(projectEnvironment.getCorpusPrefix());
 		Objects.requireNonNull(numberOfInitializedObjects);
@@ -574,7 +573,7 @@ public class RunParameter implements Serializable {
 
 		private int maxNumberOfSamplingSteps = 100;
 
-		private Regularizer regularizer = null;
+		private Regularizer regularizer = new L2(0.01);
 
 		private boolean multiThreading = true;
 

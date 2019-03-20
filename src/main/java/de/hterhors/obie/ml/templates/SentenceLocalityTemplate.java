@@ -15,11 +15,11 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.SentenceLocalityTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -55,7 +55,7 @@ import learning.Vector;
  */
 public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public SentenceLocalityTemplate(AbstractRunner runner) {
+	public SentenceLocalityTemplate(AbstractOBIERunner runner) {
 		super(runner);
 		// TODO Auto-generated constructor stub
 	}
@@ -99,7 +99,7 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing());
 		}
 		return factors;
@@ -155,7 +155,7 @@ public class SentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 	 *         ontology instance.
 	 */
 	private List<IOBIEThing> collectValuesFromFields(final IOBIEThing ontologyInstance) {
-		return ReflectionUtils.getSlots(ontologyInstance.getClass(),ontologyInstance.getInvestigationRestriction()).stream().map(f -> {
+		return ReflectionUtils.getFields(ontologyInstance.getClass(),ontologyInstance.getInvestigationRestriction()).stream().map(f -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(f, RelationTypeCollection.class)) {
 					/**

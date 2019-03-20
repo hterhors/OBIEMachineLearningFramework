@@ -12,7 +12,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 
 import corpus.SampledInstance;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -22,9 +22,9 @@ import sampling.Explorer;
 public class FullDocumentVarianceRanker implements IActiveLearningDocumentRanker {
 
 	final Logger log = LogManager.getRootLogger();
-	final private AbstractRunner runner;
+	final private AbstractOBIERunner runner;
 
-	public FullDocumentVarianceRanker(AbstractRunner runner) {
+	public FullDocumentVarianceRanker(AbstractOBIERunner runner) {
 		this.runner = runner;
 	}
 

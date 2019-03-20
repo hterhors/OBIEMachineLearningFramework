@@ -17,16 +17,14 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class DefaultNERLRunner extends AbstractRunner {
+public class DefaultEntityRecognitionRunner extends AbstractOBIERunner {
 
 	private final Random random;
 	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();
 
-	public DefaultNERLRunner(RunParameter parameter) {
+	public DefaultEntityRecognitionRunner(RunParameter parameter) {
 		super(parameter);
-		/*
-		 * SCIONERRunner TODO: parameterize ?
-		 */
+
 		this.random = new Random(100L);
 		for (int epoch = 1; epoch <= parameter.epochs; epoch++) {
 			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
@@ -66,17 +64,33 @@ public class DefaultNERLRunner extends AbstractRunner {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {
-							if (epochsTrainedWithObjective.contains(epoch)) {
-								log.info("Use Objective Score for sampling...");
-								trainWithObjective = true;
-								sampler.setTrainSamplingStrategy(RunParameter.linearTrainSamplingStrategyObjectiveScore);
+							trainWithObjective = epochsTrainedWithObjective.contains(epoch);
+							sampleGreedy = true;// epochsTrainedGreedily.contains(epoch);
+
+							if (trainWithObjective) {
+								if (sampleGreedy) {
+									log.info("Use objective score and greedy sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.greedyTrainSamplingStrategyObjectiveScore);
+								} else {
+									log.info("Use objective score and probability sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.linearTrainSamplingStrategyObjectiveScore);
+								}
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyObjectiveScore);
 							} else {
-								trainWithObjective = false;
-								log.info("Use Model Score for sampling...");
-								sampler.setTrainSamplingStrategy(RunParameter.linearTrainSamplingStrategyModelScore);
+								if (sampleGreedy) {
+									log.info("Use model score and greedy sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.greedyTrainSamplingStrategyModelScore);
+								} else {
+									log.info("Use model score and probability sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.linearTrainSamplingStrategyModelScore);
+								}
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 							}
+
 						} catch (Exception e) {
 							e.printStackTrace();
 						}

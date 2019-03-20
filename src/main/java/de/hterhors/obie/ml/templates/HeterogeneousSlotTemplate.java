@@ -15,10 +15,10 @@ import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.HeterogeneousSlotTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -34,7 +34,7 @@ import learning.Vector;
  */
 public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 
-	public HeterogeneousSlotTemplate(AbstractRunner runner) {
+	public HeterogeneousSlotTemplate(AbstractOBIERunner runner) {
 		super(runner);
 	}
 
@@ -74,19 +74,19 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		Map<Class<? extends IOBIEThing>, List<TemplateAnnotation>> groupedBy = new HashMap<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		Map<Class<? extends IOBIEThing>, List<IETmplateAnnotation>> groupedBy = new HashMap<>();
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			groupedBy.putIfAbsent(entity.rootClassType, new ArrayList<>());
 			groupedBy.get(entity.rootClassType).add(entity);
 
 		}
-		for (Entry<Class<? extends IOBIEThing>, List<TemplateAnnotation>> entities : groupedBy.entrySet()) {
+		for (Entry<Class<? extends IOBIEThing>, List<IETmplateAnnotation>> entities : groupedBy.entrySet()) {
 			factors.addAll(addFactor(entities.getKey(), entities.getValue()));
 		}
 		return factors;
 	}
 
-	private List<Scope> addFactor(Class<? extends IOBIEThing> entityRootClassType, List<TemplateAnnotation> list) {
+	private List<Scope> addFactor(Class<? extends IOBIEThing> entityRootClassType, List<IETmplateAnnotation> list) {
 		List<Scope> factors = new ArrayList<>();
 
 		if (list.isEmpty())
@@ -94,7 +94,7 @@ public class HeterogeneousSlotTemplate extends AbstractOBIETemplate<Scope> {
 
 		Map<Class<? extends IOBIEThing>, Map<String, Integer>> countBy = new HashMap<>();
 
-		for (TemplateAnnotation ann : list) {
+		for (IETmplateAnnotation ann : list) {
 			countBy.putIfAbsent(ann.getThing().getClass(), new HashMap<>());
 			if (ReflectionUtils.isAnnotationPresent(ann.getThing().getClass(), DatatypeProperty.class)) {
 				final String text = ((IDatatype) ann.getThing()).getInterpretedValue();

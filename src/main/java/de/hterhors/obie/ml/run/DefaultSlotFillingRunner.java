@@ -19,7 +19,7 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class DefaultSlotFillingRunner extends AbstractRunner {
+public class DefaultSlotFillingRunner extends AbstractOBIERunner {
 
 	private final Random random;
 	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();

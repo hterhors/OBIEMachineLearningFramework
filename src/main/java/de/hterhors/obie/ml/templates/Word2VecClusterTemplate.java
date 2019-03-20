@@ -20,11 +20,11 @@ import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.Word2VecClusterTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -35,7 +35,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 
 	final private Map<String, List<Integer>> clusters = new HashMap<>();
 
-	public Word2VecClusterTemplate(AbstractRunner runner) {
+	public Word2VecClusterTemplate(AbstractOBIERunner runner) {
 		super(runner);
 		try {
 			BufferedReader br = new BufferedReader(
@@ -86,7 +86,7 @@ public class Word2VecClusterTemplate extends AbstractOBIETemplate<Scope> {
 		List<Scope> factors = new ArrayList<>();
 		state.getInstance().getTokens();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
 		}
 		return factors;

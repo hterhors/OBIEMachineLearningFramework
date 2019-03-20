@@ -15,11 +15,11 @@ import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.TokenContextTemplate.Scope;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -43,7 +43,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private final boolean enableDistantSupervision;
 
-	public TokenContextTemplate(AbstractRunner runner) {
+	public TokenContextTemplate(AbstractOBIERunner runner) {
 		super(runner);
 		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
@@ -119,7 +119,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactorRecursive(factors, state.getInstance().getInstance(), entity.rootClassType, entity.getThing());
 		}
 		return factors;
@@ -138,7 +138,7 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getSlots(obieThing.getClass(), obieThing.getInvestigationRestriction()).forEach(field -> {
+		ReflectionUtils.getFields(obieThing.getClass(), obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
@@ -158,8 +158,8 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 		Set<PositionContainer> positions = new HashSet<>();
 
 		if (enableDistantSupervision) {
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(obieClass)) {
-				for (NERLClassAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
+			if (internalInstance.getEntityAnnotations().containsClassAnnotations(obieClass)) {
+				for (NERLClassAnnotation nera : internalInstance.getEntityAnnotations()
 						.getClassAnnotations(obieClass)) {
 					try {
 					positions.add(new PositionContainer(ReflectionUtils.simpleName(nera.classType),
@@ -173,8 +173,8 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 					}
 				}
 			}
-			if (internalInstance.getNamedEntityLinkingAnnotations().containsIndividualAnnotations(individual)) {
-				for (NERLIndividualAnnotation nera : internalInstance.getNamedEntityLinkingAnnotations()
+			if (internalInstance.getEntityAnnotations().containsIndividualAnnotations(individual)) {
+				for (NERLIndividualAnnotation nera : internalInstance.getEntityAnnotations()
 						.getIndividualAnnotations(individual)) {
 					try {
 

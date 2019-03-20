@@ -22,7 +22,7 @@ import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 /**
  * 
@@ -48,7 +48,7 @@ public class HighFrequencyBaseline {
 
 //			System.out.println(doc.getName());
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream().map(e -> e.getThing())
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getAnnotations().stream().map(e -> e.getThing())
 					.collect(Collectors.toList());
 
 			List<IOBIEThing> predictions = predictFillerByFrequency(doc);
@@ -140,7 +140,7 @@ public class HighFrequencyBaseline {
 		int randomNumberOfRootSlotTemplates = param.numberOfInitializedObjects.number(instance);// getRandomIndexBetween(1,
 																								// 1);
 
-		for (TemplateAnnotation goldAnnotation : instance.getGoldAnnotation().getTemplateAnnotations()) {
+		for (IETmplateAnnotation goldAnnotation : instance.getGoldAnnotation().getAnnotations()) {
 			IOBIEThing goldClass = (IOBIEThing) goldAnnotation.getThing();
 			IOBIEThing predictionClass = null;
 			try {
@@ -190,7 +190,7 @@ public class HighFrequencyBaseline {
 		/*
 		 * Add factors for object type properties.
 		 */
-		final List<Field> fields = ReflectionUtils.getSlots(predictionModel.getClass(),
+		final List<Field> fields = ReflectionUtils.getFields(predictionModel.getClass(),
 				param.defaultTestInvestigationRestriction);
 
 		for (Field slot : fields) {
