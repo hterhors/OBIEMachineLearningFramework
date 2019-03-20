@@ -68,8 +68,7 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 
 		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
 
-			factors.addAll(
-					addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
+			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
 
 		}
 		return factors;
@@ -81,12 +80,15 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 		if (scioClass == null)
 			return Collections.emptyList();
 
+		if (scioClass.getIndividual() == null)
+			return Collections.emptyList();
+
 		if (ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
 			return Collections.emptyList();
 
 		List<Scope> factors = new ArrayList<>();
 
-		final String className = scioClass.getClass().getSimpleName();
+		final String className = scioClass.getIndividual().name;
 
 		factors.add(new Scope(entityRootClassType, this, instance, className));
 		/*

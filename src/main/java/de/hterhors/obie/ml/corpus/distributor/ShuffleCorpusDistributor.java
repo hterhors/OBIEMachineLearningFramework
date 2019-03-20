@@ -215,8 +215,9 @@ public class ShuffleCorpusDistributor extends AbstractCorpusDistributor {
 
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
-				testDocuments.addAll(corpusProvider.allExistingInternalInstances.subList(
-						numberForTraining + numberForDevelopment, corpusProvider.allExistingInternalInstances.size()));
+				testDocuments.addAll(
+						corpusProvider.allExistingInternalInstances.subList(numberForTraining + numberForDevelopment,
+								numberForTraining + numberForDevelopment + numberForTest));
 				return this;
 			}
 		};
