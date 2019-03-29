@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.SampledInstance;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -22,9 +22,9 @@ public class FullDocumentLengthRanker implements IActiveLearningDocumentRanker {
 	final Logger log = LogManager.getRootLogger();
 
 	final Random random;
-	final AbstractRunner runner;
+	final AbstractOBIERunner runner;
 
-	public FullDocumentLengthRanker(AbstractRunner runner) {
+	public FullDocumentLengthRanker(AbstractOBIERunner runner) {
 		random = new Random();
 //		random = ((ActiveLearningDistributor) runner.getParameter().corpusDistributor).random;
 		this.runner = runner;

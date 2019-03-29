@@ -15,12 +15,12 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.LocalityTemplate.Scope;
 import de.hterhors.obie.ml.templates.utils.ClassTypePositionPair;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -33,8 +33,8 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public LocalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public LocalityTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(LocalityTemplate.class.getName());
@@ -61,7 +61,7 @@ public class LocalityTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			try {
 				factors.addAll(
 						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));

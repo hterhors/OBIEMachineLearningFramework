@@ -4,22 +4,24 @@ import java.io.Serializable;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
 
-public class TemplateAnnotation implements Serializable {
+public class IETmplateAnnotation implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public TemplateAnnotation(TemplateAnnotation e) {
+	public IETmplateAnnotation(IETmplateAnnotation e) {
 		this.rootClassType = e.rootClassType;
 		this.templateAnnotation = OBIEUtils.deepClone(e.templateAnnotation);
 		this.annotationID = e.annotationID;
 		this.initClass = e.initClass;
+//		this.investigationRestriction = e.investigationRestriction;
 	}
 
 	/**
@@ -33,6 +35,8 @@ public class TemplateAnnotation implements Serializable {
 
 	final long annotationID;
 
+//	private InvestigationRestriction investigationRestriction;
+
 	public IOBIEThing getInitializationThing() {
 		return initClass;
 	}
@@ -44,15 +48,22 @@ public class TemplateAnnotation implements Serializable {
 
 	private static final AtomicLong annotationCounter = new AtomicLong();
 
-	public TemplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass) {
+	public IETmplateAnnotation(Class<? extends IOBIEThing> rootClassType, IOBIEThing obieClass
+//			,
+//			InvestigationRestriction investigationRestriction
+			) {
 		this.rootClassType = rootClassType;
 		this.templateAnnotation = obieClass;
 		this.annotationID = annotationCounter.addAndGet(1);
 		this.initClass = OBIEUtils.deepClone(obieClass);
+//		this.investigationRestriction = investigationRestriction;
 
 	}
 
 	public void update(IOBIEThing templateAnnotation) {
+		/**
+		 * TODO: do we need to update the investigationRestriction as well?
+		 */
 		this.templateAnnotation = templateAnnotation;
 	}
 
@@ -70,6 +81,7 @@ public class TemplateAnnotation implements Serializable {
 		int result = 1;
 		result = prime * result + (int) (annotationID ^ (annotationID >>> 32));
 		result = prime * result + ((initClass == null) ? 0 : initClass.hashCode());
+//		result = prime * result + ((investigationRestriction == null) ? 0 : investigationRestriction.hashCode());
 		result = prime * result + ((rootClassType == null) ? 0 : rootClassType.hashCode());
 		result = prime * result + ((templateAnnotation == null) ? 0 : templateAnnotation.hashCode());
 		return result;
@@ -83,7 +95,7 @@ public class TemplateAnnotation implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		TemplateAnnotation other = (TemplateAnnotation) obj;
+		IETmplateAnnotation other = (IETmplateAnnotation) obj;
 		if (annotationID != other.annotationID)
 			return false;
 		if (initClass == null) {
@@ -91,6 +103,11 @@ public class TemplateAnnotation implements Serializable {
 				return false;
 		} else if (!initClass.equals(other.initClass))
 			return false;
+//		if (investigationRestriction == null) {
+//			if (other.investigationRestriction != null)
+//				return false;
+//		} else if (!investigationRestriction.equals(other.investigationRestriction))
+//			return false;
 		if (rootClassType == null) {
 			if (other.rootClassType != null)
 				return false;
@@ -108,5 +125,9 @@ public class TemplateAnnotation implements Serializable {
 	public String toString() {
 		return "InternalAnnotation [" + OBIEClassFormatter.format(templateAnnotation) + "]";
 	}
+
+//	public InvestigationRestriction getInvestigationRestriction() {
+//		return investigationRestriction;
+//	}
 
 }

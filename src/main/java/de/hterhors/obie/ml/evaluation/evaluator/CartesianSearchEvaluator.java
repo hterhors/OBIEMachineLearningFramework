@@ -14,10 +14,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.instances.EmptyOBIEInstance;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 
@@ -42,23 +42,29 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 * Default constructor.
 	 */
 	public CartesianSearchEvaluator() {
-		this(true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
-				Integer.MAX_VALUE, true);
+		this(true, Integer.MAX_VALUE, true,
+// InvestigationRestriction.noRestrictionInstance,
+				f -> false, Integer.MAX_VALUE, true);
 	}
 
 	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
-			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
-			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
-		this(enableCaching, maxEvaluationDepth, penalizeCardinality, investigationRestrictions, f -> false,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+			final boolean penalizeCardinality
+//			, InvestigationRestriction investigationRestrictions
+			, int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
+		this(enableCaching, maxEvaluationDepth, penalizeCardinality
+//				,				investigationRestrictions
+				, f -> false, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 	}
 
 	public CartesianSearchEvaluator(boolean enableCaching, final int maxEvaluationDepth,
-			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			final boolean penalizeCardinality,
+//			InvestigationRestriction investigationRestrictions,
 			IOrListCondition orListCondition, int maxNumberOfAnnotations,
 			final boolean ignoreEmptyInstancesOnEvaluation) {
-		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+
+		super(enableCaching, penalizeCardinality
+//				, investigationRestrictions
+				, orListCondition, maxEvaluationDepth, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 
 		for (int i = 0; i <= MAX_NUMBER_OF_PERMUTATIONS; i++) {
 
@@ -92,7 +98,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return cartesianEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getRecall();
@@ -103,7 +109,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return cartesianEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getPrecision();
@@ -161,7 +167,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 		return s;
 	}
 
-	private PRF1 cartesianEvaluation(List<IOBIEThing> goldList, List<IOBIEThing> predictionList)
+	private PRF1 cartesianEvaluation(List<? extends IOBIEThing> goldList, List<? extends IOBIEThing> predictionList)
 			throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
 
 		if (goldList.size() == 1 && predictionList.size() == 1)
@@ -183,12 +189,13 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @throws NoSuchFieldException
 	 */
 	@Override
-	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
+	protected PRF1 explore(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int depth) {
 		final int maxSize = Math.max(gold.size(), prediction.size());
 
 		if (maxSize > maxNumberOfAnnotations) {
 			log.warn("Skip comparison... to many cases as defined in the parameter!");
-			return new PRF1(0, 0, 0);
+			return zeroScore;
 		}
 		if (maxSize > WARNING_ON_MAX) {
 			log.warn("WARN! List size to compare are greater than " + WARNING_ON_MAX + ". Size = " + maxSize
@@ -196,7 +203,7 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 					+ ". This may result in a long computation time.");
 			if (maxSize > MAX_NUMBER_OF_PERMUTATIONS) {
 				log.warn("Skip comparison... to many cases!");
-				return new PRF1(0, 0, 0);
+				return zeroScore;
 			}
 		}
 
@@ -241,8 +248,8 @@ public class CartesianSearchEvaluator extends AbstractOBIEEvaluator {
 		return bestPermutationScore;
 	}
 
-	private PRF1 getBestPermutation(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int maxSize,
-			List<Integer> permutation, final int depth) {
+	private PRF1 getBestPermutation(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int maxSize, List<Integer> permutation, final int depth) {
 
 		final PRF1 currentPermutationScore = new PRF1();
 

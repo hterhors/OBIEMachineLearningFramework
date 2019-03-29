@@ -1,7 +1,6 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,16 +13,15 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.MainSlotVarietyTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -43,8 +41,8 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public MainSlotVarietyTemplate(RunParameter parameter) {
-		super(parameter);
+	public MainSlotVarietyTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(MainSlotVarietyTemplate.class.getName());
@@ -121,7 +119,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 		 * If there is only one rootClass (e.g. OrganismModel) the entry of the map for
 		 * that class should be equal to state.getPredictedResult.getEntities().size();
 		 */
-		state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().forEach(a -> {
+		state.getCurrentIETemplateAnnotations().getAnnotations().stream().forEach(a -> {
 
 			countRootClasses.put(a.getThing().getClass(),
 					1 + countRootClasses.getOrDefault(a.getThing().getClass(), 0));
@@ -139,7 +137,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			childrenOfEntities.put(ec.getKey(), new HashSet[ec.getValue()]);
 		}
 
-		for (TemplateAnnotation annotation : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation annotation : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			final IOBIEThing entityScioClass = annotation.getThing();
 
@@ -152,16 +150,14 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 			/*
 			 * Add factors for object type properties.
 			 */
-			Arrays.stream(entityScioClass.getClass().getDeclaredFields())
-					.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
-						field.setAccessible(true);
+			ReflectionUtils.getFields(entityScioClass.getClass(),entityScioClass.getInvestigationRestriction()).stream().forEach(field -> {
 						try {
-							if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+							if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 								for (IOBIEThing element : (List<IOBIEThing>) field.get(entityScioClass)) {
 									if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 										childrenOfEntities.get(entityScioClass.getClass())[index]
 												.add(new Child(element.getClass().getSimpleName(),
-														((IDatatype) element).getSemanticValue(), true));
+														((IDatatype) element).getInterpretedValue(), true));
 									} else {
 										childrenOfEntities.get(entityScioClass.getClass())[index].add(new Child(
 												element.getClass().getSimpleName(), element.getTextMention(), true));
@@ -177,7 +173,7 @@ public class MainSlotVarietyTemplate extends AbstractOBIETemplate<Scope> {
 											DatatypeProperty.class))
 										childrenOfEntities.get(entityScioClass.getClass())[index]
 												.add(new Child(childClass.getClass().getSimpleName(),
-														((IDatatype) childClass).getSemanticValue(), true));
+														((IDatatype) childClass).getInterpretedValue(), true));
 									else
 										childrenOfEntities.get(entityScioClass.getClass())[index]
 												.add(new Child(childClass.getClass().getSimpleName(), null, false));

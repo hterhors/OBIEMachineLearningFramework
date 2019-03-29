@@ -9,10 +9,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.instances.EmptyOBIEInstance;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 /**
  * Beam Search with parameterized beam size.
@@ -28,7 +28,9 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	private final int beamSize;
 
 	public BeamSearchEvaluator(final int beamSize) {
-		this(beamSize, true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
+		this(beamSize, true, Integer.MAX_VALUE, true,
+//				InvestigationRestriction.noRestrictionInstance,
+				f -> false,
 				Integer.MAX_VALUE, true);
 	}
 
@@ -48,10 +50,13 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @param ignoreEmptyInstancesOnEvaluation
 	 */
 	public BeamSearchEvaluator(final int beamSize, boolean enableCaching, final int maxEvaluationDepth,
-			final boolean penalizeCardinality, InvestigationRestriction investigationRestrictions,
+			final boolean penalizeCardinality,
+//			InvestigationRestriction investigationRestrictions,
 			IOrListCondition orListCondition, int maxNumberOfAnnotations,
 			final boolean ignoreEmptyInstancesOnEvaluation) {
-		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
+		super(enableCaching, penalizeCardinality,
+//				investigationRestrictions, 
+				orListCondition, maxEvaluationDepth,
 				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 		this.beamSize = beamSize < 1 ? Integer.MAX_VALUE : beamSize;
 	}
@@ -77,7 +82,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return beamEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getRecall();
@@ -88,7 +93,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		try {
 			return beamEvaluation(Collections.unmodifiableList(gold), Collections.unmodifiableList(predictions))
 					.getPrecision();
@@ -171,7 +176,8 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	 * @throws IllegalAccessException
 	 * @throws NoSuchFieldException
 	 */
-	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
+	protected PRF1 explore(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int depth) {
 
 		final List<BeamAssignmentTree> assignments = new ArrayList<>();
 
@@ -259,8 +265,8 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 	class BeamAssignmentTree implements Comparable<BeamAssignmentTree> {
 
 		final private List<BeamAssignment> assignments;
-		final private List<IOBIEThing> remainingGold;
-		final private List<IOBIEThing> remainingPrediction;
+		final private List<? extends IOBIEThing> remainingGold;
+		final private List<? extends IOBIEThing> remainingPrediction;
 		final public PRF1 overallSimiliarity;
 
 		/**
@@ -270,7 +276,7 @@ public class BeamSearchEvaluator extends AbstractOBIEEvaluator {
 		 * @param gold
 		 * @param prediction
 		 */
-		public BeamAssignmentTree(List<IOBIEThing> gold, List<IOBIEThing> prediction) {
+		public BeamAssignmentTree(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> prediction) {
 			this.assignments = new ArrayList<>();
 			this.remainingGold = gold;
 			this.remainingPrediction = prediction;

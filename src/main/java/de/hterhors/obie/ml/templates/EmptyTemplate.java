@@ -7,15 +7,15 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.EmptyTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -27,8 +27,8 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public EmptyTemplate(RunParameter parameter) {
-		super(parameter);
+	public EmptyTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(EmptyTemplate.class.getName());
@@ -44,7 +44,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getThing()));
 
@@ -73,7 +73,7 @@ public class EmptyTemplate extends AbstractOBIETemplate<Scope> {
 					field.setAccessible(true);
 					try {
 
-						if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+						if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
 								if (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)) {
 

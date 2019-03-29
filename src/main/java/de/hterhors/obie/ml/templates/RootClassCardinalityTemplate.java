@@ -9,16 +9,16 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.RootClassCardinalityTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -32,8 +32,8 @@ import learning.Vector;
  */
 public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public RootClassCardinalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public RootClassCardinalityTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(RootClassCardinalityTemplate.class.getName());
@@ -83,10 +83,10 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 		 * If there is only one rootClass (e.g. OrganismModel) the entry of the map for
 		 * that class should be equal to state.getPredictedResult.getEntities().size();
 		 */
-		state.getCurrentTemplateAnnotations().getTemplateAnnotations().stream().map(a -> a.getThing())
+		state.getCurrentIETemplateAnnotations().getAnnotations().stream().map(a -> a.getThing())
 				.forEach(s -> countRootClasses.put(s.getClass(), 1 + countRootClasses.getOrDefault(s.getClass(), 0)));
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			factors.addAll(addFactors(entity.rootClassType, state.getInstance(), countRootClasses,
 					entity.getThing()));
@@ -99,9 +99,9 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 			Map<Class<? extends IOBIEThing>, Integer> countRootClasses, final IOBIEThing rootClass) {
 		List<Scope> factors = new ArrayList<>();
 
-		ReflectionUtils.getAccessibleOntologyFields(rootClass.getClass()).forEach(field -> {
+		ReflectionUtils.getNonDatatypeSlots(rootClass.getClass(),rootClass.getInvestigationRestriction()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field,RelationTypeCollection.class)) {
 					final int rootCardinality = countRootClasses.get(rootClass.getClass());
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(rootClass)) {
 
@@ -140,8 +140,11 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 		Vector featureVector = factor.getFeatureVector();
 
+		if (ReflectionUtils.isAnnotationPresent(factor.getFactorScope().propertyClass, DatatypeProperty.class))
+			return;
+
 		final Set<NERLClassAnnotation> evidenceMentions = factor.getFactorScope().document
-				.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().propertyClass);
+				.getEntityAnnotations().getClassAnnotations(factor.getFactorScope().propertyClass);
 		int propertyEvidence = evidenceMentions == null ? 0 : evidenceMentions.size();
 
 		featureVector.set("#OfRootClasses = " + factor.getFactorScope().rootCardinality, true);
@@ -151,8 +154,6 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 				factor.getFactorScope().rootClass, propertyEvidence, factor.getFactorScope().rootClass,
 				factor.getFactorScope().rootCardinality), true);
 
-		if (ReflectionUtils.isAnnotationPresent(factor.getFactorScope().propertyClass, DatatypeProperty.class))
-			return;
 
 		/*
 		 * Add type of the field which is the root of the actual class. (More general)
@@ -174,7 +175,7 @@ public class RootClassCardinalityTemplate extends AbstractOBIETemplate<Scope> {
 			for (Class<? extends IOBIEThing> subClass : ReflectionUtils
 					.getAssignableSubClasses(propertyRootClassType)) {
 				final Set<NERLClassAnnotation> evidenceList = factor.getFactorScope().document
-						.getNamedEntityLinkingAnnotations().getClassAnnotations(subClass);
+						.getEntityAnnotations().getClassAnnotations(subClass);
 				countDifferentSubclassEvidences += evidenceList == null || evidenceList.isEmpty() ? 0 : 1;
 			}
 

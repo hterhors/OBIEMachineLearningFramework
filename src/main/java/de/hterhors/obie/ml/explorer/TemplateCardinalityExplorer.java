@@ -9,13 +9,14 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
 import de.hterhors.obie.ml.run.param.RunParameter;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 /**
  * Explores the cardinality of the main template classes.
@@ -50,6 +51,7 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 	 */
 
 	public TemplateCardinalityExplorer(RunParameter param) {
+		super(param);
 		/*
 		 * Get implementation class if input is interface.
 		 */
@@ -75,34 +77,41 @@ public class TemplateCardinalityExplorer extends AbstractOBIEExplorer {
 		 */
 		for (Class<? extends IOBIEThing> rootTemplateType : rootClassTypes) {
 
-			final int size = previousState.getCurrentTemplateAnnotations().getTemplateAnnotations().size();
+			final int size = previousState.getCurrentIETemplateAnnotations().getAnnotations().size();
 
 			if (ReflectionUtils.isAnnotationPresent(rootTemplateType, DatatypeProperty.class)
 					&& size >= maxNumberOfDataTypeElements) {
 				continue;
-			}
-
-			if (size >= maxNumberOfEntityElements) {
+			} else if (size >= maxNumberOfEntityElements) {
 				continue;
 			}
 
 			final Set<IOBIEThing> candidates = ExplorationUtils.getCandidates(previousState.getInstance(),
 					rootTemplateType, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
-					restrictExplorationOnConceptsInInstance);
+					restrictExplorationOnConceptsInInstance,
+					/**
+					 * TODO: Test this! Take restriction from gold if exists if not (as in
+					 * prediction) get the default of the state / instance.
+					 */
+					previousState.getInstance().getGoldAnnotation().getAnnotations().iterator().hasNext()
+							? previousState.getInstance().getGoldAnnotation().getAnnotations().iterator().next()
+									.getThing().getInvestigationRestriction()
+							: previousState.getDefaultInvestigationRestriction());
 
 			for (IOBIEThing candidateClass : candidates) {
 				final OBIEState generatedState = new OBIEState(previousState);
-				generatedState.getCurrentTemplateAnnotations()
-						.addAnnotation(new TemplateAnnotation(rootTemplateType, candidateClass));
+				generatedState.getCurrentIETemplateAnnotations()
+						.addAnnotation(new IETmplateAnnotation(rootTemplateType, candidateClass));
 				generatedStates.add(generatedState);
 
 			}
 
 		}
 
-		for (TemplateAnnotation internalAnnotaton : previousState.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation internalAnnotaton : previousState.getCurrentIETemplateAnnotations()
+				.getAnnotations()) {
 			final OBIEState generatedState = new OBIEState(previousState);
-			generatedState.getCurrentTemplateAnnotations().removeEntity(internalAnnotaton);
+			generatedState.getCurrentIETemplateAnnotations().removeEntity(internalAnnotaton);
 			generatedStates.add(generatedState);
 		}
 

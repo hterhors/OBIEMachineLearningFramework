@@ -7,7 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import corpus.SampledInstance;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
@@ -23,9 +23,9 @@ import de.hterhors.obie.ml.variables.OBIEState;
  */
 public class FullDocumentObjectiveScoreRanker implements IActiveLearningDocumentRanker {
 
-	final private AbstractRunner runner;
+	final private AbstractOBIERunner runner;
 
-	public FullDocumentObjectiveScoreRanker(AbstractRunner runner) {
+	public FullDocumentObjectiveScoreRanker(AbstractOBIERunner runner) {
 		this.runner = runner;
 	}
 

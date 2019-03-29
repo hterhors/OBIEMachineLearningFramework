@@ -8,19 +8,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.FrequencyTemplate.Scope;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.ClassFrequencyPair;
 import de.hterhors.obie.ml.utils.HighFrequencyUtils.IndividualFrequencyPair;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -46,8 +46,8 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 	private static Logger log = LogManager.getFormatterLogger(FrequencyTemplate.class.getName());
 
-	public FrequencyTemplate(RunParameter parameter) {
-		super(parameter);
+	public FrequencyTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			addFactorRecursive(factors, entity.rootClassType, state.getInstance(), entity.getThing(),
 					entity.rootClassType);
@@ -118,7 +118,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 		if (ReflectionUtils.isAnnotationPresent(obieThing.getClass(), DatatypeProperty.class)) {
 			factors.add(new Scope(entityRootClassType, this, instance, (Class<IOBIEThing>) obieThing.getClass(),
-					((IDatatype) obieThing).getSemanticValue(), propertyClassType.isInterface() ? propertyClassType
+					((IDatatype) obieThing).getInterpretedValue(), propertyClassType.isInterface() ? propertyClassType
 							: ReflectionUtils.getDirectInterfaces(propertyClassType),
 					null));
 		} else {
@@ -133,7 +133,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 		 * Add factors for object type properties.
 		 */
 
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getFields(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					Class<? extends IOBIEThing> fieldGenericType = (Class<? extends IOBIEThing>) ((ParameterizedType) field
@@ -154,6 +154,7 @@ public class FrequencyTemplate extends AbstractOBIETemplate<Scope> {
 
 	@Override
 	public void computeFactor(Factor<Scope> factor) {
+	if(true) return;
 		Vector featureVector = factor.getFeatureVector();
 
 		if (factor.getFactorScope().individual != null) {

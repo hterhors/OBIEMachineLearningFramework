@@ -8,6 +8,7 @@ import java.util.Set;
 
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
 import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
+import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
 import de.hterhors.obie.ml.objfunc.REObjectiveFunction;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
@@ -18,22 +19,36 @@ import learning.Trainer;
 import learning.Trainer.EpochCallback;
 import sampling.DefaultSampler;
 
-public class StandardRERunner extends AbstractRunner {
+public class DefaultSlotFillingRunner extends AbstractOBIERunner {
 
-	Random random;
-	Set<Integer> epochsTrainedWithObjective = new HashSet<>();
+	private final Random random;
+	private final Set<Integer> epochsTrainedWithObjective = new HashSet<>();
+	private final Set<Integer> epochsTrainedGreedily = new HashSet<>();
 
-	public StandardRERunner(RunParameter parameter) {
+	private final boolean callGC;
+
+	public DefaultSlotFillingRunner(RunParameter parameter, boolean callGC) {
 		super(parameter);
-		/*
-		 * TODO: parameterize ?
-		 */
+		this.callGC = callGC;
+
+		log.info("Initialize sampling settings...");
+
 		this.random = new Random(100L);
-		for (int epoch = 0; epoch < parameter.epochs; epoch++) {
+
+		for (int epoch = 1; epoch <= parameter.epochs; epoch++) {
 			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.9))
 				epochsTrainedWithObjective.add(epoch);
 		}
+		for (int epoch = 1; epoch <= parameter.epochs; epoch++) {
+			if (epoch != 2 && (epoch == 1 || this.random.nextDouble() >= 0.5))
+				epochsTrainedGreedily.add(epoch);
+		}
+		log.info("Epochs trained with objective score: " + epochsTrainedWithObjective);
+		log.info("Epochs trained greedily: " + epochsTrainedGreedily);
+	}
 
+	public DefaultSlotFillingRunner(RunParameter parameter) {
+		this(parameter, true);
 	}
 
 	@Override
@@ -51,14 +66,29 @@ public class StandardRERunner extends AbstractRunner {
 					@Override
 					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 
-						if (!(getParameter().corpusDistributor instanceof ActiveLearningDistributor)
+//						if (numberOfEpochs == epoch) {
+						if (!(getParameter().corpusDistributor instanceof ActiveLearningDistributor
+								|| getParameter().corpusDistributor instanceof FoldCrossCorpusDistributor)
 								|| numberOfEpochs == epoch) {
 
 							saveModel(epoch);
 							trainWithObjective = false;
 						}
-						log.info("Call GC manually...");
-						System.gc();
+						if (callGC) {
+							log.info("Call GC manually...");
+							System.gc();
+						}
+					}
+
+				},
+				//
+				new EpochCallback() {
+
+					@Override
+					public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+//						log.info(OBIEState.dropOutInvestigation.size());
+//						OBIEState.dropOutInvestigation.entrySet().forEach(log::info);
+						OBIEState.dropOutInstanceCache.clear();
 					}
 
 				},
@@ -67,17 +97,33 @@ public class StandardRERunner extends AbstractRunner {
 					@Override
 					public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 						try {
-							if (epochsTrainedWithObjective.contains(epoch)) {
-								log.info("Use Objective Score for sampling...");
-								trainWithObjective = true;
-								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyObjectiveScore);
+							trainWithObjective = epochsTrainedWithObjective.contains(epoch);
+							sampleGreedy = true;// epochsTrainedGreedily.contains(epoch);
+
+							if (trainWithObjective) {
+								if (sampleGreedy) {
+									log.info("Use objective score and greedy sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.greedyTrainSamplingStrategyObjectiveScore);
+								} else {
+									log.info("Use objective score and probability sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.linearTrainSamplingStrategyObjectiveScore);
+								}
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyObjectiveScore);
 							} else {
-								trainWithObjective = false;
-								log.info("Use Model Score for sampling...");
-								sampler.setTrainSamplingStrategy(RunParameter.trainSamplingStrategyModelScore);
+								if (sampleGreedy) {
+									log.info("Use model score and greedy sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.greedyTrainSamplingStrategyModelScore);
+								} else {
+									log.info("Use model score and probability sampling...");
+									sampler.setTrainSamplingStrategy(
+											RunParameter.linearTrainSamplingStrategyModelScore);
+								}
 								sampler.setTrainAcceptStrategy(RunParameter.trainAcceptanceStrategyModelScore);
 							}
+
 						} catch (Exception e) {
 							e.printStackTrace();
 						}

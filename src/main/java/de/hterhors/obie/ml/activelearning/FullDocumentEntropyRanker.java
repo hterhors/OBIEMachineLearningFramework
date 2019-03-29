@@ -5,25 +5,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
 
 public class FullDocumentEntropyRanker implements IActiveLearningDocumentRanker {
 
+
 	public static int N = 20;
 
 	final Logger log = LogManager.getRootLogger();
 
-	final private AbstractRunner runner;
+	final private AbstractOBIERunner runner;
 
-	public FullDocumentEntropyRanker(AbstractRunner runner) {
+	public FullDocumentEntropyRanker(AbstractOBIERunner runner) {
 		this.runner = runner;
 	}
 
@@ -111,5 +111,4 @@ public class FullDocumentEntropyRanker implements IActiveLearningDocumentRanker 
 		entropyInstances.stream().limit(n).forEach(i -> log.info(i.instance.getName() + ":" + i.value));
 
 	}
-
 }

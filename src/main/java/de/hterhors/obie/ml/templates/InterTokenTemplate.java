@@ -11,16 +11,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.regex.BasicRegExPattern;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.InterTokenTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -58,10 +58,10 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 
 	private final AbstractOBIETemplate<?> thisTemplate;
 
-	public InterTokenTemplate(RunParameter parameter) {
-		super(parameter);
+	public InterTokenTemplate(AbstractOBIERunner runner) {
+		super(runner);
 		this.thisTemplate = this;
-		this.enableDistantSupervision = parameter.exploreOnOntologyLevel;
+		this.enableDistantSupervision = runner.getParameter().exploreOnOntologyLevel;
 	}
 
 	class Scope extends FactorScope {
@@ -86,7 +86,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			addFactorRecursive(factors, state.getInstance(), entity.rootClassType, entity.getThing());
 		}
 
@@ -111,7 +111,7 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 		/*
 		 * Add factors for object type properties.
 		 */
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getFields(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing element : (List<IOBIEThing>) field.get(obieThing)) {
@@ -158,16 +158,16 @@ public class InterTokenTemplate extends AbstractOBIETemplate<Scope> implements S
 				 * If DSV is enabled add all surface forms of that class / individual.
 				 */
 
-				if (internalInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(classType)) {
+				if (internalInstance.getEntityAnnotations().containsClassAnnotations(classType)) {
 					surfaceForms
-							.addAll(internalInstance.getNamedEntityLinkingAnnotations().getClassAnnotations(classType)
+							.addAll(internalInstance.getEntityAnnotations().getClassAnnotations(classType)
 									.stream().map(nera -> nera.text).collect(Collectors.toList()));
 				}
 
-				if (individual != null && internalInstance.getNamedEntityLinkingAnnotations()
+				if (individual != null && internalInstance.getEntityAnnotations()
 						.containsIndividualAnnotations(individual)) {
 					surfaceForms.addAll(
-							internalInstance.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual)
+							internalInstance.getEntityAnnotations().getIndividualAnnotations(individual)
 									.stream().map(nera -> nera.text).collect(Collectors.toList()));
 				}
 			} else {

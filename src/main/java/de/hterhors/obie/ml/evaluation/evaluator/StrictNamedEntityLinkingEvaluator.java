@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 /**
  * How to use this as evaluation but not extends abstract evaluator implementing
@@ -17,22 +17,10 @@ import de.hterhors.obie.ml.run.InvestigationRestriction;
  * @author hterhors
  *
  */
-public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
+public class StrictNamedEntityLinkingEvaluator implements IOBIEEvaluator {
 
-	public NamedEntityLinkingEvaluator() {
+	public StrictNamedEntityLinkingEvaluator() {
 	}
-
-//	public NamedEntityLinkingEvaluator(int maxEvaluationDepth, boolean penalizeCardinality,
-//			InvestigationRestriction sampleRestrictions, IOrListCondition scioOrListConditon,
-//			final int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
-//	}
-//
-//	public NamedEntityLinkingEvaluator(int maxEvaluationDepth, boolean penalizeCardinality,
-//			InvestigationRestriction sampleRestrictions, final int maxNumberOfAnnotations,
-//			final boolean ignoreEmptyInstancesOnEvaluation) {
-//		this(maxEvaluationDepth, penalizeCardinality, sampleRestrictions, f -> false, maxNumberOfAnnotations,
-//				ignoreEmptyInstancesOnEvaluation);
-//	}
 
 	public static <E> double microPrecision(double tp, double fp, double fn) {
 		return tp / (tp + fp);
@@ -118,7 +106,7 @@ public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
 		// predictions.contains(g)).count();
 
 		int intersectionSize = 0;
-		
+
 		for (IOBIEThing goldThing : gold) {
 			intersectionSize += predictions.contains(goldThing) ? 1 : 0;
 		}
@@ -158,12 +146,12 @@ public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		return recall(new HashSet<>(gold), new HashSet<>(predictions));
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		return precision(new HashSet<>(gold), new HashSet<>(predictions));
 	}
 
@@ -184,11 +172,6 @@ public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
 	@Override
 	public boolean isPenalizeCardinality() {
 		return false;
-	}
-
-	@Override
-	public InvestigationRestriction getInvestigationRestrictions() {
-		return null;
 	}
 
 	@Override
@@ -213,7 +196,6 @@ public class NamedEntityLinkingEvaluator implements IOBIEEvaluator {
 
 	@Override
 	public void clearCache() {
-
 	}
 
 }

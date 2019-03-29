@@ -1,17 +1,18 @@
 package de.hterhors.obie.ml.corpus.distributor;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.tools.corpus.OBIECorpus.Instance;
 import de.hterhors.obie.ml.corpus.BigramCorpusProvider;
-import de.hterhors.obie.ml.corpus.distributor.ShuffleCorpusDistributor.Builder;
 import de.hterhors.obie.ml.variables.OBIEInstance;
+import de.hterhors.obie.ml.variables.OBIEInstance.EInstanceType;
 
 /**
  * Takes the original distribution of documents into training, development and
@@ -69,12 +70,31 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 		 */
 		return new Distributor() {
 
+			private void sortAndShuffleIf(List<String> l) {
+				if (corpusSizeFraction != 1.0F) {
+
+					/*
+					 * Ensure same order on shuffle, if fraction size is not equals 1;
+					 */
+					Collections.sort(l);
+
+					/*
+					 * Shuffle to not always get the first same elements based on the name.
+					 */
+					Collections.shuffle(l, new Random(987654321L));
+				}
+			}
+
 			@Override
 			public Distributor distributeTrainingInstances(List<OBIEInstance> trainingDocuments) {
 
-				for (String name : corpusProvider.getRawCorpus().getTrainingInstances().keySet()) {
+				List<String> l = new ArrayList<>(corpusProvider.getOriginalTrainingInstances());
+
+				sortAndShuffleIf(l);
+
+				for (String name : l) {
 					final float fraction = (float) trainingDocuments.size()
-							/ corpusProvider.getRawCorpus().getTrainingInstances().size();
+							/ corpusProvider.getOriginalTrainingInstances().size();
 
 					if (fraction >= corpusSizeFraction)
 						break;
@@ -92,9 +112,14 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 
 			@Override
 			public Distributor distributeDevelopmentInstances(List<OBIEInstance> developmentDocuments) {
-				for (String name : corpusProvider.getRawCorpus().getDevelopInstances().keySet()) {
+
+				List<String> l = new ArrayList<>(corpusProvider.getOriginalDevelopInstances());
+
+				sortAndShuffleIf(l);
+
+				for (String name : l) {
 					final float fraction = (float) developmentDocuments.size()
-							/ corpusProvider.getRawCorpus().getDevelopInstances().size();
+							/ corpusProvider.getOriginalDevelopInstances().size();
 
 					if (fraction >= corpusSizeFraction)
 						break;
@@ -112,9 +137,14 @@ public class OriginalCorpusDistributor extends AbstractCorpusDistributor {
 
 			@Override
 			public Distributor distributeTestInstances(List<OBIEInstance> testDocuments) {
-				for (String name : corpusProvider.getRawCorpus().getTestInstances().keySet()) {
+
+				List<String> l = new ArrayList<>(corpusProvider.getOriginalTestInstances());
+
+				sortAndShuffleIf(l);
+
+				for (String name : l) {
 					final float fraction = (float) testDocuments.size()
-							/ corpusProvider.getRawCorpus().getTestInstances().size();
+							/ corpusProvider.getOriginalTestInstances().size();
 
 					if (fraction >= corpusSizeFraction)
 						break;

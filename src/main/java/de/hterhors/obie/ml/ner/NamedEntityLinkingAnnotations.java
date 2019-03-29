@@ -117,6 +117,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 				final Set<NERLClassAnnotation> annotations = classRetrievals.getOrDefault(annotationEntry.getKey(),
 						new HashSet<>());
+				
 				annotations.addAll(annotationEntry.getValue());
 				classRetrievals.put(annotationEntry.getKey(), annotations);
 			}

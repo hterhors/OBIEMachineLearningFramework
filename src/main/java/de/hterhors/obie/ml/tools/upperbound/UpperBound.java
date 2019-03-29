@@ -14,7 +14,9 @@ import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
@@ -24,9 +26,8 @@ import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEClassFormatter;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 /**
  * Calculates the maximum recall for a specific corpus. The recall is calculated
@@ -43,7 +44,7 @@ import de.hterhors.obie.ml.variables.TemplateAnnotation;
  */
 public class UpperBound {
 
-	private static final int MAX_CARDINALITY = 100;
+	private static final int MAX_CARDINALITY = 1;
 
 	final private RunParameter parameter;
 
@@ -70,12 +71,15 @@ public class UpperBound {
 		PRF1 upperBound = new PRF1();
 		for (OBIEInstance doc : documents) {
 
+//			if (!doc.getName().startsWith("N243"))
+//				continue;
+
 			log.info(doc.getName());
 
-			List<IOBIEThing> gold = doc.getGoldAnnotation().getTemplateAnnotations().stream()
-					.map(e -> (IOBIEThing) e.getThing()).collect(Collectors.toList());
-
 			List<IOBIEThing> maxRecallPredictions = getUpperBoundPredictions(doc);
+			maxRecallPredictions.forEach(m -> setRestrictionRec(m, parameter.defaultTestInvestigationRestriction));
+			List<IOBIEThing> gold = doc.getGoldAnnotation().getAnnotations().stream()
+					.map(e -> (IOBIEThing) e.getThing()).collect(Collectors.toList());
 
 			System.out.println(gold);
 			System.out.println(maxRecallPredictions);
@@ -83,11 +87,11 @@ public class UpperBound {
 			final PRF1 s = parameter.evaluator.prf1(gold, maxRecallPredictions);
 			log.info("score = " + s);
 
-			for (Class<? extends IOBIEThing> clazz : doc.getNamedEntityLinkingAnnotations().getAvailableClassTypes()) {
-				log.debug(doc.getNamedEntityLinkingAnnotations().getClassAnnotations(clazz));
+			for (Class<? extends IOBIEThing> clazz : doc.getEntityAnnotations().getAvailableClassTypes()) {
+				log.debug(doc.getEntityAnnotations().getClassAnnotations(clazz));
 			}
-			for (AbstractIndividual individual : doc.getNamedEntityLinkingAnnotations().getAvailableIndividualTypes()) {
-				log.debug(doc.getNamedEntityLinkingAnnotations().getIndividualAnnotations(individual));
+			for (AbstractIndividual individual : doc.getEntityAnnotations().getAvailableIndividualTypes()) {
+				log.debug(doc.getEntityAnnotations().getIndividualAnnotations(individual));
 			}
 
 			upperBound.add(s);
@@ -96,6 +100,44 @@ public class UpperBound {
 		log.info("Failures:");
 		countFailures.entrySet().forEach(log::info);
 
+	}
+
+	/**
+	 * Adds investigationRestriction to all slot values of the parent value.
+	 * 
+	 * @param thing
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	private void setRestrictionRec(IOBIEThing thing, InvestigationRestriction r) {
+
+		if (thing == null)
+			return;
+
+		try {
+
+			if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class))
+				return;
+
+			thing.setInvestigationRestriction(r);
+
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(thing.getClass(), r)) {
+
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+
+					for (IOBIEThing sv : (List<IOBIEThing>) slot.get(thing)) {
+						setRestrictionRec(sv, r);
+					}
+				} else {
+					setRestrictionRec((IOBIEThing) slot.get(thing), r);
+				}
+
+			}
+
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 	/**
@@ -117,7 +159,7 @@ public class UpperBound {
 		final List<IOBIEThing> upperBoundPredictions = projectGoldToPredictions(doc);
 
 		log.info("______GoldAnnotations:______");
-		doc.getGoldAnnotation().getTemplateAnnotations()
+		doc.getGoldAnnotation().getAnnotations()
 				.forEach(s -> log.info(OBIEClassFormatter.format(s.getThing(), false)));
 		log.info("____________________________");
 		log.info("_________Predicted:_________");
@@ -147,12 +189,12 @@ public class UpperBound {
 
 		List<IOBIEThing> predictions = new ArrayList<>();
 
-		List<TemplateAnnotation> goldAn = new ArrayList<>(goldInstance.getGoldAnnotation().getTemplateAnnotations());
+		List<IETmplateAnnotation> goldAn = new ArrayList<>(goldInstance.getGoldAnnotation().getAnnotations());
 		Collections.shuffle(goldAn);
 
 		int counter = 0;
 		boolean maxIsReached;
-		for (TemplateAnnotation goldAnnotation : goldAn) {
+		for (IETmplateAnnotation goldAnnotation : goldAn) {
 
 			maxIsReached = ++counter == MAX_CARDINALITY;
 			try {
@@ -167,7 +209,7 @@ public class UpperBound {
 				} else {
 					predictionModel = newClassWithIndividual(goldModel.getClass(), goldModel.getIndividual());
 
-					addClassesRecursivly(goldModel, predictionModel, goldInstance.getNamedEntityLinkingAnnotations());
+					addRecursivly(goldModel, predictionModel, goldInstance.getEntityAnnotations());
 				}
 
 				if (predictionModel != null)
@@ -185,14 +227,15 @@ public class UpperBound {
 
 	private IOBIEThing projectDataTypeClass(OBIEInstance goldInstance, IOBIEThing goldModel, IOBIEThing predictionModel)
 			throws InstantiationException, IllegalAccessException {
-		if (goldInstance.getNamedEntityLinkingAnnotations().containsClassAnnotations(goldModel.getClass())) {
+
+		if (goldInstance.getEntityAnnotations().containsClassAnnotations(goldModel.getClass())) {
 
 			NERLClassAnnotation value = null;
 
-			for (NERLClassAnnotation mentionAnnotation : goldInstance.getNamedEntityLinkingAnnotations()
+			for (NERLClassAnnotation mentionAnnotation : goldInstance.getEntityAnnotations()
 					.getClassAnnotations(goldModel.getClass())) {
 				if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-						.equals(((IDatatype) goldModel).getSemanticValue())) {
+						.equals(((IDatatype) goldModel).getInterpretedValue())) {
 					value = mentionAnnotation;
 					break;
 				}
@@ -211,18 +254,16 @@ public class UpperBound {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addClassesRecursivly(IOBIEThing goldModel, IOBIEThing predictionModel,
-			NamedEntityLinkingAnnotations ner) {
+	private void addRecursivly(IOBIEThing goldModel, IOBIEThing predictionModel, NamedEntityLinkingAnnotations ner) {
 		/*
 		 * Add factors for object type properties.
 		 */
-
-		List<Field> slots = ReflectionUtils.getAccessibleOntologyFields(goldModel.getClass());
+		List<Field> slots = ReflectionUtils.getFields(goldModel.getClass(), goldModel.getInvestigationRestriction());
 
 		for (Field slot : slots) {
 			try {
 				if (slot.get(goldModel) != null) {
-					if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
+					if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
 						List<IOBIEThing> values = new ArrayList<>();
 
 						Field f = ReflectionUtils.getAccessibleFieldByName(predictionModel.getClass(), slot.getName());
@@ -252,10 +293,12 @@ public class UpperBound {
 								/*
 								 * We call this method with the new added class recursively.
 								 */
-								addClassesRecursivly(thing, property, ner);
+								addRecursivly(thing, property, ner);
 
 							} else if (ner.containsClassAnnotations(clazz)
-									|| ner.containsIndividualAnnotations(individual)) {
+									// check if individual is null for classes that do not have any individuals
+									// (supposed to be named Individuals)
+									|| (individual == null || ner.containsIndividualAnnotations(individual))) {
 								/*
 								 * If class is DatatypeProperty we need the exact value.
 								 */
@@ -266,7 +309,7 @@ public class UpperBound {
 									boolean found = false;
 									for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(clazz)) {
 										if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-												.equals(((IDatatype) thing).getSemanticValue())) {
+												.equals(((IDatatype) thing).getInterpretedValue())) {
 											found = true;
 											values.add((IOBIEThing) mentionAnnotation.classType
 													.getDeclaredConstructor(String.class, String.class)
@@ -277,10 +320,10 @@ public class UpperBound {
 									}
 									if (!found) {
 										log.warn("Can not fill dt-class: " + slot.getName() + ":"
-												+ ((IDatatype) thing).getSemanticValue());
+												+ ((IDatatype) thing).getInterpretedValue());
 										addFailure(slot.getType());
 									}
-								} else if (ner.containsIndividualAnnotations(individual)) {
+								} else if (individual == null || ner.containsIndividualAnnotations(individual)) {
 
 									/*
 									 * Else we need only the class mentioned anywhere.
@@ -292,13 +335,13 @@ public class UpperBound {
 									/*
 									 * We call this method with the new added class recursively.
 									 */
-									addClassesRecursivly(thing, property, ner);
+									addRecursivly(thing, property, ner);
 								}
 
 							} else {
 								if (ReflectionUtils.isAnnotationPresent(clazz, DatatypeProperty.class)) {
 									log.warn("Can not fill field: " + clazz.getSimpleName() + ":"
-											+ ((IDatatype) thing).getSemanticValue());
+											+ ((IDatatype) thing).getInterpretedValue());
 								} else {
 									log.warn("Can not fill field: " + clazz.getSimpleName() + " for indiviual: "
 											+ individual);
@@ -343,9 +386,9 @@ public class UpperBound {
 							/*
 							 * We call this method with the new added class recursively.
 							 */
-							addClassesRecursivly(goldSlotValue, property, ner);
+							addRecursivly(goldSlotValue, property, ner);
 						} else if (ner.containsClassAnnotations(slotType)
-								|| ner.containsIndividualAnnotations(individual)) {
+								|| (individual == null || ner.containsIndividualAnnotations(individual))) {
 							/*
 							 * If field is DataTypeProeprty we need an exact match.
 							 */
@@ -356,7 +399,7 @@ public class UpperBound {
 								 */
 								for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(slotType)) {
 									if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-											.equals(((IDatatype) goldSlotValue).getSemanticValue())) {
+											.equals(((IDatatype) goldSlotValue).getInterpretedValue())) {
 										value = mentionAnnotation;
 										break;
 									}
@@ -375,13 +418,13 @@ public class UpperBound {
 								} else {
 
 									log.warn("Can not fill dt-field: " + slot.getName() + ":"
-											+ ((IDatatype) goldSlotValue).getSemanticValue());
+											+ ((IDatatype) goldSlotValue).getInterpretedValue());
 
 									addFailure(slot.getType());
 
 								}
 
-							} else if (ner.containsIndividualAnnotations(individual)) {
+							} else if (individual == null || ner.containsIndividualAnnotations(individual)) {
 
 								/*
 								 * Else we need only the class mentioned anywhere.
@@ -400,12 +443,12 @@ public class UpperBound {
 								/*
 								 * We call this method with the new added class recursively.
 								 */
-								addClassesRecursivly(goldSlotValue, property, ner);
+								addRecursivly(goldSlotValue, property, ner);
 							}
 						} else {
 							if (ReflectionUtils.isAnnotationPresent(slot, DatatypeProperty.class)) {
 								log.warn("Can not fill field: " + slotType.getSimpleName() + ":"
-										+ ((IDatatype) slot.get(goldModel)).getSemanticValue());
+										+ ((IDatatype) slot.get(goldModel)).getInterpretedValue());
 							} else {
 								log.warn("Can not fill field: " + slotType.getSimpleName() + " for individual: "
 										+ individual);

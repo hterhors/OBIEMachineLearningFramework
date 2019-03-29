@@ -9,17 +9,17 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.Token;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.DocumentClassificationTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -36,8 +36,8 @@ import learning.Vector;
  */
 public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> implements Serializable {
 
-	public DocumentClassificationTemplate(RunParameter parameter) {
-		super(parameter);
+	public DocumentClassificationTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class DocumentClassificationTemplate extends AbstractOBIETemplate<Scope> 
 		List<Scope> factors = new ArrayList<>();
 		state.getInstance().getTokens();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			factors.addAll(addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
 

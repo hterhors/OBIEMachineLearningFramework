@@ -6,15 +6,13 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
-import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.SlotIsFilledTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -32,8 +30,8 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LogManager.getFormatterLogger(SlotIsFilledTemplate.class.getName());
 
-	public SlotIsFilledTemplate(RunParameter parameter) {
-		super(parameter);
+	public SlotIsFilledTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	class Scope extends FactorScope {
@@ -61,7 +59,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
 
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 
 			factors.addAll(addFactorRecursive(entity.rootClassType, entity.getThing()));
 		}
@@ -100,7 +98,7 @@ public class SlotIsFilledTemplate extends AbstractOBIETemplate<Scope> {
 		 * Parent-Child relation
 		 */
 
-		ReflectionUtils.getAccessibleOntologyFields(obieThing.getClass()).forEach(field -> {
+		ReflectionUtils.getFields(obieThing.getClass(),obieThing.getInvestigationRestriction()).forEach(field -> {
 			try {
 				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					List<IOBIEThing> data = ((List<IOBIEThing>) field.get(obieThing));

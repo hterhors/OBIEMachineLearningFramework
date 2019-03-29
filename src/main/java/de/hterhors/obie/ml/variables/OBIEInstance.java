@@ -13,8 +13,10 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.semanticweb.owlapi.reasoner.IllegalConfigurationException;
 
 import corpus.LabeledInstance;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.RegExTokenizer;
 import de.hterhors.obie.core.tokenizer.SentenceSplitter;
@@ -43,6 +45,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		}
 	};
 
+	public static enum EInstanceType {
+		TRAIN, DEV, TEST, UNSET;
+
+	}
+
 	private static Logger log = LogManager.getFormatterLogger(OBIEInstance.class);
 
 	/**
@@ -59,6 +66,17 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	final private String content;
 
 	final private List<Token> tokens;
+
+	private EInstanceType instanceType = EInstanceType.UNSET;
+
+	public EInstanceType getInstanceType() {
+		return instanceType;
+	}
+
+	public OBIEInstance setInstanceType(EInstanceType instanceType) {
+		this.instanceType = instanceType;
+		return this;
+	}
 
 	/**
 	 * Tokens indexed by position.
@@ -79,14 +97,15 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		this.goldAnnotation = goldAnnotations;
 
 		this.name = documentName;
+
 		this.content = prepareDocumentContent(documentContent);
 
 		this.tokens = RegExTokenizer.tokenize(getDocumentSentences(documentContent)).stream()
 				.flatMap(t -> t.tokens.stream()).collect(Collectors.toList());
 
 		for (Token token : tokens) {
-			fromPositionTokens.put(token.getFromCharPosition(), token);
-			toPositionTokens.put(token.getToCharPosition(), token);
+			fromPositionTokens.put(new Integer(token.getFromCharPosition()), token);
+			toPositionTokens.put(new Integer(token.getToCharPosition()), token);
 		}
 		this.rootClassTypes = Collections.unmodifiableSet(new HashSet<>(rootClassTypes));
 	}
@@ -122,7 +141,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		this.namedEntityLinkingAnnotations = namedEntityLinkingAnnotations;
 	}
 
-	public int charPositionToTokenPosition(int characterPosition) {
+	public int charPositionToTokenPosition(Integer characterPosition) {
 
 		if (fromPositionTokens.containsKey(characterPosition))
 			return fromPositionTokens.get(characterPosition).getIndex();
@@ -133,11 +152,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		log.warn("____CONTENT_____");
 		log.warn(content);
 		log.warn("_____FROM____");
-		fromPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		fromPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("____TO_____");
-		toPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		toPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
 		log.warn("_________");
 
@@ -147,7 +166,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 
 	}
 
-	public Token charPositionToToken(int characterPosition) {
+	public Token charPositionToToken(Integer characterPosition) {
 
 		if (fromPositionTokens.containsKey(characterPosition))
 			return fromPositionTokens.get(characterPosition);
@@ -156,11 +175,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 			return toPositionTokens.get(characterPosition);
 
 		log.warn("_________");
-		toPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		toPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
-		fromPositionTokens.entrySet().stream().filter(t -> Math.abs(t.getKey() - characterPosition) < 20)
-				.forEach(log::warn);
+		fromPositionTokens.entrySet().stream()
+				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
 		log.warn("characterPosition = " + characterPosition);
 
@@ -187,14 +206,40 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		return this;
 	}
 
-	public NamedEntityLinkingAnnotations getNamedEntityLinkingAnnotations() {
+	public NamedEntityLinkingAnnotations getEntityAnnotations() {
 		return namedEntityLinkingAnnotations;
 	}
+
+//		@Override
+//	public int hashCode() {
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + ((name == null) ? 0 : name.hashCode());
+//		return result;
+//	}
+//
+//	@Override
+//	public boolean equals(Object obj) {
+//		if (this == obj)
+//			return true;
+//		if (obj == null)
+//			return false;
+//		if (getClass() != obj.getClass())
+//			return false;
+//		OBIEInstance other = (OBIEInstance) obj;
+//		if (name == null) {
+//			if (other.name != null)
+//				return false;
+//		} else if (!name.equals(other.name))
+//			return false;
+//		return true;
+//	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((goldAnnotation == null) ? 0 : goldAnnotation.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -208,6 +253,11 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 		if (getClass() != obj.getClass())
 			return false;
 		OBIEInstance other = (OBIEInstance) obj;
+		if (goldAnnotation == null) {
+			if (other.goldAnnotation != null)
+				return false;
+		} else if (!goldAnnotation.equals(other.goldAnnotation))
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;

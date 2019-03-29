@@ -2,8 +2,8 @@ package de.hterhors.obie.ml.evaluation;
 
 import java.lang.reflect.Field;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 
 public class DatatypeOrListConditon implements IOrListCondition {
 

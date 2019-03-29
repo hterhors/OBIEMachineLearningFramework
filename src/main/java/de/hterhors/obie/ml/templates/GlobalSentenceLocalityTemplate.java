@@ -10,15 +10,15 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.GlobalSentenceLocalityTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -26,8 +26,8 @@ import learning.Vector;
 @Deprecated
 public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> {
 
-	public GlobalSentenceLocalityTemplate(RunParameter parameter) {
-		super(parameter);
+	public GlobalSentenceLocalityTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
 			try {
 				factors.addAll(
 						addFactorRecursive(entity.rootClassType, state.getInstance(), entity.getThing()));
@@ -159,7 +159,7 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 		/*
 		 * Get all annotation mentions for original class type 1.
 		 */
-		List<Integer> mentionsForClass1 = document.getNamedEntityLinkingAnnotations()
+		List<Integer> mentionsForClass1 = document.getEntityAnnotations()
 				.getClassAnnotations(factor.getFactorScope().class1Type).stream()
 				.map(m -> document.charPositionToToken(m.onset).getSentenceIndex()).collect(Collectors.toList());
 
@@ -167,7 +167,7 @@ public class GlobalSentenceLocalityTemplate extends AbstractOBIETemplate<Scope> 
 		 * Get all annotation mentions for original class type 2.
 		 */
 		List<Integer> mentionsForClass2 = new ArrayList<>(
-				document.getNamedEntityLinkingAnnotations().getClassAnnotations(factor.getFactorScope().class2Type))
+				document.getEntityAnnotations().getClassAnnotations(factor.getFactorScope().class2Type))
 						.stream().map(m -> document.charPositionToToken(m.onset).getSentenceIndex())
 						.collect(Collectors.toList());
 

@@ -477,7 +477,7 @@ public class WEKABaseline {
 
 			OBIEState previousState = new OBIEState(trainInstance, parameter);
 
-			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getTemplateAnnotations().stream()
+			List<IOBIEThing> gold = trainInstance.getGoldAnnotation().getAnnotations().stream()
 					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			List<OBIEState> previousStates = new ArrayList<>();
@@ -542,7 +542,7 @@ public class WEKABaseline {
 
 		selectedStates.forEach(newState -> {
 
-			List<IOBIEThing> prediction = newState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+			List<IOBIEThing> prediction = newState.getCurrentIETemplateAnnotations().getAnnotations().stream()
 					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
@@ -583,7 +583,7 @@ public class WEKABaseline {
 
 		previousStates.forEach(newState -> {
 
-			List<IOBIEThing> prediction = newState.getCurrentTemplateAnnotations().getTemplateAnnotations().stream()
+			List<IOBIEThing> prediction = newState.getCurrentIETemplateAnnotations().getAnnotations().stream()
 					.map(e -> e.getThing()).collect(Collectors.toList());
 
 			trainingData.addFeatureDataPoint(
@@ -630,7 +630,7 @@ public class WEKABaseline {
 		 * Score all states so we can sort them.
 		 */
 		for (OBIEState genState : generatedStates) {
-			final List<IOBIEThing> prediction = genState.getCurrentTemplateAnnotations().getTemplateAnnotations()
+			final List<IOBIEThing> prediction = genState.getCurrentIETemplateAnnotations().getAnnotations()
 					.stream().map(e -> e.getThing()).collect(Collectors.toList());
 			genState.setObjectiveScore(objectiveFunction.f1(gold, prediction));
 		}
@@ -741,7 +741,7 @@ public class WEKABaseline {
 			// System.out.println("######################################");
 		}
 
-		EvaluatePrediction.evaluateREPredictions(new REObjectiveFunction(parameter), predictions, parameter.evaluator);
+		EvaluatePrediction.evaluateSlotFillingPredictions(new REObjectiveFunction(parameter), predictions, parameter.evaluator);
 	}
 
 	/**

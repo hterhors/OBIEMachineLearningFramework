@@ -7,10 +7,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
 import de.hterhors.obie.ml.exceptions.NotSupportedException;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 /**
  * 
@@ -39,22 +39,26 @@ public class PurityEvaluator extends AbstractOBIEEvaluator {
 	public static Logger log = LogManager.getFormatterLogger(PurityEvaluator.class.getSimpleName());
 
 	public PurityEvaluator() {
-		this(true, Integer.MAX_VALUE, true, InvestigationRestriction.noRestrictionInstance, f -> false,
-				Integer.MAX_VALUE, true);
+		this(true, Integer.MAX_VALUE, true
+//				, InvestigationRestriction.noRestrictionInstance
+				, f -> false, Integer.MAX_VALUE, true);
 	}
 
 	public PurityEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, int maxNumberOfAnnotations,
-			final boolean ignoreEmptyInstancesOnEvaluation) {
-		this(enableCaching, maxEvaluationDepth, penalizeCardinality, investigationRestrictions, f -> false,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
-	}
-
-	public PurityEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
-			InvestigationRestriction investigationRestrictions, IOrListCondition orListCondition,
+//			InvestigationRestriction investigationRestrictions, 
 			int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
-		super(enableCaching, penalizeCardinality, investigationRestrictions, orListCondition, maxEvaluationDepth,
-				maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+		this(enableCaching, maxEvaluationDepth, penalizeCardinality,
+//				investigationRestrictions,
+				f -> false, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
+	}
+
+	public PurityEvaluator(boolean enableCaching, final int maxEvaluationDepth, final boolean penalizeCardinality,
+//			InvestigationRestriction investigationRestrictions,
+			IOrListCondition orListCondition, int maxNumberOfAnnotations,
+			final boolean ignoreEmptyInstancesOnEvaluation) {
+		super(enableCaching, penalizeCardinality,
+//				investigationRestrictions,
+				orListCondition, maxEvaluationDepth, maxNumberOfAnnotations, ignoreEmptyInstancesOnEvaluation);
 	}
 
 	@Override
@@ -68,12 +72,12 @@ public class PurityEvaluator extends AbstractOBIEEvaluator {
 	}
 
 	@Override
-	public double recall(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double recall(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		throw new NotSupportedException("Recall is not supported for purity measurement.");
 	}
 
 	@Override
-	public double precision(List<IOBIEThing> gold, List<IOBIEThing> predictions) {
+	public double precision(List<? extends IOBIEThing> gold, List<? extends IOBIEThing> predictions) {
 		throw new NotSupportedException("Precision is not supported for purity measurement.");
 	}
 
@@ -146,7 +150,8 @@ public class PurityEvaluator extends AbstractOBIEEvaluator {
 		throw new NotSupportedException("PRF1 is not supported for purity measurement.");
 	}
 
-	protected PRF1 explore(final List<IOBIEThing> gold, final List<IOBIEThing> prediction, final int depth) {
+	protected PRF1 explore(final List<? extends IOBIEThing> gold, final List<? extends IOBIEThing> prediction,
+			final int depth) {
 
 		PRF1 purityScore = new PRF1();
 

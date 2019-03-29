@@ -23,24 +23,21 @@ public class BigramCorpusBuilder {
 
 	public static boolean overrideCorpusFileIfExists = false;
 
-	public BigramCorpusBuilder(AbstractProjectEnvironment projectEnvironment,
+	public BigramCorpusBuilder(AbstractProjectEnvironment<?> projectEnvironment,
 			final AbstractOntologyEnvironment ontologyEnvironment, INamedEntitityLinker linker) throws Exception {
 		this(projectEnvironment, ontologyEnvironment, new HashSet<>(Arrays.asList(linker)));
 	}
 
-	public BigramCorpusBuilder(AbstractProjectEnvironment projectEnvironment,
+	public BigramCorpusBuilder(AbstractProjectEnvironment<?> projectEnvironment,
 			final AbstractOntologyEnvironment ontologyEnvironment, Set<INamedEntitityLinker> linker) throws Exception {
 
-		final String corpusPrefix = projectEnvironment.getCorpusPrefix();
 		log.info("Override-flag was set to: " + overrideCorpusFileIfExists + ", "
 				+ (overrideCorpusFileIfExists ? "existing corpus might be overriden!" : "corpus might not be saved."));
-
-		OntologyInitializer.initializeOntology(ontologyEnvironment);
 
 		final BigramCorpusProvider corpusProvider = new BigramCorpusProvider(projectEnvironment.getRawCorpusFile(),
 				linker);
 
-		storeCorpusToFile(corpusProvider, projectEnvironment, corpusPrefix, ontologyEnvironment.getOntologyVersion());
+		storeCorpusToFile(corpusProvider, projectEnvironment, ontologyEnvironment.getOntologyVersion());
 
 	}
 
@@ -51,19 +48,19 @@ public class BigramCorpusBuilder {
 	 * @param environment
 	 * @param corpusPrefixName
 	 */
-	private void storeCorpusToFile(final BigramCorpusProvider corpus, AbstractProjectEnvironment environment,
-			final String corpusPrefixName, final int ontologyVersion) {
+	private void storeCorpusToFile(final BigramCorpusProvider corpus, AbstractProjectEnvironment<?> projectEnvironment,
+			final int ontologyVersion) {
 
 		final File corpusFile = CorpusFileTools.buildAnnotatedBigramCorpusFile(
-				environment.getBigramCorpusFileDirectory(), corpusPrefixName, corpus.getRawCorpus().getRootClasses(),
-				ontologyVersion);
+				projectEnvironment.getBigramCorpusFileDirectory(), projectEnvironment.getCorpusPrefix(),
+				corpus.getOriginalRootClasses(), ontologyVersion);
 
 		if (corpusFile.exists()) {
 			log.warn("Corpus file already exists under name: " + corpusFile);
 
 		}
 
-		if (!overrideCorpusFileIfExists) {
+		if (corpusFile.exists() && !overrideCorpusFileIfExists) {
 			log.warn("Do not override, discard corpus!");
 			return;
 		} else {

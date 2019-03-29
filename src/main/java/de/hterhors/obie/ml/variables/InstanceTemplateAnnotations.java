@@ -19,7 +19,7 @@ public class InstanceTemplateAnnotations implements Serializable {
 	 * Since Entities only hold weak pointer via references to one another, using a
 	 * Map is sensible to enable an efficient access to the entities.
 	 */
-	private final Map<Long, TemplateAnnotation> entities = new HashMap<>();
+	private final Map<Long, IETmplateAnnotation> entities = new HashMap<>();
 
 	public InstanceTemplateAnnotations() {
 	}
@@ -30,12 +30,12 @@ public class InstanceTemplateAnnotations implements Serializable {
 	 * @param cloneFrom
 	 */
 	public InstanceTemplateAnnotations(InstanceTemplateAnnotations cloneFrom) {
-		for (TemplateAnnotation e : cloneFrom.entities.values()) {
-			this.entities.put(e.annotationID, new TemplateAnnotation(e));
+		for (IETmplateAnnotation e : cloneFrom.entities.values()) {
+			this.entities.put(e.annotationID, new IETmplateAnnotation(e));
 		}
 	}
 
-	public TemplateAnnotation getEntity(long entityID) {
+	public IETmplateAnnotation getEntity(long entityID) {
 		return entities.get(entityID);
 	}
 
@@ -44,18 +44,18 @@ public class InstanceTemplateAnnotations implements Serializable {
 	 * 
 	 * @return
 	 */
-	public Collection<TemplateAnnotation> getTemplateAnnotations() {
+	public Collection<IETmplateAnnotation> getAnnotations() {
 		/**
 		 * unmodifiableCollection
 		 */
 		return entities.values();
 	}
 
-	public void addAnnotation(TemplateAnnotation entity) {
+	public void addAnnotation(IETmplateAnnotation entity) {
 		entities.put(entity.annotationID, entity);
 	}
 
-	public void removeEntity(TemplateAnnotation entity) {
+	public void removeEntity(IETmplateAnnotation entity) {
 		entities.remove(entity.annotationID);
 	}
 
@@ -88,10 +88,9 @@ public class InstanceTemplateAnnotations implements Serializable {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 
-		for (TemplateAnnotation e : entities.values()) {
+		for (IETmplateAnnotation e : entities.values()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getThing()
-//					, investigationRestriction
+			builder.append(OBIEClassFormatter.format(e.getThing(),true
 			));
 			builder.append("\n");
 		}

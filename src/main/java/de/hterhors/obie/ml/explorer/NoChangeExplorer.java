@@ -18,6 +18,7 @@ import de.hterhors.obie.ml.variables.OBIEState;
 public class NoChangeExplorer extends AbstractOBIEExplorer {
 
 	public NoChangeExplorer(RunParameter param) throws ClassNotFoundException {
+	super(param);
 	}
 
 	@Override

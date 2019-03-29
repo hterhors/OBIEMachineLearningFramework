@@ -39,7 +39,17 @@ public class OBIEScorer implements Scorer {
 	 * @param multiThreaded
 	 */
 	public void score(List<? extends AbstractState<?>> states, boolean multiThreaded) {
+//Time needed: 350271
+//		for (AbstractState<?> s : states) {
+//
+//			try {
+//				s.setModelScore(scoreSingleState(s.getFactorGraph().getFactors()));
+//			} catch (MissingFactorException e) {
+//				e.printStackTrace();
+//			}
+//		}
 
+//		Time needed: 170222
 		Stream<? extends AbstractState<?>> stream = Utils.getStream(states, multiThreaded);
 
 		stream.forEach(s -> {

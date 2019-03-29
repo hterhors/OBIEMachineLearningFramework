@@ -2,6 +2,7 @@ package de.hterhors.obie.ml.evaluation.evaluator;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,31 +10,35 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import de.hterhors.obie.core.evaluation.PRF1;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.instances.EmptyOBIEInstance;
 import de.hterhors.obie.core.ontology.interfaces.IDatatype;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.evaluation.IOrListCondition;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 
 public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 	private static final int CLEAN_UP_PERIOD_IN_SEC = 5;
 
-	private final PRF1 zeroScore = new PRF1();
+	protected final PRF1 zeroScore = new PRF1();
+
+	protected final PRF1 perfectScore = new PRF1(1, 0, 0);
+
+	private final PRF1 scoreForEmptyOrNullValues;
 
 	protected final boolean penalizeCardinality;
 
-	protected final InvestigationRestriction investigationRestrictions;
+//	protected InvestigationRestriction globalInvestigationRestrictions;
 
 	/**
 	 * This condition returns true for lists that matches the "OR"-list paradigm. An
 	 * comparison of two "OR"-lists returns a score of 1 if the predicted list
 	 * contains at least one element of the gold-list and no fps.
 	 */
-	protected final IOrListCondition orListCondition;
+	protected IOrListCondition orListCondition = l -> false;
 
 	/**
 	 * Maximum depth for sub*-properties which should influence the evaluation
@@ -56,13 +61,14 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 	public static class CacheKey {
 		final private IOBIEThing goldClass;
 		final private IOBIEThing predictedClass;
-		final InvestigationRestriction samplingRestrictions;
+//		final InvestigationRestriction samplingRestrictions;
 
-		public CacheKey(IOBIEThing goldClass, IOBIEThing predictedClass,
-				InvestigationRestriction investigationRestrictions) {
+		public CacheKey(IOBIEThing goldClass, IOBIEThing predictedClass
+//				,				InvestigationRestriction investigationRestrictions
+		) {
 			this.goldClass = goldClass;
 			this.predictedClass = predictedClass;
-			this.samplingRestrictions = investigationRestrictions;
+//			this.samplingRestrictions = investigationRestrictions;
 		}
 
 		@Override
@@ -70,7 +76,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + ((goldClass == null) ? 0 : goldClass.hashCode());
-			result = prime * result + ((samplingRestrictions == null) ? 0 : samplingRestrictions.hashCode());
+//			result = prime * result + ((samplingRestrictions == null) ? 0 : samplingRestrictions.hashCode());
 			result = prime * result + ((predictedClass == null) ? 0 : predictedClass.hashCode());
 			return result;
 		}
@@ -89,11 +95,11 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					return false;
 			} else if (!goldClass.equals(other.goldClass))
 				return false;
-			if (samplingRestrictions == null) {
-				if (other.samplingRestrictions != null)
-					return false;
-			} else if (!samplingRestrictions.equals(other.samplingRestrictions))
-				return false;
+//			if (samplingRestrictions == null) {
+//				if (other.samplingRestrictions != null)
+//					return false;
+//			} else if (!samplingRestrictions.equals(other.samplingRestrictions))
+//				return false;
 			if (predictedClass == null) {
 				if (other.predictedClass != null)
 					return false;
@@ -104,17 +110,24 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 	}
 
-	public AbstractOBIEEvaluator(boolean enableCaching, boolean penalizeCardinality,
-			InvestigationRestriction propertyRestrictions, IOrListCondition orListCondition, int maxEvaluationDepth,
-			final int maxNumberOfAnnotations, final boolean ignoreEmptyInstancesOnEvaluation) {
+	public AbstractOBIEEvaluator(boolean enableCaching, boolean penalizeCardinality
+//			,		InvestigationRestriction propertyRestrictions
+			, IOrListCondition orListCondition, int maxEvaluationDepth, final int maxNumberOfAnnotations,
+			final boolean ignoreEmptyInstancesOnEvaluation) {
 		this.enableCaching = enableCaching;
 		this.penalizeCardinality = penalizeCardinality;
-		this.investigationRestrictions = propertyRestrictions;
+//		this.globalInvestigationRestrictions = propertyRestrictions;
 		this.orListCondition = orListCondition;
 		this.maxEvaluationDepth = maxEvaluationDepth;
 		this.maxNumberOfAnnotations = maxNumberOfAnnotations;
 		this.ignoreEmptyInstancesOnEvaluation = ignoreEmptyInstancesOnEvaluation;
+		/*
+		 * TODO: Parameter whether equal null values should be rewarded or not.
+		 * zeroScore
+		 */
+		boolean countEmptyOrNullValues = false;
 
+		this.scoreForEmptyOrNullValues = countEmptyOrNullValues ? perfectScore : zeroScore;
 //		Thread cleanerThread = new Thread(() -> {
 //			while (!Thread.currentThread().isInterrupted()) {
 //				try {
@@ -140,9 +153,13 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		return penalizeCardinality;
 	}
 
-	public InvestigationRestriction getInvestigationRestrictions() {
-		return investigationRestrictions;
-	}
+//	public InvestigationRestriction getInvestigationRestrictions() {
+//		return globalInvestigationRestrictions;
+//	}
+//
+//	public void setInvestigationRestrictions(InvestigationRestriction investigationRestrictions) {
+//		this.globalInvestigationRestrictions = investigationRestrictions;
+//	}
 
 	public IOrListCondition getOrListCondition() {
 		return orListCondition;
@@ -178,8 +195,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 	 */
 	protected PRF1 compareObjectWise(IOBIEThing goldInstance, IOBIEThing predictedInstance, int depth) {
 
-		if (goldInstance == null && predictedInstance == null)
-			return zeroScore;
+		if (goldInstance == null && predictedInstance == null) {
+
+			return scoreForEmptyOrNullValues;
+		}
 
 		/*
 		 * Switch on to get only the scores for same amount of templates. Do not
@@ -196,7 +215,9 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		CacheKey ck;
 		PRF1 score;
 		if (enableCaching) {
-			ck = new CacheKey(goldInstance, predictedInstance, investigationRestrictions);
+			ck = new CacheKey(goldInstance, predictedInstance
+//					, globalInvestigationRestrictions
+			);
 
 			if ((score = cache.get(ck)) != null) {
 				return score;
@@ -216,6 +237,14 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 //		}
 		score = new PRF1();
 
+		/*
+		 * TODO: Check this necessary?
+		 */
+//		if (!goldInstance.getInvestigationRestriction().equals(predictedInstance.getInvestigationRestriction())) {
+//			return zeroScore;
+////			throw new IllegalStateException("Can not compare classes with different investigation restrictions!");
+//		}
+
 		if (goldInstance == null && predictedInstance != null) {
 			/*
 			 * If the gold instance does not have the specific field but the
@@ -233,22 +262,34 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					|| ReflectionUtils.isAnnotationPresent(predictedInstance.getClass(), DatatypeProperty.class)) {
 				if (goldInstance.getClass().equals(predictedInstance.getClass())) {
 
-					final String predValue = ((IDatatype) predictedInstance).getSemanticValue();
+					String predValue = ((IDatatype) predictedInstance).getInterpretedValue();
+
+					if (predValue == null)
+						predValue = predictedInstance.getTextMention();
+
+					String goldValue = ((IDatatype) goldInstance).getInterpretedValue();
+					if (goldValue == null)
+						goldValue = goldInstance.getTextMention();
+
 					if (predValue == null) {
+//						if(goldValue==null) {
+//							score.add(scoreForEmptyOrNullValues);
+//						}else{
 						/*
 						 * This case happens only if the rootClassType is a data type class.
 						 */
 						score.fn++;
+//						}
 						return score;
-					} else if (((IDatatype) goldInstance).getSemanticValue().equals(predValue)) {
+					} else if (goldValue.equals(predValue)) {
 						/*
 						 * If both classes are same data type property and have the same value.
 						 */
 						score.tp++;
 						return score;
 					} else {
-
-						if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
+						if ((depth == 0 && goldInstance.getInvestigationRestriction().investigateClassType)
+								|| depth != 0) {
 
 							/*
 							 * If they have not the same value.
@@ -269,48 +310,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			}
 
 			/*
-			 * If they are not data types. investigate class type
-			 */
-			if (goldInstance.getClass().equals(predictedInstance.getClass())) {
-				if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
-					/*
-					 * If both classes are the same and no data type properties.
-					 */
-					if (ignoreEmptyInstancesOnEvaluation && predictedInstance.isEmpty())
-						/*
-						 * If the predicted instance is null and we want to ignore empty instances than
-						 * deal it as its not existent.
-						 */
-						score.fn++;
-					else
-						// otherwise add +1 to true positive
-						score.tp++;
-				}
-			} else {
-				if (predictedInstance == EmptyOBIEInstance.emptyInstance) {
-					// if (depth == 0 &&
-					// investigationRestrictions.investigateClassType || depth
-					// != 0) {
-					score.fn++;
-					// }
-				} else if (goldInstance == EmptyOBIEInstance.emptyInstance) {
-					// if (depth == 0 &&
-					// investigationRestrictions.investigateClassType || depth
-					// != 0) {
-					if (!(ignoreEmptyInstancesOnEvaluation && predictedInstance.isEmpty()))
-						score.fp++;
-					// }
-				} else if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
-					score.fp++;
-					score.fn++;
-				}
-			}
-
-			/*
 			 * If they are not data types investigate individual type
 			 */
 			if (checkForSameType(goldInstance, predictedInstance)) {
-				if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
+				if (depth == 0 && goldInstance.getInvestigationRestriction().investigateClassType || depth != 0) {
 					/*
 					 * If both classes are the same and no data type properties.
 					 */
@@ -338,13 +341,15 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					if (!(ignoreEmptyInstancesOnEvaluation && predictedInstance.isEmpty()))
 						score.fp++;
 					// }
-				} else if (depth == 0 && investigationRestrictions.investigateClassType || depth != 0) {
+				} else if (depth == 0 && goldInstance.getInvestigationRestriction().investigateClassType
+						|| depth != 0) {
 
 					if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() != null) {
 						score.fp++;
 					} else if (goldInstance.getIndividual() != null && predictedInstance.getIndividual() == null) {
 						score.fn++;
-					} else if (!goldInstance.getIndividual().equals(predictedInstance.getIndividual())) {
+					} else if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() == null
+							|| !goldInstance.getIndividual().equals(predictedInstance.getIndividual())) {
 						score.fn++;
 						score.fp++;
 					}
@@ -366,16 +371,20 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		 * that have the same name. Better here to check if the name is equal and both
 		 * classes have the same super root class. e.g. RatModel and MouseModel.
 		 */
-		Set<String> goldFields = new HashSet<>();
-		Set<String> predictionFields = new HashSet<>();
+		Set<String> goldFields;
+		Set<String> predictionFields;
 
 		if (goldInstance != null) {
-			goldFields = ReflectionUtils.getDeclaredOntologyFieldNames(goldInstance.getClass(),
-					investigationRestrictions);
+			goldFields = ReflectionUtils.getSlotNames(goldInstance.getClass(),
+					goldInstance.getInvestigationRestriction());
+		} else {
+			goldFields = new HashSet<>();
 		}
 		if (predictedInstance != null) {
-			predictionFields = ReflectionUtils.getDeclaredOntologyFieldNames(predictedInstance.getClass(),
-					investigationRestrictions);
+			predictionFields = ReflectionUtils.getSlotNames(predictedInstance.getClass(),
+					predictedInstance.getInvestigationRestriction());
+		} else {
+			predictionFields = new HashSet<>();
 		}
 
 		/*
@@ -384,9 +393,6 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		for (String fieldName : goldFields) {
 
 			if (predictionFields.contains(fieldName))
-				continue;
-
-			if (!investigationRestrictions.investigateField(fieldName))
 				continue;
 
 			Field goldField = ReflectionUtils.getAccessibleFieldByName(goldInstance.getClass(), fieldName);
@@ -405,9 +411,6 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		 * Loop over remaining fields
 		 */
 		for (String fieldName : predictionFields) {
-
-			if (!investigationRestrictions.investigateField(fieldName))
-				continue;
 
 			Field goldField;
 			if (goldInstance == EmptyOBIEInstance.emptyInstance || goldInstance == null) {
@@ -443,6 +446,9 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 	 */
 	private boolean checkForSameType(IOBIEThing goldInstance, IOBIEThing predictedInstance) {
 
+		if (!goldInstance.getClass().equals(predictedInstance.getClass()))
+			return false;
+
 		if (goldInstance.getIndividual() == null && predictedInstance.getIndividual() == null)
 			return true;
 
@@ -461,9 +467,20 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 		PRF1 score = new PRF1();
 
-		final PRF1 adderScore;
-		if ((goldField != null && goldField.isAnnotationPresent(RelationTypeCollection.class))
-				|| (predictionField != null && predictionField.isAnnotationPresent(RelationTypeCollection.class))) {
+		PRF1 adderScore = new PRF1();
+
+		/*
+		 * goldField and predictionField are always equal or one of them is null!
+		 */
+		if (goldClass != null && goldField != null && predictedClass != null && predictionField != null
+				&& goldClass != EmptyOBIEInstance.emptyInstance && predictedClass != EmptyOBIEInstance.emptyInstance
+				&& goldClass.getInvestigationRestriction().investigateField(goldField.getName()) != predictedClass
+						.getInvestigationRestriction().investigateField(predictionField.getName())) {
+//			return FP;
+			adderScore.add(FP);
+		} else if ((goldField != null && ReflectionUtils.isAnnotationPresent(goldField, RelationTypeCollection.class))
+				|| (predictionField != null
+						&& ReflectionUtils.isAnnotationPresent(predictionField, RelationTypeCollection.class))) {
 
 			List<IOBIEThing> goldList = null;
 			List<IOBIEThing> predictionList = null;
@@ -477,7 +494,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					e.printStackTrace();
 				}
 			} else {
-				goldList = new ArrayList<>();
+				goldList = Collections.emptyList();
 			}
 
 			if (predictedClass != null && predictionField != null) {
@@ -487,7 +504,7 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					e.printStackTrace();
 				}
 			} else {
-				predictionList = new ArrayList<>();
+				predictionList = Collections.emptyList();
 			}
 
 			/*
@@ -510,24 +527,42 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			 * If the field belongs to an or-list, we need a different method to calculate
 			 * the similarity of those lists.
 			 */
-			if (predictionField != null && ReflectionUtils.isAnnotationPresent(predictionField, DatatypeProperty.class)
-					|| goldField != null && ReflectionUtils.isAnnotationPresent(goldField, DatatypeProperty.class)) {
-				// System.out.println("In HERE..");
-				adderScore = standardSimilarity(goldList, predictionList);
-				// adderScore = listOfDataTypesEvaluator.prf1(goldList,
-				// predictionList);
-				// adderScore = new PRF1ScoreContainer(3,2,1);
-				// System.out.println("... done");
-			} else if ((predictionField != null && orListCondition.isTrue(predictionField))
-					|| (goldField != null && orListCondition.isTrue(goldField))) {
-				adderScore = orListSimilarity(goldList, predictionList, depth);
+			if (goldList.isEmpty() && predictionList.isEmpty()) {
+//				return scoreForEmptyOrNullValues;
+				adderScore.add(scoreForEmptyOrNullValues);
 			} else {
-				adderScore = explore(goldList, predictionList, depth);
+
+				if (predictionField != null
+						&& ReflectionUtils.isAnnotationPresent(predictionField, DatatypeProperty.class)
+						|| goldField != null
+								&& ReflectionUtils.isAnnotationPresent(goldField, DatatypeProperty.class)) {
+//					return standardSimilarity(goldList, predictionList);
+					adderScore.add(standardSimilarity(goldList, predictionList));
+				} else if ((predictionField != null && orListCondition.isTrue(predictionField))
+						|| (goldField != null && orListCondition.isTrue(goldField))) {
+//					return orListSimilarity(goldList, predictionList, depth);
+					adderScore.add(orListSimilarity(goldList, predictionList, depth));
+				} else {
+//					return explore(goldList, predictionList, depth);
+					adderScore.add(explore(goldList, predictionList, depth));
+				}
 			}
 
 		} else {
+
 			IOBIEThing gold = null;
 			IOBIEThing pred = null;
+
+//			if (goldField == null) {
+//				gold = EmptyOBIEInstance.emptyInstance;
+//				/*
+//				 * TODO: penalize ?
+//				 */
+////				adderScore.add(FP);
+//			} else if (predictionField == null ) {
+//				gold = EmptyOBIEInstance.emptyInstance;
+////				adderScore.add(FN);
+//			} else {
 			if (goldClass != null && goldField != null)
 				try {
 					gold = (IOBIEThing) goldField.get(goldClass);
@@ -542,7 +577,9 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 					e.printStackTrace();
 				}
 			}
-			adderScore = compareObjectWise(gold, pred, depth);
+//			return compareObjectWise(gold, pred, depth);
+//			}
+			adderScore.add(compareObjectWise(gold, pred, depth));
 		}
 
 //		System.out.println("adderScore = " + adderScore);
@@ -553,7 +590,11 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 
 	}
 
-	protected abstract PRF1 explore(List<IOBIEThing> goldList, List<IOBIEThing> predictedList, int depth);
+	protected abstract PRF1 explore(List<? extends IOBIEThing> goldList, List<? extends IOBIEThing> predictedList,
+			int depth);
+
+	private final PRF1 FP = new PRF1(0, 1, 0);
+	private final PRF1 FN = new PRF1(0, 0, 1);
 
 	/**
 	 * Compares the objects of two lists. This method calculates the max score
@@ -574,22 +615,22 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 			final int depth) {
 
 		if (goldList == null && predictedList == null) {
-			return new PRF1();
+			return zeroScore;
 		}
 
 		if (goldList == null) {
-			return new PRF1(0, 1, 0);
+			return FP;
 		}
 
 		if (predictedList == null) {
-			return new PRF1(0, 0, 1);
+			return FN;
 		}
 
 		if (goldList.isEmpty() && predictedList.isEmpty())
-			return new PRF1();
+			return zeroScore;
 
-		final PRF1 bestPermutationScore = new PRF1();
-		bestPermutationScore.fn++;
+		final PRF1 bestPermutationScore = new PRF1(0, 0, 1);
+//		bestPermutationScore.fn++;
 
 		int predictionPenalty = 0;
 
@@ -622,10 +663,10 @@ public abstract class AbstractOBIEEvaluator implements IOBIEEvaluator {
 		final List<String> semanticPredictedValues = new ArrayList<>();
 
 		for (IOBIEThing gV : goldList) {
-			semanticGoldValues.add(((IDatatype) gV).getSemanticValue());
+			semanticGoldValues.add(((IDatatype) gV).getInterpretedValue());
 		}
 		for (IOBIEThing pV : predictionList) {
-			semanticPredictedValues.add(((IDatatype) pV).getSemanticValue());
+			semanticPredictedValues.add(((IDatatype) pV).getInterpretedValue());
 		}
 
 		int tp;

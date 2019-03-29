@@ -1,10 +1,10 @@
 package de.hterhors.obie.ml.tests;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.ml.evaluation.evaluator.CartesianSearchEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
-import de.hterhors.obie.ml.evaluation.evaluator.NamedEntityLinkingEvaluator;
+import de.hterhors.obie.ml.evaluation.evaluator.StrictNamedEntityLinkingEvaluator;
 import de.hterhors.obie.ml.evaluation.evaluator.PurityEvaluator;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 
 /**
  * TODO Write, maybe create small example eontology for all tests.
@@ -15,12 +15,14 @@ import de.hterhors.obie.ml.run.InvestigationRestriction;
 public class TestEvaluation {
 
 	final static private IOBIEEvaluator purityREevaluator = new PurityEvaluator(true, 1000, true,
-			InvestigationRestriction.noRestrictionInstance, 10, false);
+//			InvestigationRestriction.noRestrictionInstance,
+			10, false);
 
 	final static private IOBIEEvaluator cartesianREevaluator = new CartesianSearchEvaluator(true, 1000, true,
-			InvestigationRestriction.noRestrictionInstance, 10, false);
+//			InvestigationRestriction.noRestrictionInstance, 
+			10, false);
 
-	final static private IOBIEEvaluator NERevaluator = new NamedEntityLinkingEvaluator();
+	final static private IOBIEEvaluator NERevaluator = new StrictNamedEntityLinkingEvaluator();
 
 //	public static void main(String[] args)
 //			throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {

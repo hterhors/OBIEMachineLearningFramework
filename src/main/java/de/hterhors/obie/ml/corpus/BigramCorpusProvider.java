@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -22,6 +23,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
@@ -34,12 +37,12 @@ import de.hterhors.obie.ml.corpus.distributor.ActiveLearningDistributor;
 import de.hterhors.obie.ml.corpus.distributor.FoldCrossCorpusDistributor;
 import de.hterhors.obie.ml.ner.INamedEntitityLinker;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
-import de.hterhors.obie.ml.run.AbstractRunner;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.run.param.RunParameter;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.InstanceTemplateAnnotations;
 import de.hterhors.obie.ml.variables.OBIEInstance;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
+import de.hterhors.obie.ml.variables.OBIEInstance.EInstanceType;
 import learning.Trainer;
 
 /**
@@ -65,10 +68,9 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	transient private AbstractCorpusDistributor distributer;
 
-	/**
-	 * The raw corpus that was loaded from binaries.
-	 */
-	public final OBIECorpus rawCorpus;
+	private final Set<String> originalTrainingInstances;
+	private final Set<String> originalDevelopmentInstances;
+	private final Set<String> originalTestInstances;
 
 	/**
 	 * Training, development, test corpus.
@@ -89,46 +91,60 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	public final List<OBIEInstance> allExistingInternalInstances = new ArrayList<>();
 
-	transient private int currentFold = -1;
+	public transient int currentFold = -1;
 
-	public OBIECorpus getRawCorpus() {
-		return rawCorpus;
+	public Set<String> getOriginalTrainingInstances() {
+		return Collections.unmodifiableSet(originalTrainingInstances);
+	}
+
+	public Set<String> getOriginalDevelopInstances() {
+		return Collections.unmodifiableSet(originalDevelopmentInstances);
+	}
+
+	public Set<String> getOriginalTestInstances() {
+		return Collections.unmodifiableSet(originalTestInstances);
 	}
 
 	transient public int currentActiveLearningItertion = 0;
 
-	private final Set<INamedEntitityLinker> entityLinker;
+	private final Set<Class<? extends IOBIEThing>> originalRootClasses;
+
+	public Set<Class<? extends IOBIEThing>> getOriginalRootClasses() {
+		return Collections.unmodifiableSet(originalRootClasses);
+	}
 
 	public BigramCorpusProvider(final File rawCorpusFile, Set<INamedEntitityLinker> entityLinker) {
 		log.info("Start creating corpus...");
 
 		log.info("Read raw corpus from file system: " + rawCorpusFile);
+		OBIECorpus rawCorpus;
 		try {
-			this.rawCorpus = OBIECorpus.readRawCorpusData(rawCorpusFile);
+			rawCorpus = OBIECorpus.readRawCorpusData(rawCorpusFile);
+
+			originalTrainingInstances = new HashSet<>(rawCorpus.getTrainingInstances().keySet());
+			originalDevelopmentInstances = new HashSet<>(rawCorpus.getDevelopInstances().keySet());
+			originalTestInstances = new HashSet<>(rawCorpus.getTestInstances().keySet());
+			originalRootClasses = new HashSet<>(rawCorpus.getRootClasses());
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IllegalArgumentException("Could not load corpus: " + e.getMessage());
 		}
 
-		this.entityLinker = Collections.unmodifiableSet(entityLinker);
-
 		log.info("Provided Named Enitity Recognition and Linking tools: ");
-		this.entityLinker.forEach(log::info);
+		entityLinker.forEach(log::info);
 
-		log.info("Apply " + this.entityLinker.size() + " NEL-Tools to  " + rawCorpus.getAllInstanceNames().size()
+		log.info("Apply " + entityLinker.size() + " NEL-Tools to  " + rawCorpus.getAllInstanceNames().size()
 				+ " instances...");
 
 		AtomicInteger countEntities = new AtomicInteger();
 		AtomicInteger progress = new AtomicInteger();
 		final int numOfInstances = rawCorpus.getInstances().size();
 
-		final long totalLength = rawCorpus.getInstances().values().stream().map(i -> Long.valueOf(i.content.length()))
-				.reduce(0L, Long::sum);
+		final Double totalLength = rawCorpus.getInstances().values().stream()
+				.map(i -> Double.valueOf(i.content.length())).reduce(new Double(0), Double::sum);
 
 		AtomicLong timeConsumed = new AtomicLong(0);
 		AtomicLong lengthConsumed = new AtomicLong(0);
-
-//		rawCorpus.getInstances().values().parallelStream().forEach(instance -> {
 
 		for (Instance instance : rawCorpus.getInstances().values()) {
 
@@ -140,24 +156,30 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			log.info("Annotate " + internalInstance.getName() + ", length: " + internalInstance.getContent().length());
 			long t = System.currentTimeMillis();
-			for (INamedEntitityLinker l : this.entityLinker) {
+			for (INamedEntitityLinker l : entityLinker) {
 				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + internalInstance.getName());
-				annotationbuilder.addClassAnnotations(l.annotateClasses(internalInstance.getContent()));
-				annotationbuilder.addIndividualAnnotations(l.annotateIndividuals(internalInstance.getContent()));
+				annotationbuilder.addClassAnnotations(
+						l.annotateClasses(internalInstance.getName(), internalInstance.getContent()));
+				annotationbuilder.addIndividualAnnotations(
+						l.annotateIndividuals(internalInstance.getName(), internalInstance.getContent()));
 
 			}
 			internalInstance.setAnnotations(annotationbuilder.build());
 
 			final long tc = (System.currentTimeMillis() - t);
 
-			log.info("Found " + internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations()
+			log.info("Found " + internalInstance.getEntityAnnotations().numberOfTotalAnnotations()
 					+ " in instance: " + internalInstance.getName() + " in " + tc + " ms.");
+
+			if (log.isDebugEnabled()) {
+				log.debug(internalInstance.getEntityAnnotations());
+			}
 
 			timeConsumed.addAndGet(tc);
 			lengthConsumed.addAndGet(internalInstance.getContent().length());
-			countEntities.addAndGet(internalInstance.getNamedEntityLinkingAnnotations().numberOfTotalAnnotations());
+			countEntities.addAndGet(internalInstance.getEntityAnnotations().numberOfTotalAnnotations());
 
-			final long estimedRemainignTime = (long) ((((double) totalLength - (double) lengthConsumed.get())
+			final long estimedRemainignTime = (long) (((totalLength.doubleValue() - (double) lengthConsumed.get())
 					/ (double) lengthConsumed.get()) * (double) timeConsumed.get());
 
 			log.info("Progress " + progress.addAndGet(1) + "/" + numOfInstances + ", estimated remaining time: "
@@ -178,7 +200,11 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			log.warn(errors.size() + " erros found:");
 			errors.forEach(log::warn);
 		}
-
+		{
+			entityLinker = null;
+			rawCorpus = null;
+			System.gc();
+		}
 	}
 
 	/**
@@ -189,8 +215,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	private void checkAnnotationConsistencies(final List<OBIEInstance> trainingDocuments) {
 		for (OBIEInstance internalInstance : trainingDocuments) {
-			for (TemplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
-					.getTemplateAnnotations()) {
+			for (IETmplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
+					.getAnnotations()) {
 				checkForTextualAnnotations(internalAnnotation.getThing(), internalInstance.getName(),
 						internalInstance.getContent());
 			}
@@ -221,12 +247,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			}
 
 		}
-		/*
-		 * Add factors for object type properties.
-		 */
-		ReflectionUtils.getAccessibleOntologyFields(annotation.getClass()).forEach(field -> {
+
+		ReflectionUtils.getSlots(annotation.getClass()).forEach(field -> {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 					for (IOBIEThing t : (List<IOBIEThing>) field.get(annotation)) {
 						checkForTextualAnnotations(t, instanceName, content);
 					}
@@ -252,30 +276,32 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		log.info("\"maximum number of annotations\" was set to: " + parameter.maxNumberOfEntityElements);
 
 		final int totalNumberOfInstances = this.allExistingInternalInstances.size();
-
+		int count = 0;
 		log.info("Apply filter...");
 		for (Iterator<OBIEInstance> it = this.allExistingInternalInstances.iterator(); it.hasNext();) {
 			OBIEInstance internalInstance = (OBIEInstance) it.next();
 
+			count += internalInstance.getTokens().size();
+
 			if (parameter.excludeEmptyInstancesFromCorpus
-					&& internalInstance.getGoldAnnotation().getTemplateAnnotations().isEmpty()) {
+					&& internalInstance.getGoldAnnotation().getAnnotations().isEmpty()) {
 				log.debug("No annotation data found!" + " Remove empty document " + internalInstance.getName()
 						+ " from corpus.");
 				it.remove();
 				continue;
 			}
 
-			if (internalInstance.getGoldAnnotation().getTemplateAnnotations()
+			if (internalInstance.getGoldAnnotation().getAnnotations()
 					.size() > parameter.maxNumberOfEntityElements) {
 				log.debug("Number of annotations = "
-						+ internalInstance.getGoldAnnotation().getTemplateAnnotations().size() + " exceeds limit of: "
+						+ internalInstance.getGoldAnnotation().getAnnotations().size() + " exceeds limit of: "
 						+ parameter.maxNumberOfEntityElements + "! Remove document " + internalInstance.getName()
 						+ " from corpus.");
 				it.remove();
 				continue;
 			}
 
-			for (TemplateAnnotation annotation : internalInstance.getGoldAnnotation().getTemplateAnnotations()) {
+			for (IETmplateAnnotation annotation : internalInstance.getGoldAnnotation().getAnnotations()) {
 
 				if (!testLimitToAnnnotationElementsRecursively(annotation.getThing(),
 						parameter.maxNumberOfEntityElements, parameter.maxNumberOfDataTypeElements)) {
@@ -286,6 +312,13 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 					it.remove();
 					continue;
 				}
+			}
+		}
+
+		log.info("Apply investigation restriction from parameter to gold data...");
+		for (Iterator<OBIEInstance> it = this.allExistingInternalInstances.iterator(); it.hasNext();) {
+			for (IETmplateAnnotation annotation : it.next().getGoldAnnotation().getAnnotations()) {
+				setRestrictionRec(annotation.getThing(), parameter.defaultTestInvestigationRestriction);
 			}
 		}
 
@@ -305,6 +338,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 		distributer.distributeInstances(this).distributeTrainingInstances(trainingDocuments)
 				.distributeDevelopmentInstances(developmentDocuments).distributeTestInstances(testDocuments);
+
+		trainingDocuments.forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
+		developmentDocuments.forEach(d -> d.setInstanceType(EInstanceType.DEV));
+		testDocuments.forEach(d -> d.setInstanceType(EInstanceType.TEST));
 
 		this.currentFold = -1;
 		this.currentActiveLearningItertion = 0;
@@ -373,7 +410,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * 
 	 * @param developmentDocuments
 	 * @param castedConfig
-	 * @param investigationRestriction
+	 * @param defaultTrainInvestigationRestriction
 	 * @param rootClassTypes
 	 * @param documents
 	 * 
@@ -388,7 +425,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 				Objects.requireNonNull(a);
 
-				internalAnnotation.addAnnotation(new TemplateAnnotation(annotations.getKey(), a));
+				internalAnnotation.addAnnotation(new IETmplateAnnotation(annotations.getKey(), a));
 
 			}
 		}
@@ -452,22 +489,61 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		throw new RuntimeException();
 	}
 
+	/**
+	 * Adds investigationRestriction to all slot values of the parent value.
+	 * 
+	 * @param thing
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	private static void setRestrictionRec(IOBIEThing thing, InvestigationRestriction r) {
+
+		if (thing == null)
+			return;
+
+		try {
+
+			if (ReflectionUtils.isAnnotationPresent(thing.getClass(), DatatypeProperty.class))
+				return;
+
+			thing.setInvestigationRestriction(r);
+
+			for (Field slot : ReflectionUtils.getNonDatatypeSlots(thing.getClass(), r)) {
+
+				if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+
+					for (IOBIEThing sv : (List<IOBIEThing>) slot.get(thing)) {
+						setRestrictionRec(sv, r);
+					}
+				} else {
+					setRestrictionRec((IOBIEThing) slot.get(thing), r);
+				}
+
+			}
+
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+
 	@Override
 	public boolean nextFold() {
 		if (!(distributer instanceof FoldCrossCorpusDistributor))
 			throw new IllegalStateException("Provided corpus distributor does not support fold cross validation: "
 					+ distributer.getDistributorID());
+		// init with -1
 		this.currentFold++;
 
 		if (((FoldCrossCorpusDistributor) distributer).n == (this.currentFold))
 			return false;
 
-		updateFold();
+		updateFold(((FoldCrossCorpusDistributor) distributer).n == (this.currentFold + 1));
 
 		return true;
 	}
 
-	private void updateFold() {
+	private void updateFold(boolean last) {
 		log.info("Update fold: " + this.currentFold);
 
 		final int foldSize = this.remainingFullCorpus.getInternalInstances().size()
@@ -480,11 +556,15 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		newTrainingInstances.addAll(this.remainingFullCorpus.getInternalInstances()
 				.subList((this.currentFold + 1) * foldSize, this.remainingFullCorpus.getInternalInstances().size()));
 
+		newTrainingInstances.forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
+
 		this.trainingCorpus = new BigramInternalCorpus(newTrainingInstances);
 
-		this.testCorpus = new BigramInternalCorpus(this.remainingFullCorpus.getInternalInstances()
-				.subList(this.currentFold * foldSize, (this.currentFold + 1) * foldSize));
+		this.testCorpus = new BigramInternalCorpus(this.remainingFullCorpus.getInternalInstances().subList(
+				this.currentFold * foldSize,
+				last ? this.remainingFullCorpus.getInternalInstances().size() : (this.currentFold + 1) * foldSize));
 
+		this.testCorpus.getInternalInstances().forEach(d -> d.setInstanceType(EInstanceType.TEST));
 	}
 
 	@Override
@@ -502,7 +582,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 * Function for updating training data within active learning life cycle.
 	 */
 	@Override
-	public List<OBIEInstance> updateActiveLearning(AbstractRunner runner, IActiveLearningDocumentRanker ranker) {
+	public List<OBIEInstance> updateActiveLearning(AbstractOBIERunner runner, IActiveLearningDocumentRanker ranker) {
 
 		if (!(distributer instanceof ActiveLearningDistributor))
 			throw new IllegalArgumentException("Configuration does not support active learning validation: "
@@ -519,10 +599,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			final List<OBIEInstance> trainingInstances = new ArrayList<>(this.trainingCorpus.getInternalInstances());
 
 			Level trainerLevel = LogManager.getFormatterLogger(Trainer.class.getName()).getLevel();
-			Level runnerLevel = LogManager.getFormatterLogger(AbstractRunner.class).getLevel();
+			Level runnerLevel = LogManager.getFormatterLogger(AbstractOBIERunner.class).getLevel();
 
 			Configurator.setLevel(Trainer.class.getName(), Level.FATAL);
-			Configurator.setLevel(AbstractRunner.class.getName(), Level.FATAL);
+			Configurator.setLevel(AbstractOBIERunner.class.getName(), Level.FATAL);
 
 			log.info("Rank remaining training instances (" + getDevelopCorpus().getInternalInstances().size()
 					+ ") using " + ranker.getClass().getSimpleName() + "...");
@@ -530,7 +610,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			log.info("done!");
 
 			Configurator.setLevel(Trainer.class.getName(), trainerLevel);
-			Configurator.setLevel(AbstractRunner.class.getName(), runnerLevel);
+			Configurator.setLevel(AbstractOBIERunner.class.getName(), runnerLevel);
 
 			List<OBIEInstance> newInstances;
 			List<OBIEInstance> remainingInstances;
@@ -549,6 +629,8 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 			this.trainingCorpus = new BigramInternalCorpus(trainingInstances);
 
 			this.developmentCorpus = new BigramInternalCorpus(remainingInstances);
+
+			this.trainingCorpus.getInternalInstances().forEach(d -> d.setInstanceType(EInstanceType.TRAIN));
 
 			return newInstances;
 		}
@@ -571,16 +653,17 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 		if (annotation == null)
 			return true;
 
-		final List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(annotation.getClass());
+		final List<Field> fields = ReflectionUtils.getNonDatatypeSlots(annotation.getClass());
 
 		for (Field field : fields) {
 			try {
-				if (field.isAnnotationPresent(RelationTypeCollection.class)) {
+				if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
 
 					@SuppressWarnings("unchecked")
 					List<IOBIEThing> elements = (List<IOBIEThing>) field.get(annotation);
 
-					if (elements.size() > (field.isAnnotationPresent(DatatypeProperty.class) ? datatypeLimit
+					if (elements.size() > (ReflectionUtils.isAnnotationPresent(field, DatatypeProperty.class)
+							? datatypeLimit
 							: objectLimit)) {
 						log.debug("Found property that elements in field: " + field.getName() + " exceeds given limit: "
 								+ elements.size() + " > " + objectLimit);

@@ -16,21 +16,24 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.hterhors.obie.core.ontology.AbstractOntologyEnvironment;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.ImplementationClass;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.projects.AbstractProjectEnvironment;
 import de.hterhors.obie.core.utils.ToStringFormatter;
 import de.hterhors.obie.ml.corpus.distributor.AbstractCorpusDistributor;
+import de.hterhors.obie.ml.corpus.distributor.OriginalCorpusDistributor;
 import de.hterhors.obie.ml.evaluation.evaluator.IOBIEEvaluator;
 import de.hterhors.obie.ml.explorer.AbstractOBIEExplorer;
 import de.hterhors.obie.ml.explorer.IExplorationCondition;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
+import de.hterhors.obie.ml.ner.candidateRetrieval.ICandidateRetrieval;
 import de.hterhors.obie.ml.templates.AbstractOBIETemplate;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEState;
 import learning.optimizer.Optimizer;
 import learning.optimizer.SGD;
+import learning.regularizer.L2;
 import learning.regularizer.Regularizer;
 import libsvm.svm_parameter;
 import sampling.samplingstrategies.AcceptStrategies;
@@ -43,22 +46,16 @@ public class RunParameter implements Serializable {
 	/**
 	 * TODO: via parameter greedy vs linear.
 	 */
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
-//			.linearObjectiveSamplingStrategy();
-//
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
-//			.linearModelSamplingStrategy();
+	public final static SamplingStrategy<OBIEState> linearTrainSamplingStrategyObjectiveScore = SamplingStrategies
+			.linearObjectiveSamplingStrategy();
 
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
-//			.softmaxObjectiveSamplingStrategy();
-//	
-//	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
-//			.softmaxModelSamplingStrategy();
+	public final static SamplingStrategy<OBIEState> linearTrainSamplingStrategyModelScore = SamplingStrategies
+			.linearModelSamplingStrategy();
 
-	public final static SamplingStrategy<OBIEState> trainSamplingStrategyObjectiveScore = SamplingStrategies
+	public final static SamplingStrategy<OBIEState> greedyTrainSamplingStrategyObjectiveScore = SamplingStrategies
 			.greedyObjectiveStrategy();
 
-	public final static SamplingStrategy<OBIEState> trainSamplingStrategyModelScore = SamplingStrategies
+	public final static SamplingStrategy<OBIEState> greedyTrainSamplingStrategyModelScore = SamplingStrategies
 			.greedyModelStrategy();
 
 	/*
@@ -168,7 +165,7 @@ public class RunParameter implements Serializable {
 	/**
 	 * The projects environment.
 	 */
-	public final AbstractProjectEnvironment projectEnvironment;
+	public final AbstractProjectEnvironment<?> projectEnvironment;
 
 	/**
 	 * The ontology environment.
@@ -177,8 +174,8 @@ public class RunParameter implements Serializable {
 
 	/**
 	 * Tasks specific exploration condition that goes beyond the
-	 * {@link #investigationRestriction}. This allows to set hard exploration
-	 * constrains.
+	 * {@link #defaultTrainInvestigationRestriction}. This allows to set hard
+	 * exploration constrains.
 	 * 
 	 * Even more specified exploration conditions. This does not affect the
 	 * evaluation! Use this interface to specify if specific fields should be
@@ -200,7 +197,13 @@ public class RunParameter implements Serializable {
 	 * The investigation restriction allows to focus only on specific slots. It
 	 * influences the sampling procedure and the evaluation.
 	 */
-	public final InvestigationRestriction investigationRestriction;
+	public final InvestigationRestriction defaultTrainInvestigationRestriction;
+
+	/**
+	 * The investigation restriction allows to focus only on specific slots. It
+	 * influences the sampling procedure and the evaluation.
+	 */
+	public final InvestigationRestriction defaultTestInvestigationRestriction;
 
 	/**
 	 * A predefined set of initial objects if {@link #initializer} is set
@@ -297,21 +300,24 @@ public class RunParameter implements Serializable {
 
 	public final AbstractCorpusDistributor corpusDistributor;
 
+	private final ICandidateRetrieval candidateRetrieval;
+
 	private RunParameter(boolean excludeEmptyInstancesFromCorpus,
 			Set<Class<? extends AbstractOBIETemplate<?>>> templates, File rootDirectory, int epochs,
 			Optimizer optimizer, EScorerType scorerType, String personalNotes,
 			Set<Class<? extends IOBIEThing>> rootSearchTypes, EInstantiationType initializer, String runID,
-			boolean multiThreading, AbstractProjectEnvironment projectEnvironment,
+			boolean multiThreading, AbstractProjectEnvironment<?> projectEnvironment,
 			Class<? extends IOBIEThing>[] manualExploreClassesWithoutEvidence,
 			IExplorationCondition explorationCondition, Set<Class<? extends AbstractOBIEExplorer>> explorersTypes,
-			svm_parameter svmParam, InvestigationRestriction investigationRestriction,
+			svm_parameter svmParam, InvestigationRestriction defaultTrainInvestigationRestriction,
+			InvestigationRestriction defaultTestInvestigationRestriction,
 			Map<Class<? extends IOBIEThing>, List<IOBIEThing>> initializationObjects, boolean exploreExistingTemplates,
 			boolean exploreOnOntologyLevel, boolean enableDiscourseProgression,
 			IInitializeNumberOfObjects numberOfInitializedObjects, IOBIEEvaluator evaluator,
 			int maxNumberOfEntityElements, int maxNumberOfDataTypeElements, Regularizer regularizer,
 			int maxNumberOfSamplingSteps, Random rndForSampling, boolean ignoreEmptyInstancesonEvaluation,
 			AbstractCorpusDistributor corpusConfiguration, AbstractOntologyEnvironment ontologyEnvironment,
-			boolean restrictExplorationOnConceptsInInstance) {
+			boolean restrictExplorationOnConceptsInInstance, ICandidateRetrieval candidateRetrieval) {
 
 		if (!validate()) {
 			throw new IllegalStateException("The given paramters do not match.");
@@ -336,7 +342,8 @@ public class RunParameter implements Serializable {
 		if (scorerType == EScorerType.LIB_SVM)
 			Objects.requireNonNull(svmParam);
 
-		Objects.requireNonNull(investigationRestriction);
+		Objects.requireNonNull(defaultTrainInvestigationRestriction);
+		Objects.requireNonNull(defaultTestInvestigationRestriction);
 
 		if (initializer == EInstantiationType.SPECIFIED) {
 			requireElements(initializationObjects);
@@ -349,9 +356,9 @@ public class RunParameter implements Serializable {
 			}
 		}
 
-		if (rootSearchTypes.size() > 1) {
-			throw new IllegalStateException("System does not support multiple root search types: " + rootSearchTypes);
-		}
+//		if (rootSearchTypes.size() > 1) {
+//			throw new IllegalStateException("System does not support multiple root search types: " + rootSearchTypes);
+//		}
 
 		Objects.requireNonNull(projectEnvironment.getCorpusPrefix());
 		Objects.requireNonNull(numberOfInitializedObjects);
@@ -361,6 +368,7 @@ public class RunParameter implements Serializable {
 		requireGreaterThanZero(maxNumberOfDataTypeElements);
 		requireGreaterThanZero(maxNumberOfSamplingSteps);
 
+		this.candidateRetrieval = candidateRetrieval;
 		this.corpusNamePrefix = projectEnvironment.getCorpusPrefix();
 		this.restrictExplorationToFoundConcepts = restrictExplorationOnConceptsInInstance;
 		this.corpusDistributor = corpusConfiguration;
@@ -389,7 +397,8 @@ public class RunParameter implements Serializable {
 		this.explorationCondition = explorationCondition;
 		this.explorers = explorersTypes;
 		this.svmParam = svmParam;
-		this.investigationRestriction = investigationRestriction;
+		this.defaultTrainInvestigationRestriction = defaultTrainInvestigationRestriction;
+		this.defaultTestInvestigationRestriction = defaultTestInvestigationRestriction;
 		this.initializationObjects = initializationObjects;
 		this.exploreExistingTemplates = exploreExistingTemplates;
 		this.exploreOnOntologyLevel = exploreOnOntologyLevel;
@@ -401,6 +410,14 @@ public class RunParameter implements Serializable {
 		this.maxNumberOfEntityElements = maxNumberOfEntityElements;
 		this.maxNumberOfDataTypeElements = maxNumberOfDataTypeElements;
 
+	}
+
+	public boolean hasCandidateRetrieval() {
+		return getCandidateRetrieval() != null;
+	}
+
+	public ICandidateRetrieval getCandidateRetrieval() {
+		return candidateRetrieval;
 	}
 
 	private void requireGreaterThanZero(double number) {
@@ -460,8 +477,11 @@ public class RunParameter implements Serializable {
 
 		for (Class<? extends IOBIEThing> c : ReflectionUtils.getAssignableSubInterfaces(ontologyRootThing)) {
 			if (ExplorationUtils.isAuxiliary(c)) {
+
 				if (ReflectionUtils.isAnnotationPresent(c, ImplementationClass.class)) {
+
 					set.add(ReflectionUtils.getImplementationClass(c));
+
 				} else {
 					log.warn("Can not find implementation class for: " + c.getSimpleName());
 				}
@@ -479,8 +499,8 @@ public class RunParameter implements Serializable {
 
 	@Override
 	public String toString() {
-		return "OBIEParameter [trainSamplingStrategyObjectiveScore=" + trainSamplingStrategyObjectiveScore
-				+ ", trainSamplingStrategyModelScore=" + trainSamplingStrategyModelScore
+		return "OBIEParameter [trainSamplingStrategyObjectiveScore=" + linearTrainSamplingStrategyObjectiveScore
+				+ ", trainSamplingStrategyModelScore=" + linearTrainSamplingStrategyModelScore
 				+ ", trainAcceptanceStrategyObjectiveScore=" + trainAcceptanceStrategyObjectiveScore
 				+ ", trainAcceptanceStrategyModelScore=" + trainAcceptanceStrategyModelScore + ", testSamplingStrategy="
 				+ testSamplingStrategy + ", testAcceptanceStrategy=" + testAcceptanceStrategy
@@ -491,7 +511,7 @@ public class RunParameter implements Serializable {
 				+ personalNotes + ", rootSearchTypes=" + rootSearchTypes + ", initializer=" + initializer
 				+ ", environment=" + projectEnvironment + ", explorationCondition=" + explorationCondition
 				+ ", explorers=" + explorers + ", svmParam=" + svmParam + ", investigationRestriction="
-				+ investigationRestriction + ", initializationObjects=" + initializationObjects
+				+ defaultTrainInvestigationRestriction + ", initializationObjects=" + initializationObjects
 				+ ", exploreExistingTemplates=" + exploreExistingTemplates + ", enableDiscourseProgression="
 				+ enableDiscourseProgression + ", exploreOnOntologyLevel=" + exploreOnOntologyLevel
 				+ ", numberOfInitializedObjects=" + numberOfInitializedObjects + ", maxNumberOfEntityElements="
@@ -525,7 +545,9 @@ public class RunParameter implements Serializable {
 
 		private Set<Class<? extends IOBIEThing>> rootSearchTypes = new HashSet<>();
 
-		private InvestigationRestriction investigationRestriction = InvestigationRestriction.noRestrictionInstance;
+		private InvestigationRestriction defaultTrainInvestigationRestriction = InvestigationRestriction.noRestrictionInstance;
+
+		private InvestigationRestriction defaultTestInvestigationRestriction = InvestigationRestriction.noRestrictionInstance;
 
 		private EInstantiationType initializer = EInstantiationType.EMPTY;
 
@@ -537,21 +559,21 @@ public class RunParameter implements Serializable {
 
 		private boolean exploreExistingTemplates = false;
 
-		private boolean exploreOnOntologyLevel = true;
+		private boolean exploreOnOntologyLevel = false;
 
 		private boolean restrictExplorationToFoundConcepts = true;
 
-		private AbstractProjectEnvironment projectEnvironment;
+		private AbstractProjectEnvironment<?> projectEnvironment = null;
 
-		private AbstractOntologyEnvironment ontologyEnvironment;
+		private AbstractOntologyEnvironment ontologyEnvironment = null;
 
 		private String personalNotes = "Default Notes";
 
-		private String runID = String.valueOf("RND_" + new Random().nextInt());
+		private String runID = String.valueOf("runID" + new Random().nextInt());
 
 		private int maxNumberOfSamplingSteps = 100;
 
-		private Regularizer regularizer = null;
+		private Regularizer regularizer = new L2(0.01);
 
 		private boolean multiThreading = true;
 
@@ -578,7 +600,18 @@ public class RunParameter implements Serializable {
 
 		private AbstractCorpusDistributor corpusConfiguration = null;
 
+		private ICandidateRetrieval candidateRetrieval = null;
+
 		public Builder() {
+		}
+
+		public ICandidateRetrieval getCandidateRetrieval() {
+			return candidateRetrieval;
+		}
+
+		public Builder setCandidateRetrieval(ICandidateRetrieval candidateRetrieval) {
+			this.candidateRetrieval = candidateRetrieval;
+			return this;
 		}
 
 		public AbstractCorpusDistributor getCorpusConfiguration() {
@@ -736,7 +769,7 @@ public class RunParameter implements Serializable {
 			return this;
 		}
 
-		public AbstractProjectEnvironment getProjectEnvironment() {
+		public AbstractProjectEnvironment<?> getProjectEnvironment() {
 			return projectEnvironment;
 		}
 
@@ -749,7 +782,7 @@ public class RunParameter implements Serializable {
 			return this;
 		}
 
-		public Builder setProjectEnvironment(AbstractProjectEnvironment projectEnvironment) {
+		public Builder setProjectEnvironment(AbstractProjectEnvironment<?> projectEnvironment) {
 			this.projectEnvironment = projectEnvironment;
 			return this;
 		}
@@ -781,12 +814,23 @@ public class RunParameter implements Serializable {
 			return this;
 		}
 
-		public InvestigationRestriction getInvestigationRestriction() {
-			return investigationRestriction;
+		public InvestigationRestriction getDefaultTrainInvestigationRestriction() {
+			return defaultTrainInvestigationRestriction;
 		}
 
-		public Builder setInvestigationRestriction(InvestigationRestriction investigationRestriction) {
-			this.investigationRestriction = investigationRestriction;
+		public Builder setDefaultTrainInvestigationRestriction(
+				InvestigationRestriction defaultTrainInvestigationRestriction) {
+			this.defaultTrainInvestigationRestriction = defaultTrainInvestigationRestriction;
+			return this;
+		}
+
+		public InvestigationRestriction getDefaultTestInvestigationRestriction() {
+			return defaultTestInvestigationRestriction;
+		}
+
+		public Builder setDefaultTestInvestigationRestriction(
+				InvestigationRestriction defaultTestInvestigationRestriction) {
+			this.defaultTestInvestigationRestriction = defaultTestInvestigationRestriction;
 			return this;
 		}
 
@@ -895,11 +939,11 @@ public class RunParameter implements Serializable {
 			return new RunParameter(excludeEmptyInstancesFromCorpus, templates, rootDirectory, epochs, optimizer,
 					scorerType, personalNotes, rootSearchTypes, initializer, runID, multiThreading, projectEnvironment,
 					manualExploreClassesWithoutEvidence, explorationCondition, explorers, svmParam,
-					investigationRestriction, initializationObjects, exploreExistingTemplates, exploreOnOntologyLevel,
-					enableDiscourseProgression, numberOfInitializedObjects, evaluator, maxNumberOfEntityElements,
-					maxNumberOfDataTypeElements, regularizer, maxNumberOfSamplingSteps, rndForSampling,
-					ignoreEmptyInstancesonEvaluation, corpusConfiguration, ontologyEnvironment,
-					restrictExplorationToFoundConcepts);
+					defaultTrainInvestigationRestriction, defaultTestInvestigationRestriction, initializationObjects,
+					exploreExistingTemplates, exploreOnOntologyLevel, enableDiscourseProgression,
+					numberOfInitializedObjects, evaluator, maxNumberOfEntityElements, maxNumberOfDataTypeElements,
+					regularizer, maxNumberOfSamplingSteps, rndForSampling, ignoreEmptyInstancesonEvaluation,
+					corpusConfiguration, ontologyEnvironment, restrictExplorationToFoundConcepts, candidateRetrieval);
 		}
 
 	}

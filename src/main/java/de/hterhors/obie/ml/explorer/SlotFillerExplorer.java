@@ -10,20 +10,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.AbstractIndividual;
+import de.hterhors.obie.core.ontology.InvestigationRestriction;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.explorer.utils.ExplorationUtils;
-import de.hterhors.obie.ml.run.InvestigationRestriction;
 import de.hterhors.obie.ml.run.param.RunParameter;
 import de.hterhors.obie.ml.utils.OBIEUtils;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
-import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 
 public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
@@ -33,7 +34,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	private Set<Class<? extends IOBIEThing>> exploreClassesWithoutTextualEvidence;
 
-	public final InvestigationRestriction investigationRestriction;
+//	private final InvestigationRestriction investigationRestriction;
 
 	private OBIEState currentState = null;
 
@@ -59,6 +60,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * NOT THREAD SAFE!
 	 */
 	public SlotFillerExplorer(RunParameter param) {
+		super(param);
 		this.restrictExplorationOnConceptsInInstance = param.restrictExplorationToFoundConcepts;
 		this.exploreClassesWithoutTextualEvidence = param.exploreClassesWithoutTextualEvidence;
 		if (param.explorationCondition != null)
@@ -66,7 +68,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		else
 			this.explorationCondition = (a, b, c) -> true;
 
-		this.investigationRestriction = param.investigationRestriction;
+//		this.investigationRestriction = param.investigationRestriction;
 
 		this.exploreOnOntologyLevel = param.exploreOnOntologyLevel;
 		this.exploreExistingTemplates = param.exploreExistingTemplates;
@@ -84,25 +86,40 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		this.currentState = currentState;
 
 		final List<OBIEState> proposalStates = new LinkedList<OBIEState>();
+//		System.out.println("#########################");
+//		System.out.println(currentState);
+//		System.out.println("#########################");
+		final Collection<IETmplateAnnotation> templateAnnotations = currentState.getCurrentIETemplateAnnotations()
+				.getAnnotations();
 
-		final Collection<TemplateAnnotation> templateAnnotations = currentState.getCurrentTemplateAnnotations()
-				.getTemplateAnnotations();
+//		if (currentState.getInstance().getName().contains("Geoff_Dyson")) {
+//			System.out.println("here");
+//		}
 
-		for (final TemplateAnnotation templateAnnotation : templateAnnotations) {
+		for (final IETmplateAnnotation templateAnnotation : templateAnnotations) {
 
 			this.currentRootEntitySentenceIndex = getRootEntitySentenceIndex(templateAnnotation);
 
 			this.currentTempalateAnnotationID = templateAnnotation.getAnnotationID();
 
 			for (StateInstancePair stateInstancePair : topDownRecursiveSlotFilling(templateAnnotation.getThing(),
-					templateAnnotation.rootClassType, true)) {
+					templateAnnotation.rootClassType, true,
+					templateAnnotation.getThing().getInvestigationRestriction())) {
 				proposalStates.add(stateInstancePair.state);
 			}
 
 		}
 
 		Collections.shuffle(proposalStates, new Random(rnd.nextLong()));
-
+//		if (currentState.getInstance().getName().contains("N223")) {
+////			proposalStates.forEach(System.out::println);
+//		for (OBIEState s : proposalStates) {
+//			System.out.println(s);
+//			for (TemplateAnnotation templateAnnotation : s.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
+//				System.out.println(templateAnnotation.getThing());
+//			}
+//		}
+//		}
 		return proposalStates;
 	}
 
@@ -113,7 +130,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @param templateAnnotation
 	 * @return
 	 */
-	private int getRootEntitySentenceIndex(final TemplateAnnotation templateAnnotation) {
+	private int getRootEntitySentenceIndex(final IETmplateAnnotation templateAnnotation) {
 		final int rootEntitySentenceIndex;
 
 		if (enableDiscourseProgression) {
@@ -130,8 +147,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	}
 
 	private List<StateInstancePair> topDownRecursiveSlotFilling(IOBIEThing parentTemplate,
-			Class<? extends IOBIEThing> slotType) {
-		return topDownRecursiveSlotFilling(parentTemplate, slotType, false);
+			Class<? extends IOBIEThing> slotType, InvestigationRestriction investigationRestriction) {
+		return topDownRecursiveSlotFilling(parentTemplate, slotType, false, investigationRestriction);
 	}
 
 	/**
@@ -154,7 +171,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @throws NoSuchFieldException
 	 */
 	private List<StateInstancePair> topDownRecursiveSlotFilling(IOBIEThing parentTemplate,
-			Class<? extends IOBIEThing> slotType, final boolean currentlyExploreRootTemplate) {
+			Class<? extends IOBIEThing> slotType, final boolean currentlyExploreRootTemplate,
+			InvestigationRestriction investigationRestriction) {
 
 		List<StateInstancePair> generatedStates = new LinkedList<>();
 
@@ -166,7 +184,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		boolean wasModByPreFilled = false;
 
 		if (!currentlyExploreRootTemplate
-				|| currentlyExploreRootTemplate && investigationRestriction.investigateClassType) {
+				|| currentlyExploreRootTemplate && parentTemplate.getInvestigationRestriction().investigateClassType) {
 
 			Set<IOBIEThing> potentialSlotFiller;
 
@@ -180,7 +198,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 				for (IOBIEThing emptyCandidateInstance : ExplorationUtils.getCandidates(currentState.getInstance(),
 						slotType, exploreClassesWithoutTextualEvidence, exploreOnOntologyLevel,
-						restrictExplorationOnConceptsInInstance)) {
+						restrictExplorationOnConceptsInInstance, investigationRestriction)) {
 
 					if (!exploreOnOntologyLevel && enableDiscourseProgression) {
 						/**
@@ -191,13 +209,14 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 						if (emptyCandidateInstance.getCharacterOnset() != null) {
 							final int slotEntitySentenceIndex = currentState.getInstance()
 									.charPositionToToken(emptyCandidateInstance.getCharacterOnset()).getSentenceIndex();
-							if (currentRootEntitySentenceIndex > slotEntitySentenceIndex) {
+//							if (Math.abs(currentRootEntitySentenceIndex - slotEntitySentenceIndex) > 10) {
+							if (currentRootEntitySentenceIndex + 1 > slotEntitySentenceIndex) {
 								continue;
 							}
 						}
 
 					}
-
+					
 					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
 							parentTemplate);
 
@@ -205,11 +224,6 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 				}
 			}
-			/*
-			 * Basic fields are already set. Only OntologyModelContent fields are missing.
-			 * 
-			 * For all values for field:
-			 */
 
 			for (IOBIEThing candidateFiller : potentialSlotFiller) {
 				/*
@@ -227,7 +241,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					generatedState.addUsedPreFilledTemplate(candidateFiller);
 				}
 
-				generatedState.getCurrentTemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
+				generatedState.getCurrentIETemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
 						.update(clonedClass);
 
 				generatedStates.add(new StateInstancePair(generatedState, clonedClass));
@@ -240,7 +254,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				 * filled add null to set of pre filled templates.
 				 */
 				OBIEState generatedState = new OBIEState(this.currentState);
-				generatedState.getCurrentTemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
+				generatedState.getCurrentIETemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
 						.update(null);
 
 				generatedStates.add(new StateInstancePair(generatedState, null));
@@ -254,21 +268,25 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 		if (wasModByPreFilled || parentTemplate == null)
 			return generatedStates;
 
-		List<Field> fields = ReflectionUtils.getAccessibleOntologyFields(parentTemplate.getClass());
+		List<Field> fields = ReflectionUtils.getFields(parentTemplate.getClass(), investigationRestriction);
 
 		/*
 		 * For all fields:
 		 */
 		for (Field slot : fields) {
 
-			if (!investigationRestriction.investigateField(slot.getName())) {
-				continue;
-			}
+//			if (!investigationRestriction.investigateField(slot.getName())) {
+//				continue;
+//			}
 
-			if (slot.isAnnotationPresent(RelationTypeCollection.class)) {
-				slotFillingForListElements(parentTemplate, generatedStates, slot);
+			if (ReflectionUtils.isAnnotationPresent(slot, RelationTypeCollection.class)) {
+				slotFillingForListElements(parentTemplate, generatedStates, slot
+//						, investigationRestriction
+				);
 			} else {
-				slotFillingForSingleElement(parentTemplate, generatedStates, slot);
+				slotFillingForSingleElement(parentTemplate, generatedStates, slot
+//						, investigationRestriction
+				);
 			}
 
 		}
@@ -300,7 +318,9 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 	 * @throws NoSuchFieldException
 	 */
 	private void slotFillingForListElements(IOBIEThing parentTemplate, List<StateInstancePair> generatedStates,
-			Field slot) {
+			Field slot
+//			, InvestigationRestriction investigationRestriction
+	) {
 		try {
 
 			@SuppressWarnings("unchecked")
@@ -309,6 +329,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 			/*
 			 * Generate states for lists of objects. Change just one element of the list.
 			 */
+			final Set<AbstractIndividual> individuals = slotValues.stream().map(s -> s.getIndividual())
+					.collect(Collectors.toSet());
 
 			for (IOBIEThing slotElement : slotValues) {
 
@@ -333,14 +355,9 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 				/*
 				 * Get and add possible values for current element.
 				 */
-				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement,
-						listBaseClassType)) {
 
-					/*
-					 * Do not allow multiple values that are equal
-					 */
-					if (slotValues.contains(possibleElementValue.instance))
-						continue;
+				for (StateInstancePair possibleElementValue : topDownRecursiveSlotFilling(slotElement,
+						listBaseClassType, parentTemplate.getInvestigationRestriction())) {
 
 					/**
 					 * Do not add null elements in lists.
@@ -348,9 +365,21 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					if (possibleElementValue.instance == null)
 						continue;
 
+					if (possibleElementValue.instance.getIndividual() == null)
+						continue;
+
 					if (!explorationCondition.matchesExplorationContitions(parentTemplate, fieldName,
 							possibleElementValue.instance))
 						continue;
+
+					/*
+					 * TODO: parameterize Do not allow multiple values that are equal
+					 */
+					if (individuals.contains(possibleElementValue.instance.getIndividual()))
+						continue;
+
+//					if (slotValues.contains(possibleElementValue.instance))
+//						continue;
 
 					/*
 					 * Copy current baseClass so that we can replace the list.
@@ -377,6 +406,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					 */
 					Field listFieldOfNewClass = ReflectionUtils.getAccessibleFieldByName(newClass.getClass(),
 							fieldName);
+
 					listFieldOfNewClass.set(newClass, newList);
 
 					/*
@@ -405,7 +435,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					// generatedState.preFilledUsedObjects.forEach(System.out::println);
 					// System.out.println("------");
 
-					generatedState.getCurrentTemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
+					generatedState.getCurrentIETemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
 							.update(newClass);
 
 					generatedStates.add(new StateInstancePair(generatedState, newClass));
@@ -420,7 +450,9 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void slotFillingForSingleElement(IOBIEThing parentTemplate, List<StateInstancePair> generatedStates,
-			Field slot) {
+			Field slot
+//			, InvestigationRestriction investigationRestriction
+	) {
 		try {
 			final String slotName = slot.getName();
 
@@ -428,7 +460,8 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 			final Class<? extends IOBIEThing> slotType = (Class<? extends IOBIEThing>) slot.getType();
 
-			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType)) {
+			for (StateInstancePair modAtFieldClass : topDownRecursiveSlotFilling(slotValue, slotType,
+					parentTemplate.getInvestigationRestriction())) {
 
 //				if (modAtFieldClass.instance == null) {
 //					continue;
@@ -450,7 +483,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 					generatedState.removeRecUsedPreFilledTemplate(slotValue);
 
-					generatedState.getCurrentTemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
+					generatedState.getCurrentIETemplateAnnotations().getEntity(this.currentTempalateAnnotationID)
 							.update(genClass);
 
 					generatedStates.add(new StateInstancePair(generatedState, genClass));

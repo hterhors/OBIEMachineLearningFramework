@@ -21,6 +21,7 @@ public class MergedCardinalityExplorer extends AbstractOBIEExplorer {
 	final private Explorer<OBIEState> slotCardinalityExplorer;
 
 	public MergedCardinalityExplorer(RunParameter parameter) {
+	super(parameter);
 		this.templateCardinalityExplorer = new TemplateCardinalityExplorer(parameter);
 
 		this.slotCardinalityExplorer = new SlotCardinalityExplorer(parameter);

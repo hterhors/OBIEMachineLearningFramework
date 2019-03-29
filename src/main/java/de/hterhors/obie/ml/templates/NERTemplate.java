@@ -1,23 +1,21 @@
 package de.hterhors.obie.ml.templates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
-import de.hterhors.obie.core.ontology.annotations.OntologyModelContent;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.run.param.RunParameter;
+import de.hterhors.obie.ml.run.AbstractOBIERunner;
 import de.hterhors.obie.ml.templates.NERTemplate.Scope;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 import de.hterhors.obie.ml.variables.OBIEInstance;
 import de.hterhors.obie.ml.variables.OBIEState;
-import de.hterhors.obie.ml.variables.TemplateAnnotation;
+import de.hterhors.obie.ml.variables.IETmplateAnnotation;
 import factors.Factor;
 import factors.FactorScope;
 import learning.Vector;
@@ -33,8 +31,9 @@ import learning.Vector;
  * @date Nov 15, 2017
  */
 public class NERTemplate extends AbstractOBIETemplate<Scope> {
-	public NERTemplate(RunParameter parameter) {
-		super(parameter);
+
+	public NERTemplate(AbstractOBIERunner runner) {
+		super(runner);
 	}
 
 	/**
@@ -65,9 +64,8 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 	@Override
 	public List<Scope> generateFactorScopes(OBIEState state) {
 		List<Scope> factors = new ArrayList<>();
-		for (TemplateAnnotation entity : state.getCurrentTemplateAnnotations().getTemplateAnnotations()) {
-			factors.addAll(
-					addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getThing()));
+		for (IETmplateAnnotation entity : state.getCurrentIETemplateAnnotations().getAnnotations()) {
+			factors.addAll(addFactorRecursive(state.getInstance(), entity.rootClassType, entity.getThing()));
 		}
 		return factors;
 	}
@@ -89,23 +87,25 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 		/*
 		 * Add factors for object type properties.
 		 */
-		if (!ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
-			Arrays.stream(scioClass.getClass().getDeclaredFields())
-					.filter(f -> f.isAnnotationPresent(OntologyModelContent.class)).forEach(field -> {
-						field.setAccessible(true);
-						try {
-							if (field.isAnnotationPresent(RelationTypeCollection.class)) {
-								for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
-									factors.addAll(addFactorRecursive(internalInstance, entityRootClassType, element));
-								}
-							} else {
-								factors.addAll(addFactorRecursive(internalInstance, entityRootClassType,
-										(IOBIEThing) field.get(scioClass)));
+		if (ReflectionUtils.isAnnotationPresent(scioClass.getClass(), DatatypeProperty.class))
+			return factors;
+
+		ReflectionUtils.getNonDatatypeSlots(scioClass.getClass(), scioClass.getInvestigationRestriction())
+				.forEach(field -> {
+					try {
+						if (ReflectionUtils.isAnnotationPresent(field, RelationTypeCollection.class)) {
+							for (IOBIEThing element : (List<IOBIEThing>) field.get(scioClass)) {
+								factors.addAll(addFactorRecursive(internalInstance, entityRootClassType, element));
 							}
-						} catch (Exception e) {
-							e.printStackTrace();
+						} else {
+							factors.addAll(addFactorRecursive(internalInstance, entityRootClassType,
+									(IOBIEThing) field.get(scioClass)));
 						}
-					});
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				});
+
 		return factors;
 
 	}
@@ -115,10 +115,10 @@ public class NERTemplate extends AbstractOBIETemplate<Scope> {
 
 		Vector featureVector = factor.getFeatureVector();
 
-		if (!factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
+		if (!factor.getFactorScope().instance.getEntityAnnotations()
 				.containsClassAnnotations(factor.getFactorScope().classType))
 			return;
-		boolean foundByNER = factor.getFactorScope().instance.getNamedEntityLinkingAnnotations()
+		boolean foundByNER = factor.getFactorScope().instance.getEntityAnnotations()
 				.getClassAnnotations(factor.getFactorScope().classType).stream()
 				.map(e -> e.getDTValueIfAnyElseTextMention()).collect(Collectors.toSet())
 				.contains(factor.getFactorScope().surfaceForm);

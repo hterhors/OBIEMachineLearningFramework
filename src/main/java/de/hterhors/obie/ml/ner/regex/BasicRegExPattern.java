@@ -9,15 +9,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hterhors.obie.core.OntologyAnalyzer;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
-import de.hterhors.obie.ml.utils.ReflectionUtils;
 
 public abstract class BasicRegExPattern<T> implements Serializable {
 
@@ -29,13 +30,25 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 	/**
 	 * Standard set of stop words.
 	 */
-	public static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList("a", "an", "and", "are", "as", "at", "be",
-			"but", "by", "for", "if", "in", "into", "is", "it", "no", "not", "of", "on", "or", "such", "that", "the",
-			"their", "then", "there", "these", "they", "this", "to", "was", "will", "with"));
+//	public static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList("i", "me", "my", "myself", "we", "our",
+//			"ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she",
+//			"her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves", "what",
+//			"which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been",
+//			"being", "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", "the", "and", "but", "if",
+//			"or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about", "against", "between",
+//			"into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out",
+//			"on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why",
+//			"how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not",
+//			"only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should",
+//			"now"));
+	public static final Set<String> STOP_WORDS = new HashSet<>(
+			Arrays.asList("a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it",
+					"no", "not", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these", "they",
+					"this", "to", "was", "will", "with", "his", "her", "from", "who", "whom"));
 
 	public abstract Set<String> getAdditionalStopWords();
 
-	private static final String SPECIAL_CHARS = "\\W|_";
+	public static final String SPECIAL_CHARS = "\\W|_";
 
 	public static final String CAMEL_CASE_SPLIT_PATTERN = "(?<!(^|[A-Z" + SPECIAL_CHARS + "]))(?=[A-Z" + SPECIAL_CHARS
 			+ "])|(?<!^)(?=[A-Z" + SPECIAL_CHARS + "][a-z" + SPECIAL_CHARS + "])";
@@ -55,15 +68,15 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 		if (param2 != null && param2.length > 0) {
 			for (int i = 0; i < param2.length; i++) {
 				param2Builer.append("(");
-				param2Builer.append(".?" + param2[i]);
+				param2Builer.append(".?" + Pattern.quote(param2[i]));
 				if (i + 1 != param2.length)
 					param2Builer.append("(-)?");
 				param2Builer.append(")?");
 			}
 		}
 
-		return Pattern.quote(param1) + "(" + (param2Builer.length() == 0 ? "" : Pattern.quote(param2Builer.toString()))
-				+ ")?" + (param3 == null || param3.isEmpty() ? "" : "(.?" + Pattern.quote(param3) + ")?");
+		return Pattern.quote(param1) + "(" + (param2Builer.length() == 0 ? "" : param2Builer.toString()) + ")?"
+				+ (param3 == null || param3.isEmpty() ? "" : "(.?" + Pattern.quote(param3) + ")?");
 	}
 
 	protected static String buildRegExpr(final String param1, final String param2, final String[] param3,
@@ -73,14 +86,14 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 
 		if (param3 != null && param3.length > 0) {
 			for (int i = 0; i < param3.length - 1; i++) {
-				param3Builer.append(".?" + param3[i]);
+				param3Builer.append(".?" + Pattern.quote(param3[i]));
 				param3Builer.append("|");
 			}
-			param3Builer.append(".?" + param3[param3.length - 1]);
+			param3Builer.append(".?" + Pattern.quote(param3[param3.length - 1]));
 		}
 
 		return "(" + Pattern.quote(param1) + "(.?" + Pattern.quote(param2) + ")?|" + Pattern.quote(param2) + ")("
-				+ (param3Builer.length() == 0 ? "" : "(" + Pattern.quote(param3Builer.toString()) + ")?")
+				+ (param3Builer.length() == 0 ? "" : "(" + param3Builer.toString() + ")?")
 				+ (param4 == null || param4.isEmpty() ? "" : "(.?" + Pattern.quote(param4) + ")?") + ")?";
 	}
 
@@ -159,22 +172,22 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 
 	@SuppressWarnings("unchecked")
 	public Map<AbstractIndividual, Set<Pattern>> autoGeneratePatternForIndividuals(
-			Class<? extends IOBIEThing> rootClassType) {
+			Collection<AbstractIndividual> individuals ) {
 
 		Map<AbstractIndividual, Set<Pattern>> autoGeneratedPattern = new HashMap<>();
 
-		Set<Class<? extends IOBIEThing>> relatedRootClasses = OntologyAnalyzer
-				.getRelatedClassTypesUnderRoot(rootClassType);
-
-		for (Class<? extends IOBIEThing> obieClassType : relatedRootClasses) {
-
-			if (ReflectionUtils.isAnnotationPresent(obieClassType, DatatypeProperty.class))
-				continue;
+//		Set<Class<? extends IOBIEThing>> relatedRootClasses = OntologyAnalyzer
+//				.getRelatedClassTypesUnderRoot(rootClassType);
+//
+//		for (Class<? extends IOBIEThing> obieClassType : relatedRootClasses) {
+//
+//			if (ReflectionUtils.isAnnotationPresent(obieClassType, DatatypeProperty.class))
+//				continue;
 
 			try {
-				Collection<AbstractIndividual> individuals = ((IndividualFactory<AbstractIndividual>) ReflectionUtils
-						.getAccessibleFieldByName(obieClassType, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME)
-						.get(null)).getIndividuals();
+//				Collection<AbstractIndividual> individuals = ((IndividualFactory<AbstractIndividual>) ReflectionUtils
+//						.getAccessibleFieldByName(obieClassType, OntologyInitializer.INDIVIDUAL_FACTORY_FIELD_NAME)
+//						.get(null)).getIndividuals();
 
 				for (AbstractIndividual individual : individuals) {
 
@@ -182,10 +195,11 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 
 					for (String w : individual.name.split(CAMEL_CASE_SPLIT_PATTERN)) {
 						w = w.replaceAll(SPECIAL_CHARS, "");
-						if (STOP_WORDS.contains(w.toLowerCase()) || getAdditionalStopWords().contains(w.toLowerCase()))
-							continue;
 
 						if (w.length() < getMinTokenlength())
+							continue;
+
+						if (STOP_WORDS.contains(w.toLowerCase()) || getAdditionalStopWords().contains(w.toLowerCase()))
 							continue;
 
 						names.add(w);
@@ -234,7 +248,7 @@ public abstract class BasicRegExPattern<T> implements Serializable {
 				System.exit(COULD_NOT_GET_INDIVIDUAL_FACTORY_ERROR);
 			}
 
-		}
+//		}
 
 		return autoGeneratedPattern;
 	}

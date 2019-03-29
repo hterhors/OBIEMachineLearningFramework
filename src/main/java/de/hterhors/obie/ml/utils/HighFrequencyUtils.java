@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.IndividualFactory;
 import de.hterhors.obie.core.ontology.OntologyInitializer;
+import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.DatatypeProperty;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
@@ -156,7 +157,7 @@ public class HighFrequencyUtils {
 			return classCache.get(ck).subList(0, Math.min(n, classCache.get(ck).size()));
 		}
 
-		NamedEntityLinkingAnnotations ner = instance.getNamedEntityLinkingAnnotations();
+		NamedEntityLinkingAnnotations ner = instance.getEntityAnnotations();
 
 		List<ClassFrequencyPair> bestClasses = new ArrayList<>();
 
@@ -210,7 +211,7 @@ public class HighFrequencyUtils {
 			return classCache.get(ck).subList(0, Math.min(n, classCache.get(ck).size()));
 		}
 
-		NamedEntityLinkingAnnotations ner = instance.getNamedEntityLinkingAnnotations();
+		NamedEntityLinkingAnnotations ner = instance.getEntityAnnotations();
 
 		List<ClassFrequencyPair> bestClasses = new ArrayList<>();
 
@@ -265,7 +266,7 @@ public class HighFrequencyUtils {
 			/*
 			 * Get nerl-annotations.
 			 */
-			final NamedEntityLinkingAnnotations nerlas = instance.getNamedEntityLinkingAnnotations();
+			final NamedEntityLinkingAnnotations nerlas = instance.getEntityAnnotations();
 
 			final Field factoryField = ReflectionUtils.getAccessibleFieldByName(
 					ReflectionUtils.getImplementationClass(slotType),
