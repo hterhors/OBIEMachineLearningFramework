@@ -152,7 +152,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 
 			allExistingInternalInstances.add(internalInstance);
 
-			NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
+			NamedEntityLinkingAnnotations.Collector annotationbuilder = new NamedEntityLinkingAnnotations.Collector();
 
 			log.info("Annotate " + internalInstance.getName() + ", length: " + internalInstance.getContent().length());
 			long t = System.currentTimeMillis();
@@ -164,12 +164,12 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 						l.annotateIndividuals(internalInstance.getName(), internalInstance.getContent()));
 
 			}
-			internalInstance.setAnnotations(annotationbuilder.build());
+			internalInstance.setNERLAnnotations(annotationbuilder.collect());
 
 			final long tc = (System.currentTimeMillis() - t);
 
-			log.info("Found " + internalInstance.getEntityAnnotations().numberOfTotalAnnotations()
-					+ " in instance: " + internalInstance.getName() + " in " + tc + " ms.");
+			log.info("Found " + internalInstance.getEntityAnnotations().numberOfTotalAnnotations() + " in instance: "
+					+ internalInstance.getName() + " in " + tc + " ms.");
 
 			if (log.isDebugEnabled()) {
 				log.debug(internalInstance.getEntityAnnotations());
@@ -215,8 +215,7 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 	 */
 	private void checkAnnotationConsistencies(final List<OBIEInstance> trainingDocuments) {
 		for (OBIEInstance internalInstance : trainingDocuments) {
-			for (IETmplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation()
-					.getAnnotations()) {
+			for (IETmplateAnnotation internalAnnotation : internalInstance.getGoldAnnotation().getAnnotations()) {
 				checkForTextualAnnotations(internalAnnotation.getThing(), internalInstance.getName(),
 						internalInstance.getContent());
 			}
@@ -291,12 +290,10 @@ public class BigramCorpusProvider implements IFoldCrossProvider, IActiveLearning
 				continue;
 			}
 
-			if (internalInstance.getGoldAnnotation().getAnnotations()
-					.size() > parameter.maxNumberOfEntityElements) {
-				log.debug("Number of annotations = "
-						+ internalInstance.getGoldAnnotation().getAnnotations().size() + " exceeds limit of: "
-						+ parameter.maxNumberOfEntityElements + "! Remove document " + internalInstance.getName()
-						+ " from corpus.");
+			if (internalInstance.getGoldAnnotation().getAnnotations().size() > parameter.maxNumberOfEntityElements) {
+				log.debug("Number of annotations = " + internalInstance.getGoldAnnotation().getAnnotations().size()
+						+ " exceeds limit of: " + parameter.maxNumberOfEntityElements + "! Remove document "
+						+ internalInstance.getName() + " from corpus.");
 				it.remove();
 				continue;
 			}

@@ -159,11 +159,10 @@ public class UpperBound {
 		final List<IOBIEThing> upperBoundPredictions = projectGoldToPredictions(doc);
 
 		log.info("______GoldAnnotations:______");
-		doc.getGoldAnnotation().getAnnotations()
-				.forEach(s -> log.info(OBIEClassFormatter.format(s.getThing(), false)));
+		doc.getGoldAnnotation().getAnnotations().forEach(s -> log.info(OBIEClassFormatter.format(s.getThing())));
 		log.info("____________________________");
 		log.info("_________Predicted:_________");
-		upperBoundPredictions.forEach(f -> log.info(OBIEClassFormatter.format(f, false)));
+		upperBoundPredictions.forEach(f -> log.info(OBIEClassFormatter.format(f)));
 
 		return upperBoundPredictions;
 	}
@@ -307,17 +306,18 @@ public class UpperBound {
 									 * Search for exact match... break on find.
 									 */
 									boolean found = false;
-									for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(clazz)) {
-										if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-												.equals(((IDatatype) thing).getInterpretedValue())) {
-											found = true;
-											values.add((IOBIEThing) mentionAnnotation.classType
-													.getDeclaredConstructor(String.class, String.class)
-													.newInstance(mentionAnnotation.text,
-															mentionAnnotation.getDTValueIfAnyElseTextMention()));
-											break;
+									if (ner.containsClassAnnotations(clazz))
+										for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(clazz)) {
+											if (mentionAnnotation.getDTValueIfAnyElseTextMention()
+													.equals(((IDatatype) thing).getInterpretedValue())) {
+												found = true;
+												values.add((IOBIEThing) mentionAnnotation.classType
+														.getDeclaredConstructor(String.class, String.class)
+														.newInstance(mentionAnnotation.text,
+																mentionAnnotation.getDTValueIfAnyElseTextMention()));
+												break;
+											}
 										}
-									}
 									if (!found) {
 										log.warn("Can not fill dt-class: " + slot.getName() + ":"
 												+ ((IDatatype) thing).getInterpretedValue());
@@ -397,13 +397,19 @@ public class UpperBound {
 								/*
 								 * Search for exact match. Break on find.
 								 */
-								for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(slotType)) {
-									if (mentionAnnotation.getDTValueIfAnyElseTextMention()
-											.equals(((IDatatype) goldSlotValue).getInterpretedValue())) {
-										value = mentionAnnotation;
-										break;
+//								System.out.println("slotType: " + slotType);
+//								System.out.println("ner: " + ner);
+//								System.out.println("individual: " + individual);
+//								System.out.println("contInd: " + ner.containsIndividualAnnotations(individual));
+
+								if (ner.containsClassAnnotations(slotType))
+									for (NERLClassAnnotation mentionAnnotation : ner.getClassAnnotations(slotType)) {
+										if (mentionAnnotation.getDTValueIfAnyElseTextMention()
+												.equals(((IDatatype) goldSlotValue).getInterpretedValue())) {
+											value = mentionAnnotation;
+											break;
+										}
 									}
-								}
 								/*
 								 * If the value is not null we set it to the object on the specific field.
 								 */

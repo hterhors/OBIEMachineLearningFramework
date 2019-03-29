@@ -191,8 +191,8 @@ public class EntityRecognitionExplorer extends AbstractOBIEExplorer {
 							 * Add Identity
 							 */
 
-							final int charStartIndex = tokens.get(i).getFromCharPosition();
-							final int charEndIndex = tokens.get(i + tokenPerAnnotation - 1).getToCharPosition();
+							final int charStartIndex = tokens.get(i).getOnsetCharPosition();
+							final int charEndIndex = tokens.get(i + tokenPerAnnotation - 1).getOffsetCharPosition();
 
 							final String originalText = previousState.getInstance().getContent()
 									.substring((int) charStartIndex, (int) charEndIndex);
@@ -243,8 +243,8 @@ public class EntityRecognitionExplorer extends AbstractOBIEExplorer {
 
 		for (IETmplateAnnotation internalAnnotation : prediction.getAnnotations()) {
 
-			if (checkForAnnotationRec(internalAnnotation.getThing(), (int) token.getFromCharPosition(),
-					(int) token.getToCharPosition()))
+			if (checkForAnnotationRec(internalAnnotation.getThing(), (int) token.getOnsetCharPosition(),
+					(int) token.getOffsetCharPosition()))
 				return true;
 
 		}

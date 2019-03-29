@@ -216,7 +216,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 						}
 
 					}
-					
+
 					emptyCandidateInstance = ExplorationUtils.copyOntologyModelFields(emptyCandidateInstance,
 							parentTemplate);
 
@@ -425,11 +425,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 					generatedState.addUsedPreFilledTemplate(possibleElementValue.instance);
 
 					// System.out.println("Remove: " + childBaseClass);
-					generatedState.removeRecUsedPreFilledTemplate(
-
-							slotElement
-
-					);
+					generatedState.removeRecUsedPreFilledTemplate(slotElement);
 					// System.out.println();
 					// System.out.println("Results to:");
 					// generatedState.preFilledUsedObjects.forEach(System.out::println);
@@ -450,9 +446,7 @@ public class SlotFillerExplorer extends AbstractOBIEExplorer {
 
 	@SuppressWarnings("unchecked")
 	private void slotFillingForSingleElement(IOBIEThing parentTemplate, List<StateInstancePair> generatedStates,
-			Field slot
-//			, InvestigationRestriction investigationRestriction
-	) {
+			Field slot) {
 		try {
 			final String slotName = slot.getName();
 

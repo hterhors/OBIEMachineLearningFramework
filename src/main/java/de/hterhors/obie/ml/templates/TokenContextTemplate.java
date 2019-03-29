@@ -12,6 +12,7 @@ import de.hterhors.obie.core.ontology.AbstractIndividual;
 import de.hterhors.obie.core.ontology.ReflectionUtils;
 import de.hterhors.obie.core.ontology.annotations.RelationTypeCollection;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
+import de.hterhors.obie.core.owlreader.ECardinalityType;
 import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.NERLClassAnnotation;
 import de.hterhors.obie.ml.ner.NERLIndividualAnnotation;
@@ -162,9 +163,9 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 				for (NERLClassAnnotation nera : internalInstance.getEntityAnnotations()
 						.getClassAnnotations(obieClass)) {
 					try {
-					positions.add(new PositionContainer(ReflectionUtils.simpleName(nera.classType),
-							internalInstance.charPositionToTokenPosition(nera.onset),
-							internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
+						positions.add(new PositionContainer(ReflectionUtils.simpleName(nera.classType),
+								internalInstance.charPositionToTokenPosition(nera.onset),
+								internalInstance.charPositionToTokenPosition(nera.onset + nera.text.length())));
 					} catch (Exception e) {
 						System.out.println(individual);
 						System.out.println(nera);
@@ -197,19 +198,33 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 			if (onset != null && offset != null) {
 
 				forClass: {
-					final Class<? extends IOBIEThing> classType = obieClass;
-					final int beginTokenIndex = internalInstance.charPositionToTokenPosition(onset);
-					final int endTokenIndex = internalInstance.charPositionToTokenPosition(offset);
-					positions.add(new PositionContainer(ReflectionUtils.simpleName(classType), beginTokenIndex,
-							endTokenIndex));
+					try {
+						final Class<? extends IOBIEThing> classType = obieClass;
+						final int beginTokenIndex = internalInstance.charPositionToTokenPosition(onset);
+						final int endTokenIndex = internalInstance.charPositionToTokenPosition(offset);
+						positions.add(new PositionContainer(ReflectionUtils.simpleName(classType), beginTokenIndex,
+								endTokenIndex));
+					} catch (Exception e) {
+						System.out.println(individual);
+						System.out.println(obieClass);
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 
 				forIndividual: {
-					if (individual == null)
-						break forIndividual;
-					final int beginTokenIndex = internalInstance.charPositionToTokenPosition(onset);
-					final int endTokenIndex = internalInstance.charPositionToTokenPosition(offset);
-					positions.add(new PositionContainer(individual.name, beginTokenIndex, endTokenIndex));
+					try {
+						if (individual == null)
+							break forIndividual;
+						final int beginTokenIndex = internalInstance.charPositionToTokenPosition(onset);
+						final int endTokenIndex = internalInstance.charPositionToTokenPosition(offset);
+						positions.add(new PositionContainer(individual.name, beginTokenIndex, endTokenIndex));
+					} catch (Exception e) {
+						System.out.println(individual);
+						System.out.println(obieClass);
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 			}
 		}
@@ -220,22 +235,26 @@ public class TokenContextTemplate extends AbstractOBIETemplate<Scope> {
 	public void computeFactor(Factor<Scope> factor) {
 
 		Vector featureVector = factor.getFeatureVector();
+		try {
+			final Set<PositionContainer> positions = getPositions(factor.getFactorScope().instance,
+					factor.getFactorScope().obieClass, factor.getFactorScope().characterOnset,
+					factor.getFactorScope().characterOffset, factor.getFactorScope().individual);
 
-		final Set<PositionContainer> positions = getPositions(factor.getFactorScope().instance,
-				factor.getFactorScope().obieClass, factor.getFactorScope().characterOnset,
-				factor.getFactorScope().characterOffset, factor.getFactorScope().individual);
+			final List<Token> tokens = factor.getFactorScope().instance.getTokens();
 
-		final List<Token> tokens = factor.getFactorScope().instance.getTokens();
+			for (PositionContainer position : positions) {
 
-		for (PositionContainer position : positions) {
+				final String className = position.classOrIndividualName;
+				final int beginTokenIndex = position.beginTokenIndex;
+				final int endTokenIndex = position.endTokenIndex;
 
-			final String className = position.classOrIndividualName;
-			final int beginTokenIndex = position.beginTokenIndex;
-			final int endTokenIndex = position.endTokenIndex;
+				addContextFeatures(featureVector, tokens, className, beginTokenIndex, endTokenIndex);
+			}
 
-			addContextFeatures(featureVector, tokens, className, beginTokenIndex, endTokenIndex);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
 		}
-
 	}
 
 	private void addContextFeatures(Vector featureVector, List<Token> tokens, String className, int beginTokenIndex,

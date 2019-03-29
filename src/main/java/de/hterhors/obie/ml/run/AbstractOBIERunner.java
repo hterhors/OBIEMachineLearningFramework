@@ -379,7 +379,7 @@ public abstract class AbstractOBIERunner {
 
 		Trainer trainer = newTrainer();
 
-		NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
+		NamedEntityLinkingAnnotations.Collector annotationbuilder = new NamedEntityLinkingAnnotations.Collector();
 
 		final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
 			try {
@@ -396,7 +396,7 @@ public abstract class AbstractOBIERunner {
 			annotationbuilder
 					.addIndividualAnnotations(l.annotateIndividuals(instance.getName(), instance.getContent()));
 		}
-		instance.setAnnotations(annotationbuilder.build());
+		instance.setNERLAnnotations(annotationbuilder.collect());
 
 		return trainer.predict(sampler, initializer, Arrays.asList(instance));
 
@@ -409,39 +409,29 @@ public abstract class AbstractOBIERunner {
 
 		Trainer trainer = newTrainer();
 
-		NamedEntityLinkingAnnotations.Builder annotationbuilder = new NamedEntityLinkingAnnotations.Builder();
 
 		for (OBIEInstance instance : instances) {
 
-//			final Set<INamedEntitityLinker> linker = entityLinker.stream().map(linkerClass -> {
-//				try {
-//					return linkerClass.getConstructor(Set.class).newInstance(instance.rootClassTypes);
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//				throw new RuntimeException(
-//						"Can not instantiate entity linker with name: " + linkerClass.getSimpleName());
-//			}).collect(Collectors.toSet());
+			NamedEntityLinkingAnnotations.Collector annotationCollector = new NamedEntityLinkingAnnotations.Collector();
 
 			for (INamedEntitityLinker l : entityLinker) {
 				log.info("Apply: " + l.getClass().getSimpleName() + " to: " + instance.getName());
-				annotationbuilder.addClassAnnotations(l.annotateClasses(instance.getName(), instance.getContent()));
-				annotationbuilder
+				annotationCollector.addClassAnnotations(l.annotateClasses(instance.getName(), instance.getContent()));
+				annotationCollector
 						.addIndividualAnnotations(l.annotateIndividuals(instance.getName(), instance.getContent()));
 			}
-			instance.setAnnotations(annotationbuilder.build());
+			instance.setNERLAnnotations(annotationCollector.collect());
 
 		}
 		return trainer.predict(sampler, initializer, instances);
 
 	}
 
+	
 	public List<SampledInstance<OBIEInstance, InstanceTemplateAnnotations, OBIEState>> test(
 			final List<OBIEInstance> instances) {
 
 		DefaultSampler<OBIEInstance, OBIEState, InstanceTemplateAnnotations> sampler = buildTestDefaultSampler(model);
-//
-//		Trainer trainer = buildDefaultTrainer();
 
 		return trainer.test(sampler, initializer, instances);
 
@@ -647,7 +637,6 @@ public abstract class AbstractOBIERunner {
 		 */
 		IOBIEEvaluator evaluator = new CartesianSearchEvaluator(parameter.evaluator.isEnableCaching(),
 				parameter.evaluator.getMaxEvaluationDepth(), parameter.evaluator.isPenalizeCardinality(),
-//				parameter.evaluator.getInvestigationRestrictions(), 
 				parameter.evaluator.getMaxNumberOfAnnotations(),
 				parameter.evaluator.isIgnoreEmptyInstancesOnEvaluation());
 

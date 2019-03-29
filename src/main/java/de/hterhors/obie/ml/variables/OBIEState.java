@@ -13,7 +13,6 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.jena.util.OneToManyMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,6 +47,10 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 
 	private final InstanceTemplateAnnotations currentTemplateAnnotations;
 
+	/**
+	 * TODO: Stupid way of rem which are used. rather use an object with extra
+	 * field..
+	 */
 	private final Map<Class<? extends IOBIEThing>, Set<IOBIEThing>> preFilledObjectMap;
 
 	private final RunParameter parameter;
@@ -180,11 +183,8 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		}
 	}
 
-//		/**
-//		 * TODO: through parameter to get info
-//		 */
-//	private void addExistingTemplatesForExploration(InternalInstance instance) {
-//		instance.getGoldAnnotation().getEntityAnnotations().stream().forEach(g -> {
+	private void addExistingTemplatesForExploration() {
+//		getInstance().getGoldAnnotation().getAnnotations().stream().forEach(g -> {
 //			/**
 //			 * TODO: If investigation restriction is active filter by that.
 //			 */
@@ -218,11 +218,9 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 //						.extractGroupNamesFromExperimentalGroup((IExperimentalGroup) g.getAnnotationInstance())) {
 //					this.preFilledObjectMap.get(IGroupName.class).add(thing);
 //				}
-//
 //			}
-//
 //		});
-//	}
+	}
 
 	/**
 	 * Adds investigationRestriction to all slot values of the parent value.
@@ -367,7 +365,7 @@ public class OBIEState extends AbstractState<OBIEInstance> implements Serializab
 		builder.append("]: ");
 		for (IETmplateAnnotation e : currentTemplateAnnotations.getAnnotations()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getThing(), true));
+			builder.append(OBIEClassFormatter.format(e.getThing()));
 			builder.append("\n");
 		}
 		return builder.toString();

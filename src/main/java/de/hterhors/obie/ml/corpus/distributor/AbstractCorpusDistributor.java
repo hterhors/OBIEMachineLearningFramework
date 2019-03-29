@@ -2,7 +2,6 @@ package de.hterhors.obie.ml.corpus.distributor;
 
 import java.util.List;
 
-import org.apache.jena.atlas.logging.Log;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,24 +29,6 @@ public abstract class AbstractCorpusDistributor implements ICorpusDistributor {
 		}
 		log.info("Initialize corpus diributor of type " + getDistributorID() + " with fraction size: "
 				+ corpusSizeFraction);
-	}
-
-	public static abstract class AbstractConfigBuilder<B extends AbstractConfigBuilder<B>> {
-		float corpusSizeFraction = AbstractCorpusDistributor.DEFAULT_CORPUS_SIZE_FRACTION;
-
-		public abstract AbstractCorpusDistributor build();
-
-		public float getCorpusSizeFraction() {
-			return corpusSizeFraction;
-		}
-
-		public B setCorpusSizeFraction(float corpusSizeFraction) {
-			this.corpusSizeFraction = corpusSizeFraction;
-			return getDistributor();
-		}
-
-		protected abstract B getDistributor();
-
 	}
 
 	public static interface Distributor {

@@ -60,7 +60,7 @@ public abstract class AbstractRegExNERL<T extends IOBIEThing> implements INamedE
 	}
 
 	public Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> annotateClasses(final String instanceName,
-			final String content) {
+			final String content) {		
 
 		final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> docSpeceficRetrieval = new HashMap<>();
 

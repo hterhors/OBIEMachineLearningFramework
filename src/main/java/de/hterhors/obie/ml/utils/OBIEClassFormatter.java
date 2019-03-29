@@ -16,29 +16,26 @@ import de.hterhors.obie.core.tools.visualization.graphml.templates.NamedIndividu
 public class OBIEClassFormatter {
 
 	private static final String ONE_DEPTH = "    ";
+	public static boolean printDetailed = false;
 
 	public static String format(IOBIEThing scioClass) {
 		if (scioClass == null)
 			return "null";
-		return format(scioClass, false);
-	}
-
-	public static String format(IOBIEThing scioClass, boolean printAll) {
 		try {
-			return toStringUsingRelfections(scioClass, 0, printAll);
+			return toStringUsingRelfections(scioClass, 0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	private static String toStringUsingRelfections(IOBIEThing c, int depth, boolean printAll) throws Exception {
+	private static String toStringUsingRelfections(IOBIEThing c, int depth) throws Exception {
 		StringBuilder sb = new StringBuilder();
 
 		if (c == null)
 			return null;
 
-		if (printAll) {
+		if (printDetailed) {
 			sb.append("(" + c.getCharacterOnset() + "-" + c.getCharacterOffset() + ")");
 		}
 
@@ -49,7 +46,7 @@ public class OBIEClassFormatter {
 			AbstractIndividual individual = ((AbstractIndividual) c.getClass()
 					.getField(OntologyInitializer.INDIVIDUAL_FIELD_NAME).get(c));
 			sb.append(getDepth(depth) + ReflectionUtils.simpleName(c.getClass()));
-			sb.append(individual == null ? " " : (" " + (printAll ? individual.nameSpace : "") + individual.name));
+			sb.append(individual == null ? " " : (" " + (printDetailed ? individual.nameSpace : "") + individual.name));
 		}
 
 		sb.append("\n");
@@ -75,7 +72,7 @@ public class OBIEClassFormatter {
 						if (l == null) {
 							sb.append("\nnull");
 						} else {
-							if (printAll) {
+							if (printDetailed) {
 								sb.append(ONE_DEPTH);
 								sb.append("(" + l.getCharacterOnset() + "-" + l.getCharacterOffset() + ": \""
 										+ l.getTextMention() + "\")");
@@ -89,7 +86,7 @@ public class OBIEClassFormatter {
 //								sb.append(getDepth(depth + 1) + l.getClass()));
 							} else {
 								sb.append("\n");
-								sb.append(toStringUsingRelfections(l, depth + 1, printAll
+								sb.append(toStringUsingRelfections(l, depth + 1
 //										, investigationRestriction
 								));
 							}
@@ -97,7 +94,7 @@ public class OBIEClassFormatter {
 					}
 					sb.append("\n");
 				} else {
-					if (printAll) {
+					if (printDetailed) {
 						sb.append(ONE_DEPTH);
 						sb.append("(" + ((IOBIEThing) slot.get(c)).getCharacterOnset() + "-"
 								+ ((IOBIEThing) slot.get(c)).getCharacterOffset() + ": \""
@@ -111,7 +108,7 @@ public class OBIEClassFormatter {
 //						sb.append(ONE_DEPTH + cn.getClass()) + "\n");
 					} else {
 						sb.append("\n");
-						sb.append(toStringUsingRelfections(cn, depth + 1, printAll
+						sb.append(toStringUsingRelfections(cn, depth + 1
 //								, investigationRestriction
 						));
 					}

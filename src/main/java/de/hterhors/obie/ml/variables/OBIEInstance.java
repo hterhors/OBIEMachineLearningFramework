@@ -13,10 +13,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.semanticweb.owlapi.reasoner.IllegalConfigurationException;
 
 import corpus.LabeledInstance;
-import de.hterhors.obie.core.ontology.InvestigationRestriction;
 import de.hterhors.obie.core.ontology.interfaces.IOBIEThing;
 import de.hterhors.obie.core.tokenizer.RegExTokenizer;
 import de.hterhors.obie.core.tokenizer.SentenceSplitter;
@@ -24,8 +22,8 @@ import de.hterhors.obie.core.tokenizer.Token;
 import de.hterhors.obie.ml.ner.NamedEntityLinkingAnnotations;
 
 /**
- * The BiGram Document contains information about the annotations (training or
- * test instances), the underlying text and passage information of the text.
+ * The OBIEInstance contains information about the annotations (training or test
+ * instances), the underlying text and passage information of the text.
  * 
  * @author hterhors
  *
@@ -53,7 +51,7 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	private static Logger log = LogManager.getFormatterLogger(OBIEInstance.class);
 
 	/**
-	 * The documents name.
+	 * The instance name.
 	 */
 	final private String name;
 
@@ -81,8 +79,8 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 	/**
 	 * Tokens indexed by position.
 	 */
-	final private Map<Integer, Token> fromPositionTokens = new HashMap<>();
-	final private Map<Integer, Token> toPositionTokens = new HashMap<>();
+	final private Map<Integer, Token> onsetCharPositionTokens = new HashMap<>();
+	final private Map<Integer, Token> offsetCharPositionTokens = new HashMap<>();
 
 	public String getName() {
 		return name;
@@ -98,90 +96,66 @@ public final class OBIEInstance implements LabeledInstance<OBIEInstance, Instanc
 
 		this.name = documentName;
 
-		this.content = prepareDocumentContent(documentContent);
+		this.content = documentContent;
 
-		this.tokens = RegExTokenizer.tokenize(getDocumentSentences(documentContent)).stream()
+		this.tokens = RegExTokenizer.tokenize(SentenceSplitter.extractSentences(this.content)).stream()
 				.flatMap(t -> t.tokens.stream()).collect(Collectors.toList());
 
 		for (Token token : tokens) {
-			fromPositionTokens.put(new Integer(token.getFromCharPosition()), token);
-			toPositionTokens.put(new Integer(token.getToCharPosition()), token);
+			onsetCharPositionTokens.put(new Integer(token.getOnsetCharPosition()), token);
+			offsetCharPositionTokens.put(new Integer(token.getOffsetCharPosition()), token);
 		}
 		this.rootClassTypes = Collections.unmodifiableSet(new HashSet<>(rootClassTypes));
 	}
 
-	private List<String> getDocumentSentences(String rawDocumentContent) {
-		final List<String> sentences = SentenceSplitter.extractSentences(rawDocumentContent);
-		final List<String> cleanedSentences = new ArrayList<>();
-
-		for (String sentence : sentences) {
-			// String cleanedSentence =
-			// ContentCleaner.getInstance().process(sentence);
-			cleanedSentences.add(sentence);
-		}
-
-		return cleanedSentences;
-	}
-
-	private String prepareDocumentContent(final String rawDocumentContent) {
-
-		final List<String> sentences = SentenceSplitter.extractSentences(rawDocumentContent);
-
-		final StringBuffer cleanedContent = new StringBuffer();
-
-		for (String sentence : sentences) {
-			// String cleanedSentence =
-			// ContentCleaner.getInstance().process(sentence)
-			cleanedContent.append(sentence);// .append(" ");
-		}
-		return cleanedContent.toString().trim();
-	}
-
-	public void setAnnotations(NamedEntityLinkingAnnotations namedEntityLinkingAnnotations) {
+	public void setNERLAnnotations(NamedEntityLinkingAnnotations namedEntityLinkingAnnotations) {
 		this.namedEntityLinkingAnnotations = namedEntityLinkingAnnotations;
 	}
 
 	public int charPositionToTokenPosition(Integer characterPosition) {
 
-		if (fromPositionTokens.containsKey(characterPosition))
-			return fromPositionTokens.get(characterPosition).getIndex();
+		if (onsetCharPositionTokens.containsKey(characterPosition))
+			return onsetCharPositionTokens.get(characterPosition).getIndex();
 
-		if (toPositionTokens.containsKey(characterPosition))
-			return toPositionTokens.get(characterPosition).getIndex() + 1;
+		if (offsetCharPositionTokens.containsKey(characterPosition))
+			return offsetCharPositionTokens.get(characterPosition).getIndex() + 1;
 
 		log.warn("____CONTENT_____");
 		log.warn(content);
 		log.warn("_____FROM____");
-		fromPositionTokens.entrySet().stream()
+		onsetCharPositionTokens.entrySet().stream()
 				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("____TO_____");
-		toPositionTokens.entrySet().stream()
+		offsetCharPositionTokens.entrySet().stream()
 				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
+		log.warn("characterPosition = " + characterPosition);
 		log.warn("_________");
 
 		this.tokens.forEach(log::warn);
 
 		throw new IndexOutOfBoundsException("Can not map character position to token position: " + characterPosition);
-
 	}
 
 	public Token charPositionToToken(Integer characterPosition) {
 
-		if (fromPositionTokens.containsKey(characterPosition))
-			return fromPositionTokens.get(characterPosition);
+		if (onsetCharPositionTokens.containsKey(characterPosition))
+			return onsetCharPositionTokens.get(characterPosition);
 
-		if (toPositionTokens.containsKey(characterPosition))
-			return toPositionTokens.get(characterPosition);
+		if (offsetCharPositionTokens.containsKey(characterPosition))
+			return offsetCharPositionTokens.get(characterPosition);
 
-		log.warn("_________");
-		toPositionTokens.entrySet().stream()
+		log.warn("____CONTENT_____");
+		log.warn(content);
+		log.warn("_____FROM____");
+		onsetCharPositionTokens.entrySet().stream()
 				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
-		log.warn("_________");
-		fromPositionTokens.entrySet().stream()
+		log.warn("____TO_____");
+		offsetCharPositionTokens.entrySet().stream()
 				.filter(t -> Math.abs(t.getKey().intValue() - characterPosition.intValue()) < 20).forEach(log::warn);
 		log.warn("_________");
 		log.warn("characterPosition = " + characterPosition);
+		log.warn("_________");
 
 		this.tokens.forEach(log::warn);
 

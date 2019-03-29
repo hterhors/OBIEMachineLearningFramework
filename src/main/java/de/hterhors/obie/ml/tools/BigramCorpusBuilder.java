@@ -52,7 +52,7 @@ public class BigramCorpusBuilder {
 			final int ontologyVersion) {
 
 		final File corpusFile = CorpusFileTools.buildAnnotatedBigramCorpusFile(
-				projectEnvironment.getBigramCorpusFileDirectory(), projectEnvironment.getCorpusPrefix(),
+				projectEnvironment.getBigramCorpusFileDirectory(), projectEnvironment.getCorpusName(),
 				corpus.getOriginalRootClasses(), ontologyVersion);
 
 		if (corpusFile.exists()) {

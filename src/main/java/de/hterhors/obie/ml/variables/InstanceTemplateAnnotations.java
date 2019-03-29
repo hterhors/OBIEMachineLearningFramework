@@ -90,8 +90,7 @@ public class InstanceTemplateAnnotations implements Serializable {
 
 		for (IETmplateAnnotation e : entities.values()) {
 			builder.append("\n\t");
-			builder.append(OBIEClassFormatter.format(e.getThing(),true
-			));
+			builder.append(OBIEClassFormatter.format(e.getThing()));
 			builder.append("\n");
 		}
 		return builder.toString();

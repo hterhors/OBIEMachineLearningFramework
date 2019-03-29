@@ -360,7 +360,7 @@ public class RunParameter implements Serializable {
 //			throw new IllegalStateException("System does not support multiple root search types: " + rootSearchTypes);
 //		}
 
-		Objects.requireNonNull(projectEnvironment.getCorpusPrefix());
+		Objects.requireNonNull(projectEnvironment.getCorpusName());
 		Objects.requireNonNull(numberOfInitializedObjects);
 		Objects.requireNonNull(evaluator);
 
@@ -369,7 +369,7 @@ public class RunParameter implements Serializable {
 		requireGreaterThanZero(maxNumberOfSamplingSteps);
 
 		this.candidateRetrieval = candidateRetrieval;
-		this.corpusNamePrefix = projectEnvironment.getCorpusPrefix();
+		this.corpusNamePrefix = projectEnvironment.getCorpusName();
 		this.restrictExplorationToFoundConcepts = restrictExplorationOnConceptsInInstance;
 		this.corpusDistributor = corpusConfiguration;
 		this.excludeEmptyInstancesFromCorpus = excludeEmptyInstancesFromCorpus;

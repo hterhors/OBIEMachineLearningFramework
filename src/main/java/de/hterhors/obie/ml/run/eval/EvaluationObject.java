@@ -19,8 +19,7 @@ public class EvaluationObject {
 
 	@Override
 	public String toString() {
-		return OBIEClassFormatter.format(scioClass, false
-//				, investigationRestriction
+		return OBIEClassFormatter.format(scioClass
 				);
 	}
 

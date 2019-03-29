@@ -101,15 +101,15 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 		return Collections.unmodifiableMap(rBDSV);
 	}
 
-	public static class Builder {
+	public static class Collector {
 
 		private final Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> classRetrievals = new HashMap<>();
 		private final Map<AbstractIndividual, Set<NERLIndividualAnnotation>> individualRetrievals = new HashMap<>();
 
-		public Builder() {
+		public Collector() {
 		}
 
-		public Builder addClassAnnotations(
+		public Collector addClassAnnotations(
 				Map<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> namedEntityLinkingAnnotations) {
 
 			for (Entry<Class<? extends IOBIEThing>, Set<NERLClassAnnotation>> annotationEntry : namedEntityLinkingAnnotations
@@ -117,7 +117,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 				final Set<NERLClassAnnotation> annotations = classRetrievals.getOrDefault(annotationEntry.getKey(),
 						new HashSet<>());
-				
+
 				annotations.addAll(annotationEntry.getValue());
 				classRetrievals.put(annotationEntry.getKey(), annotations);
 			}
@@ -125,7 +125,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 		}
 
-		public Builder addIndividualAnnotations(
+		public Collector addIndividualAnnotations(
 				Map<AbstractIndividual, Set<NERLIndividualAnnotation>> namedEntityLinkingAnnotations) {
 
 			for (Entry<AbstractIndividual, Set<NERLIndividualAnnotation>> annotationEntry : namedEntityLinkingAnnotations
@@ -140,7 +140,7 @@ public class NamedEntityLinkingAnnotations implements Serializable {
 
 		}
 
-		public NamedEntityLinkingAnnotations build() {
+		public NamedEntityLinkingAnnotations collect() {
 			return new NamedEntityLinkingAnnotations(classRetrievals, individualRetrievals);
 		}
 	}
